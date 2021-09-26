@@ -1,69 +1,172 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 const int indent_width = 2;
 
+struct string_stack {
+    char   *buffer;
+    char   *next;
+    char   *end;
+    int     count;
+    int     limit;
+    char *(stack[16]);
+};
+
+enum bools {
+    false = 0,
+    true  = 1
+};
+
+
 int read_token(char *token, int token_length, char **buffer);
 int read_indent(int *new_indent, char **buffer);
+
+void  init_string_stack(struct string_stack *stack, char *buffer, size_t size);
+void  print_string_stack(struct string_stack *stack);
+char* push(struct string_stack *stack, char *buffer);
+char* pop(struct string_stack *stack);
+char* peek(struct string_stack *stack);
 
 int
 main(int argc, char **argv)
 {
-    char token[256] = "";
-    char *code =
-        "+ 1 2\n"
-        "  + 3 4\n"
-        "    + 5 6";
-    char *s    = code;
+    char *code = NULL;
+    char *s    = NULL;
+    char *expected_result = NULL;
+
+    char token_data[1024] = "";
+    char token[256]       = "";
+
+    char *cmd        = NULL;
+    char *parent_cmd = NULL;
+
+    int running    = true;
     int error      = 0;
     int indent     = 0;
     int new_indent = 0;
+    int delta      = 0;
+    struct string_stack stack = {0};
 
-    while (*s != '\0') {
+    init_string_stack(&stack, token_data, sizeof(token_data));
+
+    switch (5) {
+    case 0:
+        code = "";
+        break;
+
+    case 1:
+        code =
+            "+ 1 2";
+        expected_result = "1 2 +";
+        break;
+
+    case 2:
+        code =
+            "+ 1 2\n"
+            "  * 3 4";
+        expected_result = "1 2 + 3 4 * +";
+        break;
+
+    case 3:
+        code =
+            "+ 1 2\n"
+            "  * 3 4\n"
+            "    + 5 6\n";
+        expected_result = "1 2 + 3 4 * 5 6 + * +";
+        break;
+
+    case 4:
+        code =
+            "+ 1 2\n"
+            "  * 3 4\n"
+            "    + 5 6\n"
+            "  * 6 6\n"
+            "  / 12 2\n";
+        expected_result = "1 2 + 3 4 * 5 6 + * + 6 6 * + 12 2 / +";
+        break;
+
+    case 5:
+        code =
+            "double\n"
+            "  * 3 4\n";
+        expected_result = "3 4 * double";
+        break;
+
+    default:
+        exit(1);
+    }
+
+    printf("%s\n\n", code);
+    printf("%s\n\n", expected_result);
+
+    s = code;
+
+    while (running) {
         switch (*s) {
+        case '\0':
+            /*print_string_stack(&stack);*/
+
+            while (stack.count) {
+                cmd = pop(&stack);
+                printf("%s ", cmd);
+            }
+
+            printf("\n");
+
+            running = false;
+            break;
+
         case ' ':
-            printf("%s\n", s);
             fprintf(stderr, "error: unexpected space\n");
             goto errhandle;
             break;
 
         case '\n':
-            if (error = read_indent(&new_indent, &s))
+            if ((error = read_indent(&new_indent, &s)))
                 goto errhandle;
-            switch (new_indent - indent) {
-            case -1:
-                puts("-1");
-                break;
 
-            case 0:
-                puts("0");
-                break;
+            delta =  new_indent - indent;
 
-            case 1:
-                puts("indent");
-                break;
+            if (delta < 0) {
+                for (; delta < 0; delta += 1) {
+                    parent_cmd = pop(&stack);
+                    printf("%s ", parent_cmd);
+                }
+            } else if (delta == 0) {
+                cmd = pop(&stack);
+                printf("%s ", cmd);
 
-            default:
+            } else if (delta == 1) {
+                /*parent_cmd = peek(&stack);*/
+                /*printf("%s ", parent_cmd);*/
+
+            } else {
                 fprintf(stderr, "error: invalid indent, old: %d, new: %d\n", indent, new_indent);
                 goto errhandle;
             }
+
             indent = new_indent;
+            cmd = NULL;
+
             break;
 
         default:
-            if (error = read_token(token, sizeof(token), &s))
+            if ((error = read_token(token, sizeof(token), &s)))
                 goto errhandle;
+
+            if (cmd == NULL)
+                cmd = push(&stack, token);
+            else
+                printf("%s ", token);
+
             while (*s == ' ')
                 s += 1;
 
         }
     }
 
-    while (indent > 0) {
-        puts("dedent");
-        indent -= 1;
-    }
 
     return 0;
 
@@ -92,9 +195,17 @@ read_token(char *token, int token_length, char **buffer)
         return 1;
     }
 
-    strncpy(token, s, len);
+    if (len > token_length) {
+        fprintf(stderr, "token too long\n");
+        return 1;
+    }
 
-    printf("t: %s\n", token);
+    /*printf("\ns: %.*s\n", len, s);*/
+    strncpy(token, s, len);
+    *(token + len) = '\0';
+
+    /*printf("len:%d ", len);*/
+    /*printf("t: %s\n", token);*/
 
     *buffer = end;
 
@@ -127,4 +238,75 @@ read_indent(int *new_indent, char **buffer)
     *buffer = end;
     return 0;
 }
+
+
+void
+init_string_stack(struct string_stack *stack, char *buffer, size_t size)
+{
+    stack->buffer    = buffer;
+    stack->next      = buffer;
+    stack->end       = buffer + size;
+    stack->count     = 0;
+    stack->limit     = sizeof(stack->stack) / sizeof(stack->stack[0]);
+    memset(stack->buffer, 0, size);
+}
+
+
+char*
+push(struct string_stack *stack, char *buffer)
+{
+    int len = strlen(buffer);
+    char *rval = stack->next;
+
+    /*printf("push %s\n", buffer);*/
+
+    stack->stack[stack->count] = stack->next;
+
+    strcpy(stack->next, buffer);
+    stack->count += 1;
+    stack->next += (len + 1);
+    /*print_string_stack(stack);*/
+    return rval;
+}
+
+
+char*
+pop(struct string_stack *stack)
+{
+    if (stack->count == 0)
+        return NULL;
+
+    stack->count -= 1;
+    stack->next = stack->stack[stack->count];
+    return stack->next;
+}
+
+
+char*
+peek(struct string_stack *stack)
+{
+    if (stack->count == 0)
+        return NULL;
+
+    return stack->stack[stack->count - 1];
+}
+
+
+void
+print_string_stack(struct string_stack *stack)
+{
+    char *s = NULL;
+    int   i = 0;
+
+    if (stack == NULL) {
+        printf("stack is NULL\n");
+        return;
+    }
+
+    printf("stack %d:\n", stack->count);
+
+    for (i = 0; i < stack->count; i += 1)
+        printf("%d,%s\n", i, stack->stack[i]);
+}
+
 
