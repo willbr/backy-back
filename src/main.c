@@ -5,13 +5,14 @@
 
 const int indent_width = 2;
 
-struct string_stack {
-    char   *buffer;
-    char   *next;
-    char   *end;
-    int     count;
-    int     limit;
-    char *(stack[16]);
+struct cmd_stack {
+    char  *buffer;
+    char  *next;
+    char  *end;
+    int    count;
+    int    limit;
+    char *(cmds[16]);
+    int    args[16];
 };
 
 enum bools {
@@ -23,11 +24,11 @@ enum bools {
 int read_token(char *token, int token_length, char **buffer);
 int read_indent(int *new_indent, char **buffer);
 
-void  init_string_stack(struct string_stack *stack, char *buffer, size_t size);
-void  print_string_stack(struct string_stack *stack);
-char* push(struct string_stack *stack, char *buffer);
-char* pop(struct string_stack *stack);
-char* peek(struct string_stack *stack);
+void  init_cmd_stack(struct cmd_stack *stack, char *buffer, size_t size);
+void  print_cmd_stack(struct cmd_stack *stack);
+char* push(struct cmd_stack *stack, char *buffer);
+char* pop(struct cmd_stack *stack);
+char* peek(struct cmd_stack *stack);
 
 int
 main(int argc, char **argv)
@@ -47,19 +48,19 @@ main(int argc, char **argv)
     int indent     = 0;
     int new_indent = 0;
     int delta      = 0;
-    struct string_stack stack = {0};
+    struct cmd_stack stack = {0};
 
-    init_string_stack(&stack, token_data, sizeof(token_data));
+    init_cmd_stack(&stack, token_data, sizeof(token_data));
 
-    switch (5) {
+    switch (6) {
     case 0:
         code = "";
         break;
 
     case 1:
         code =
-            "+ 1 2";
-        expected_result = "1 2 +";
+            "+ 1 2 3";
+        expected_result = "1 2 + 3 +";
         break;
 
     case 2:
@@ -94,19 +95,27 @@ main(int argc, char **argv)
         expected_result = "3 4 * double";
         break;
 
+    case 6:
+        code =
+            "+ 3 4 5\n"
+            "  + 6 7\n";
+        expected_result = "3 4 + 5 + 6 7 + +";
+        break;
+
     default:
         exit(1);
     }
 
-    printf("%s\n\n", code);
-    printf("%s\n\n", expected_result);
+    printf("code:\n%s\n\n", code);
+    printf("er:\n%s\n\n", expected_result);
+    printf("r:\n");
 
     s = code;
 
     while (running) {
         switch (*s) {
         case '\0':
-            /*print_string_stack(&stack);*/
+            /*print_cmd_stack(&stack);*/
 
             while (stack.count) {
                 cmd = pop(&stack);
@@ -130,15 +139,21 @@ main(int argc, char **argv)
             delta =  new_indent - indent;
 
             if (delta < 0) {
+                /*printf("dedent ");*/
                 for (; delta < 0; delta += 1) {
                     parent_cmd = pop(&stack);
                     printf("%s ", parent_cmd);
                 }
+
             } else if (delta == 0) {
                 cmd = pop(&stack);
                 printf("%s ", cmd);
 
             } else if (delta == 1) {
+                int *argsp = &stack.args[stack.count - 1];
+                if ((*argsp % 2) == 0) {
+                    printf("%s ", cmd);
+                }
                 /*parent_cmd = peek(&stack);*/
                 /*printf("%s ", parent_cmd);*/
 
@@ -156,10 +171,18 @@ main(int argc, char **argv)
             if ((error = read_token(token, sizeof(token), &s)))
                 goto errhandle;
 
-            if (cmd == NULL)
+            if (cmd == NULL) {
                 cmd = push(&stack, token);
-            else
+            } else {
+                int *argsp = &stack.args[stack.count - 1];
+                /*printf("<%d, %d> ", *argsp, *argsp % 2);*/
+                if ((*argsp > 0) && ((*argsp % 2) == 0)) {
+                    printf("%s ", cmd);
+                }
                 printf("%s ", token);
+                *argsp += 1;
+            }
+
 
             while (*s == ' ')
                 s += 1;
@@ -241,59 +264,60 @@ read_indent(int *new_indent, char **buffer)
 
 
 void
-init_string_stack(struct string_stack *stack, char *buffer, size_t size)
+init_cmd_stack(struct cmd_stack *stack, char *buffer, size_t size)
 {
     stack->buffer    = buffer;
     stack->next      = buffer;
     stack->end       = buffer + size;
     stack->count     = 0;
-    stack->limit     = sizeof(stack->stack) / sizeof(stack->stack[0]);
+    stack->limit     = sizeof(stack->cmds) / sizeof(stack->cmds[0]);
     memset(stack->buffer, 0, size);
+    memset(stack->args, 0, sizeof(stack->args));
 }
 
 
 char*
-push(struct string_stack *stack, char *buffer)
+push(struct cmd_stack *stack, char *buffer)
 {
     int len = strlen(buffer);
     char *rval = stack->next;
 
     /*printf("push %s\n", buffer);*/
 
-    stack->stack[stack->count] = stack->next;
+    stack->cmds[stack->count] = stack->next;
 
     strcpy(stack->next, buffer);
     stack->count += 1;
     stack->next += (len + 1);
-    /*print_string_stack(stack);*/
+    /*print_cmd_stack(stack);*/
     return rval;
 }
 
 
 char*
-pop(struct string_stack *stack)
+pop(struct cmd_stack *stack)
 {
     if (stack->count == 0)
         return NULL;
 
     stack->count -= 1;
-    stack->next = stack->stack[stack->count];
+    stack->next = stack->cmds[stack->count];
     return stack->next;
 }
 
 
 char*
-peek(struct string_stack *stack)
+peek(struct cmd_stack *stack)
 {
     if (stack->count == 0)
         return NULL;
 
-    return stack->stack[stack->count - 1];
+    return stack->cmds[stack->count - 1];
 }
 
 
 void
-print_string_stack(struct string_stack *stack)
+print_cmd_stack(struct cmd_stack *stack)
 {
     char *s = NULL;
     int   i = 0;
@@ -306,7 +330,7 @@ print_string_stack(struct string_stack *stack)
     printf("stack %d:\n", stack->count);
 
     for (i = 0; i < stack->count; i += 1)
-        printf("%d,%s\n", i, stack->stack[i]);
+        printf("%d,%s\n", i, stack->cmds[i]);
 }
 
 
