@@ -1,15 +1,12 @@
 code = """
-double
-  +
-    + 1 2
-    \ 3
+: double
+  * 2
+double 10
+.
 """.strip()
 
 indent_width = 2
 
-# print("code:\n{}\n".format(code))
-# print("#"*10)
-# print("")
 
 running = True
 
@@ -17,6 +14,7 @@ code_len = len(code)
 
 i = 0
 
+imediate = [':']
 break_chars = " \n"
 indent = 0
 
@@ -38,11 +36,12 @@ while i < code_len:
         if new_indent == indent - 1:
             cmd = stack.pop()
             print(cmd)
-            # print("dedent", cmd);
+            cmd = stack.pop()
+            print(cmd)
+            stack.append(None)
         elif new_indent == indent:
             cmd = stack.pop()
             print(cmd)
-            # print("newline", cmd);
             stack.append(None)
         elif new_indent == indent + 1:
             stack.append(None)
@@ -55,18 +54,20 @@ while i < code_len:
         while j < code_len and code[j] not in break_chars:
             j += 1
         word = code[i:j]
-        # print("word: {}".format(word))
         if stack[-1] == None:
             if word == "\\":
                 stack.pop()
+            elif word in imediate:
+                print(word)
+                if word == ':':
+                    stack[-1] = ";"
+                else:
+                    raise ValueError(word)
             else:
                 stack[-1] = word
         else:
-            # print("word: {}".format(word))
             print(word)
-        # print("i1", i, repr(code[i:]))
         i = j
-        # print("i2", i, repr(code[i:]))
 
     while i < code_len and code[i] == " ":
         i += 1
