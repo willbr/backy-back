@@ -16,6 +16,7 @@ enum states {
     reading_newline
 };
 
+enum states state = reading_token;
 
 int read_token(char *token, int token_length, char **buffer);
 int read_indent(int *new_indent, char **buffer);
@@ -34,7 +35,6 @@ main(int argc, char **argv)
     int new_indent = 0;
     int delta      = 0;
 
-    enum states state = reading_token;
 
     while (fgets(buffer, sizeof(buffer), stdin)) {
         /*printf("buffer: %s", buffer);*/
@@ -56,9 +56,35 @@ main(int argc, char **argv)
 
                 } else if (delta == 0) {
                     puts("newline");
+                    /*ignore newline after line continuation?*/
 
                 } else if (delta == 1) {
-                    puts("indent");
+                    /* match line continuation */
+                    if (*s == '\\') {
+                        switch (*(s + 1)) {
+                        case '\0':
+                            die("error; EOF following line continuation");
+                            break;
+
+                        case '\t':
+                            die("error; tab following line continuation");
+                            break;
+
+                        case '\n':
+                            die("error; newline following line continuation");
+                            break;
+
+                        case ' ':
+                            s += 2;
+                            new_indent -= 1;
+                            break;
+
+                        default:
+                            puts("indent");
+                        }
+                    } else {
+                        puts("indent");
+                    }
 
                 } else {
                     fprintf(stderr, "error: invalid indent, old: %d, new: %d\n", indent, new_indent);
@@ -76,6 +102,10 @@ main(int argc, char **argv)
                 break;
 
             default:
+                if (state == reading_newline) {
+                    puts("newline");
+                    state = reading_token;
+                }
                 if ((error = read_token(token, sizeof(token), &s)))
                     die("error");
 
@@ -147,28 +177,6 @@ read_indent(int *new_indent, char **buffer)
     }
 
     *new_indent = len / indent_width;
-
-    /* match line continuation */
-    if (*end == '\\') {
-        switch (*(s + 1)) {
-        case '\0':
-            die("error; EOF following line continuation");
-            break;
-
-        case '\t':
-            die("error; tab following line continuation");
-            break;
-
-        case '\n':
-            die("error; newline following line continuation");
-            break;
-
-        case ' ':
-            end += 2;
-            new_indent -= 1;
-            break;
-        }
-    }
 
     *buffer = end;
     return 0;
