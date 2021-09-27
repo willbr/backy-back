@@ -30,7 +30,11 @@ test5: .\src\tokens5.ie
 	tcc -run src/main.c < $< | python src/transform.py
 	tcc -run src/main.c < $< | python src/transform.py | python src/eval.py
 
-run: src/*.c src/*.py test2
+alt:
+	python src/alt.py
+	python src/alt.py | python src/eval.py
+
+run: src/*.c src/*.py alt
 
 watch:
 	watchexec -cr "make run"
