@@ -1,3 +1,13 @@
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(description='alt transformer')
+parser.add_argument('--echo-code', action='store_true')
+args = parser.parse_args()
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 code = """
 : double
   * 2
@@ -5,8 +15,13 @@ double 10
 .
 """.strip()
 
-indent_width = 2
+with open("src/tokens3.ie") as f:
+    code = f.read()
+    if args.echo_code:
+        eprint(code.replace(' ', '.').replace('\n','\\n\n'))
+        eprint()
 
+indent_width = 2
 
 running = True
 
@@ -23,9 +38,13 @@ stack = [None]
 while i < code_len:
     # print("i", i, repr(code[i:]))
     j = i
-    if code[j] == '\n':
+    if code[i] == '\n':
         i += 1
-        j += 1
+
+        while i < code_len and code[i] == '\n':
+            i += 1
+
+        j = i
         while j < code_len and code[j] == " ":
             j += 1
         delta = j - i
@@ -46,6 +65,7 @@ while i < code_len:
         elif new_indent == indent + 1:
             stack.append(None)
         else:
+            eprint(f"goodbye {new_indent=} {indent=} {delta=}")
             raise ValueError
 
         indent = new_indent
@@ -57,6 +77,7 @@ while i < code_len:
         if stack[-1] == None:
             if word == "\\":
                 stack.pop()
+                indent -= 1
             elif word in imediate:
                 print(word)
                 if word == ':':
@@ -74,6 +95,7 @@ while i < code_len:
 
 while stack:
     cmd = stack.pop()
-    print(cmd)
+    if cmd:
+        print(cmd)
 
 
