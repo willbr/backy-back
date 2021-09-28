@@ -32,7 +32,7 @@ test5: .\src\tokens5.ie
 
 alt:
 	python src/alt.py
-	python src/alt.py | python src/eval.py
+	python src/alt.py | python src/eval.py --trace
 
 run: src/*.c src/*.py alt
 
