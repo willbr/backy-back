@@ -21,7 +21,7 @@ def main():
 def init():
     global env
     env = {
-            '+': [fn_mult],
+            '+': [fn_add],
             '*': [fn_mult],
             '.': [fn_dot],
             ':': [fn_defn],
