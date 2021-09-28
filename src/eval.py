@@ -16,12 +16,14 @@ def main():
     while token != '':
         eval(token)
         token = input.readline().strip()
+    print(f"{stack=}")
 
 
 def init():
     global env
     env = {
             '+': [fn_add],
+            '-': [fn_sub],
             '*': [fn_mult],
             '.': [fn_dot],
             ':': [fn_defn],
@@ -32,6 +34,7 @@ def eval(token):
     if args.trace:
         print(f"{stack=}")
         print(f"{token=}")
+        print("")
 
     try:
         i = int(token)
@@ -78,6 +81,12 @@ def fn_add():
     n2 = stack.pop()
     n1 = stack.pop()
     stack.append(n1 + n2)
+
+
+def fn_sub():
+    n2 = stack.pop()
+    n1 = stack.pop()
+    stack.append(n1 - n2)
 
 
 def fn_mult():
