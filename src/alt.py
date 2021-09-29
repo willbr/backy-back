@@ -1,3 +1,4 @@
+import pdb
 import sys
 import argparse
 
@@ -5,103 +6,141 @@ parser = argparse.ArgumentParser(description='alt transformer')
 parser.add_argument('--echo-code', action='store_true')
 args = parser.parse_args()
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-code = """
-: double
-  * 2
-double 10
-.
-""".strip()
-
-with open("src/tokens3.ie") as f:
-    code = f.read()
-    if args.echo_code:
-        eprint(code.replace(' ', '.').replace('\n','\\n\n'))
-        eprint()
-
-indent_width = 2
-
 running = True
-
-code_len = len(code)
-
+indent_width = 2
 i = 0
+code = ""
+code_len = 0
 
 imediate = [':']
 break_chars = " \n"
 indent = 0
 
-stack = [None]
+trace = pdb.set_trace
 
-while i < code_len:
-    # print("i", i, repr(code[i:]))
-    j = i
-    if code[i] == '\n':
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
+def read_indent():
+    global i
+    global indent
+
+    i += 1
+
+    while i < code_len and code[i] == '\n':
         i += 1
 
-        while i < code_len and code[i] == '\n':
-            i += 1
+    j = i
+    while j < code_len and code[j] == " ":
+        j += 1
 
-        j = i
-        while j < code_len and code[j] == " ":
-            j += 1
-        delta = j - i
-        if delta % 2 != 0:
-            raise ValueError
-        new_indent = delta // indent_width
-
-        if new_indent < indent:
-            # eprint(stack)
-            while new_indent < indent:
-                cmd = stack.pop()
-                print(cmd)
-                indent -= 1
-            cmd = stack.pop()
-            print(cmd)
-            stack.append(None)
-
-        elif new_indent == indent:
-            cmd = stack.pop()
-            print(cmd)
-            stack.append(None)
-
-        elif new_indent == indent + 1:
-            stack.append(None)
-
-        else:
-            eprint(f"goodbye {new_indent=} {indent=} {delta=}")
-            raise ValueError
-
-        indent = new_indent
-
-    else:
-        while j < code_len and code[j] not in break_chars:
-            j += 1
-        word = code[i:j]
-        if stack[-1] == None:
-            if word == "\\":
-                stack.pop()
-                indent -= 1
-            elif word in imediate:
-                print(word)
-                if word == ':':
-                    stack[-1] = ";"
-                else:
-                    raise ValueError(word)
-            else:
-                stack[-1] = word
-        else:
-            print(word)
+    if j == code_len:
         i = j
+        return
+
+    if code[j] == '\n':
+        i = j
+        return
+
+    delta = j - i
+    if delta % 2 != 0:
+        raise ValueError
+    new_indent = delta // indent_width
+
+    i = j
+
+    if new_indent > indent + 1:
+        eprint(f"\n=> goodbye {new_indent=} {indent=} {delta=}\n")
+        raise ValueError
+
+    indent = new_indent
+
+
+def read_word():
+    global i
+
+    j = i
+    while j < code_len and code[j] not in break_chars:
+        j += 1
+
+    word = code[i:j]
+
+    print(word)
+    i = j
 
     while i < code_len and code[i] == " ":
         i += 1
 
-while stack:
-    cmd = stack.pop()
-    if cmd:
-        print(cmd)
 
+def read_expr():
+    global i
+    # eprint("expr:", repr(code[i:]))
+
+    if code[i:i+1] == '\n':
+        raise ValueError(f"invalid char {code[i]=}")
+
+    start_indent = indent
+
+    # print('[')
+    print((indent*"  ")+'[')
+
+    while i < code_len:
+        if code[i] == '\n':
+            read_indent()
+            if indent > start_indent:
+                # eprint("indent:", repr(code[i:]))
+                if code[i:i+1] == '':
+                    break
+                elif code[i:i+1] == '\\':
+                    i += 1
+                    if code[i:i+1] != ' ':
+                        raise ValueError(f"invalid char {code[i:i+1]=}")
+                    i += 1
+                else:
+                    read_expr()
+                    if indent == start_indent:
+                        break
+            elif indent == start_indent:
+                # eprint("newline:", repr(code[i:]))
+                if code[i:i+1] != '\\':
+                    break
+                i += 1
+                if code[i:i+1] != ' ':
+                    raise ValueError(f"invalid char {code[i:i+1]=}")
+            elif indent < start_indent:
+                dedent = start_indent - indent
+                # eprint(f"dedent: {dedent}, ", repr(code[i:]))
+                break
+        elif code[i] == ' ':
+            raise ValueError(f"invalid char {code[i]=}")
+        else:
+            read_word()
+
+    # print(']')
+    print((indent*"  ")+']')
+
+
+def main():
+    global code
+    global code_len
+    global indent
+
+    with open("src/tokens6.ie") as f:
+        code = f.read()
+        if args.echo_code:
+            eprint(code.replace(' ', '.').replace('\n','\\n\n'))
+            eprint()
+
+    code_len = len(code)
+
+    while i < code_len:
+        # eprint("main:", repr(code[i:]))
+        read_expr()
+
+    eprint("\nend ########################################\n")
+
+if __name__ == "__main__":
+    main()
 

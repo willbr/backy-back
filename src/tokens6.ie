@@ -1,0 +1,12 @@
+: cr
+  emit 10
+
+: star
+  emit 42
+
+star
+cr
+
+: stars 0 1 do star loop
+stars 5
+
