@@ -31,8 +31,7 @@ test5: .\src\tokens5.ie
 	tcc -run src/main.c < $< | python src/transform.py | python src/eval.py
 
 alt:
-	python src/alt.py --echo-code
-	python src/alt.py | python src/eval.py --trace
+	python src/alt.py --echo-code | python src/eval.py --trace
 
 run: src/*.c src/*.py alt
 
