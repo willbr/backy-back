@@ -1,11 +1,16 @@
 # reader
+    read first char
+    is it a prefix char? "({[*&'
+        " string
+        ( infix
+        { rpn
+        [ prefix
+        * deref
+        & address
+        ' quote
 
-check if is a prefix char
-" read string
-  read prefix char * & '
-( read infix
-read word
-try and promote to number
+    read word
+    try and promote to number
 
 # infix syntax
 
@@ -109,7 +114,6 @@ look into how Lisp does printf
 
     set set
     :=  let
-     =  equals
-
+     =  equals or ==
 
 
