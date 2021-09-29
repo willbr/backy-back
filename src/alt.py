@@ -50,20 +50,26 @@ while i < code_len:
         delta = j - i
         if delta % 2 != 0:
             raise ValueError
-        new_indent = delta / indent_width
+        new_indent = delta // indent_width
 
-        if new_indent == indent - 1:
-            cmd = stack.pop()
-            print(cmd)
+        if new_indent < indent:
+            # eprint(stack)
+            while new_indent < indent:
+                cmd = stack.pop()
+                print(cmd)
+                indent -= 1
             cmd = stack.pop()
             print(cmd)
             stack.append(None)
+
         elif new_indent == indent:
             cmd = stack.pop()
             print(cmd)
             stack.append(None)
+
         elif new_indent == indent + 1:
             stack.append(None)
+
         else:
             eprint(f"goodbye {new_indent=} {indent=} {delta=}")
             raise ValueError
