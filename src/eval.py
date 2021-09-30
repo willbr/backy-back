@@ -6,11 +6,13 @@ parser = argparse.ArgumentParser(description='Eval thingy')
 parser.add_argument('--trace', action='store_true')
 args = parser.parse_args()
 
+
 input_stack = []
 param_stack = []
 env = None
 input = fileinput.input("-")
 imediate_cmds = [':', 'do']
+
 
 def main():
     init()
@@ -25,15 +27,16 @@ def main():
 def init():
     global env
     env = {
-            '+': [fn_add],
-            '-': [fn_sub],
-            '*': [fn_mult],
-            '.': [fn_dot],
-            ':': [fn_defn],
-            '[': [fn_prefix_expr],
-            '{': [fn_postfix_expr],
+            '+':    [fn_add],
+            '-':    [fn_sub],
+            '*':    [fn_mult],
+            '.':    [fn_dot],
+            ':':    [fn_defn],
+            '[':    [fn_prefix_expr],
+            '{':    [fn_postfix_expr],
+            '(':    [fn_infix_expr],
             'emit': [fn_emit],
-            'do': [fn_do],
+            'do':   [fn_do],
             }
 
 
@@ -134,7 +137,7 @@ def parse_postfix():
     expr = []
     token = next_token()
     while token != "}" and token != '':
-        print(f"{token=} {expr=}")
+        # print(f"{token=} {expr=}")
         if token == '[':
             assert False
             child = parse_prefix()
@@ -152,6 +155,46 @@ def parse_postfix():
 
 def fn_postfix_expr():
     body = parse_postfix()
+    input_stack.extend(reversed(body))
+
+
+def parse_infix():
+    infix_tokens = []
+    token = next_token()
+    while token != ")" and token != '':
+        # print(f"{token=} {expr=}")
+        if token == '[':
+            assert False
+            child = parse_prefix()
+            if child:
+                infix_tokens.extend(child)
+        elif token == '{':
+            assert False
+        elif token == '(':
+            assert False
+        else:
+            infix_tokens.append(token)
+
+        token = next_token()
+
+    # print(f"{infix_tokens=}")
+    arg, op, next_arg, *tail = infix_tokens
+    expr= [arg, next_arg, op]
+    # print(f"{arg=} {op=} {next_arg=} {tail=}")
+    while tail:
+        next_op, next_arg, *tail = tail
+        if op != next_op:
+            raise ValueError(f"operator precidence: {op=} {next_op=}")
+        # print(f"{op=} {next_op=} {next_arg=}")
+        expr.extend([next_arg, next_op])
+        # print(f"{expr=}")
+
+    return expr
+
+
+def fn_infix_expr():
+    body = parse_infix()
+    # print(f"{body=}")
     input_stack.extend(reversed(body))
 
 
