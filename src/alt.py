@@ -13,7 +13,8 @@ code = ""
 code_len = 0
 
 imediate = [':']
-break_chars = " \n"
+prefix_chars = "(){}[]\"\'&*"
+break_chars = " (){}[]\n"
 indent = 0
 
 trace = pdb.set_trace
@@ -58,6 +59,12 @@ def read_indent():
     indent = new_indent
 
 
+def chomp(chars):
+    global i
+    while i < code_len and code[i] in chars:
+        i += 1
+
+
 def read_word():
     global i
 
@@ -69,9 +76,6 @@ def read_word():
 
     print(word)
     i = j
-
-    while i < code_len and code[i] == " ":
-        i += 1
 
 
 def read_expr():
@@ -115,11 +119,30 @@ def read_expr():
                 break
         elif code[i] == ' ':
             raise ValueError(f"invalid char {code[i]=}")
+        elif code[i] in prefix_chars:
+            read_prefix()
         else:
             read_word()
+        chomp(" ")
 
     # print(']')
     print((indent*"  ")+']')
+
+
+def read_prefix():
+    global i
+
+    if code[i] in "({[":
+        print(code[i])
+        i += 1
+    elif code[i] in ")}]":
+        print(code[i])
+        i += 1
+        if code[i:i+1] not in " \n(){}[]":
+            raise ValueError(f"invalid char following close: {code[i]=}")
+    else:
+        raise ValueError(f"unknown prefix char: {code[i]=}")
+
 
 
 def main():
