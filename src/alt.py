@@ -127,7 +127,7 @@ def main():
     global code_len
     global indent
 
-    with open("src/tokens6.ie") as f:
+    with open("src/tokens7.ie") as f:
         code = f.read()
         if args.echo_code:
             eprint(code.replace(' ', '.').replace('\n','\\n\n'))

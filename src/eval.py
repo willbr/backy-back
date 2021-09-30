@@ -31,6 +31,7 @@ def init():
             '.': [fn_dot],
             ':': [fn_defn],
             '[': [fn_prefix_expr],
+            '{': [fn_postfix_expr],
             'emit': [fn_emit],
             'do': [fn_do],
             }
@@ -126,6 +127,31 @@ def fn_prefix_expr():
 
     # print(f"{body=}")
 
+    input_stack.extend(reversed(body))
+
+
+def parse_postfix():
+    expr = []
+    token = next_token()
+    while token != "}" and token != '':
+        print(f"{token=} {expr=}")
+        if token == '[':
+            assert False
+            child = parse_prefix()
+            if child:
+                expr.extend(child)
+        elif token == '{':
+            assert False
+        else:
+            expr.append(token)
+
+        token = next_token()
+
+    return expr
+
+
+def fn_postfix_expr():
+    body = parse_postfix()
     input_stack.extend(reversed(body))
 
 
