@@ -1,12 +1,22 @@
 : cr
   emit 10
 
-: star
-  emit 42
+: space 32 emit
+: spaces 0 1 do space loop
 
-star
-cr
-
+: star [ emit 42 ]
 : stars 0 1 do star loop
-stars 5
 
+: margin cr 30 spaces
+: blip margin star
+: bar margin 5 stars
+
+: f
+  bar
+  blip
+  bar
+  blip
+  blip
+  cr
+
+f
