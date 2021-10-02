@@ -117,3 +117,7 @@ look into how Lisp does printf
      =  equals or ==
 
 
+# add forth memory model
+
+    mem = bytearray(0x8000)
+
