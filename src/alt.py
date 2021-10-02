@@ -12,8 +12,8 @@ i = 0
 code = ""
 code_len = 0
 
-prefix_chars = "(){}[]\"\'&*"
-break_chars = " (){}[]\n"
+prefix_chars = "(){}[],\"\'&*"
+break_chars = " (){}[],\n"
 indent = 0
 
 trace = pdb.set_trace
@@ -21,6 +21,11 @@ trace = pdb.set_trace
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+
+def print_token(t):
+    print(t)
+    # print((indent*"  ")+t)
 
 
 def read_indent():
@@ -73,7 +78,7 @@ def read_word():
 
     word = code[i:j]
 
-    print(word)
+    print_token(word)
     i = j
 
 
@@ -86,8 +91,7 @@ def read_expr():
 
     start_indent = indent
 
-    # print('[')
-    print((indent*"  ")+'[')
+    print_token('[')
 
     while i < code_len:
         if code[i] == '\n':
@@ -124,18 +128,17 @@ def read_expr():
             read_word()
         chomp(" ")
 
-    # print(']')
-    print((indent*"  ")+']')
+    print_token(']')
 
 
 def read_prefix():
     global i
 
     if code[i] in "({[":
-        print(code[i])
+        print_token(code[i])
         i += 1
-    elif code[i] in ")}]":
-        print(code[i])
+    elif code[i] in ")}],":
+        print_token(code[i])
         i += 1
         if code[i:i+1] not in " \n(){}[]":
             raise ValueError(f"invalid char following close: {code[i]=}")
@@ -146,7 +149,7 @@ def read_prefix():
         word = code[i:j]
 
         if j == i + 1:
-            print(word)
+            print_token(word)
             i = j
         else:
             assert False, "deref?"
@@ -160,7 +163,7 @@ def main():
     global code_len
     global indent
 
-    with open("src/tokens7.ie") as f:
+    with open("src/tokens8.ie") as f:
         code = f.read()
         if args.echo_code:
             eprint(code.replace(' ', '.').replace('\n','\\n\n'))
@@ -173,6 +176,7 @@ def main():
         read_expr()
 
     eprint("\nend ########################################\n")
+
 
 if __name__ == "__main__":
     main()

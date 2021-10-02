@@ -31,6 +31,7 @@ def init():
             '-':    [fn_sub],
             '*':    [fn_mult],
             '.':    [fn_dot],
+            '.s':   [fn_print_stack],
             ':':    [fn_defn],
             '[':    [fn_prefix_expr],
             '{':    [fn_postfix_expr],
@@ -97,6 +98,10 @@ def parse_prefix():
             child = parse_prefix()
             if child:
                 expr.extend(child)
+        elif token == '(':
+            child = parse_infix()
+            if child:
+                expr.extend(child)
         else:
             expr.append(token)
 
@@ -110,8 +115,6 @@ def parse_prefix():
 
 def fn_prefix_expr():
     *body, cmd = parse_prefix()
-
-    # print(f"{cmd=} {body=}")
 
     its_an_imediate_cmd = cmd in imediate_cmds
     it_isnt_an_imediate_cmd = not its_an_imediate_cmd
@@ -159,8 +162,10 @@ def fn_postfix_expr():
 
 
 def parse_infix():
+    parent_tokens = []
     infix_tokens = []
     token = next_token()
+
     while token != ")" and token != '':
         # print(f"{token=} {expr=}")
         if token == '[':
@@ -172,29 +177,36 @@ def parse_infix():
             assert False
         elif token == '(':
             assert False
+        elif token == ',':
+            parent_tokens.append(infix_tokens)
+            infix_tokens = []
         else:
             infix_tokens.append(token)
 
         token = next_token()
 
-    # print(f"{infix_tokens=}")
-    arg, op, next_arg, *tail = infix_tokens
-    expr= [arg, next_arg, op]
-    # print(f"{arg=} {op=} {next_arg=} {tail=}")
-    while tail:
-        next_op, next_arg, *tail = tail
-        if op != next_op:
-            raise ValueError(f"operator precidence: {op=} {next_op=}")
-        # print(f"{op=} {next_op=} {next_arg=}")
-        expr.extend([next_arg, next_op])
-        # print(f"{expr=}")
+    parent_tokens.append(infix_tokens)
+
+    expr = []
+    for infix_tokens in parent_tokens:
+        # print(f"{infix_tokens=}")
+        arg, op, next_arg, *tail = infix_tokens
+        expr.extend([arg, next_arg, op])
+        # print(f"{arg=} {op=} {next_arg=} {tail=}")
+        while tail:
+            next_op, next_arg, *tail = tail
+            if op != next_op:
+                raise ValueError(f"operator precidence: {op=} {next_op=}")
+            # print(f"{op=} {next_op=} {next_arg=}")
+            expr.extend([next_arg, next_op])
+            # print(f"{expr=}")
 
     return expr
 
 
 def fn_infix_expr():
     body = parse_infix()
-    # print(f"{body=}")
+    print(f"{body=}")
     input_stack.extend(reversed(body))
 
 
@@ -246,6 +258,10 @@ def fn_do():
     for i in range(start, limit, step):
         for token in body:
             eval(token)
+
+
+def fn_print_stack():
+    print(f"{param_stack}")
 
 
 if __name__ == '__main__':
