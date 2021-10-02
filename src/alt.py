@@ -12,7 +12,6 @@ i = 0
 code = ""
 code_len = 0
 
-imediate = [':']
 prefix_chars = "(){}[]\"\'&*"
 break_chars = " (){}[]\n"
 indent = 0
@@ -140,6 +139,17 @@ def read_prefix():
         i += 1
         if code[i:i+1] not in " \n(){}[]":
             raise ValueError(f"invalid char following close: {code[i]=}")
+    elif code[i] == '*':
+        j = i + 1
+        while j < code_len and code[j] not in break_chars:
+            j += 1
+        word = code[i:j]
+
+        if j == i + 1:
+            print(word)
+            i = j
+        else:
+            assert False, "deref?"
     else:
         raise ValueError(f"unknown prefix char: {code[i]=}")
 
