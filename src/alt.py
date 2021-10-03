@@ -77,9 +77,9 @@ def read_word():
         j += 1
 
     word = code[i:j]
+    i = j
 
     print_token(word)
-    i = j
 
 
 def read_expr():
@@ -158,9 +158,22 @@ def read_prefix():
             i = j
         else:
             assert False, "deref?"
+    elif code[i] == '"':
+        j = i + 1
+        in_string = True
+        while j < code_len:
+            c = code[j]
+            j += 1
+            if c == '"':
+                in_string = False
+                break
+            elif c == '\\':
+                assert False
+        word = code[i:j]
+        print(word)
+        i = j
     else:
         raise ValueError(f"unknown prefix char: {code[i]=}")
-
 
 
 def main():
@@ -168,7 +181,7 @@ def main():
     global code_len
     global indent
 
-    with open("src/tokens8.ie") as f:
+    with open("src/tokens9.ie") as f:
         code = f.read()
         if args.echo_code:
             eprint(code.replace(' ', '.').replace('\n','\\n\n'))
@@ -185,4 +198,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
