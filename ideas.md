@@ -12,23 +12,6 @@
     read word
     try and promote to number
 
-# infix syntax
-
-    : double
-      (# * 2)
-
-    : double
-      * 2
-
-    forth : double 2 * ;
-
-    double 10
-    .
-
-    =>
-
-    20 
-
 # implied infix
     1 + 1
     is
@@ -55,30 +38,6 @@ pointer methods
     & addr
     ' quote
     ! not
-
-# prefix notation
-
-    : double
-      (# * 2)
-
-    to
-
-    [ : double [ * # 2 ] ]
-
-
-    1 [ + 2 3 ] +
-
-    to
-
-    1 2 3 + +
-
-# rpn syntax
-
-     {1 2 +}
-
-     to
-
-     1 2 +
 
 # neoteric function calls
 
