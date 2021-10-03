@@ -121,3 +121,15 @@ look into how Lisp does printf
 
     mem = bytearray(0x8000)
 
+# have modes: 8bit, 16bit, 32bit, 64bit
+
+Review how Uxa does this
+
+stack functions
+
+    push
+    pop
+    peek
+    print
+    get
+
