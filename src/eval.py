@@ -7,8 +7,9 @@ input_stack = []
 param_stack = []
 env = None
 input = None
-imediate_cmds = [':', 'do']
+immediate_cmds = [':', 'do']
 args = None
+
 
 def main():
     global input
@@ -131,10 +132,10 @@ def parse_prefix():
 def transform_prefix_expr(x):
     *body, cmd = x
 
-    its_an_imediate_cmd = cmd in imediate_cmds
-    it_isnt_an_imediate_cmd = not its_an_imediate_cmd
+    its_an_immediate_cmd = cmd in immediate_cmds
+    it_isnt_an_immediate_cmd = not its_an_immediate_cmd
 
-    if its_an_imediate_cmd:
+    if its_an_immediate_cmd:
         if cmd == ':':
             body.insert(0, ':')
             body.append(';')
@@ -158,7 +159,6 @@ def parse_postfix():
     expr = []
     token = next_token()
     while token != "}" and token != '':
-        # print(f"{token=} {expr=}")
         if token == '[':
             assert False
             child = parse_prefix()
