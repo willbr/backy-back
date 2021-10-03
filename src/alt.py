@@ -137,7 +137,12 @@ def read_prefix():
     if code[i] in "({[":
         print_token(code[i])
         i += 1
-    elif code[i] in ")}],":
+    elif code[i] in ")}]":
+        print_token(code[i])
+        i += 1
+        if code[i:i+1] not in " \n(){}[],":
+            raise ValueError(f"invalid char following close: {code[i]=}")
+    elif code[i] in ",":
         print_token(code[i])
         i += 1
         if code[i:i+1] not in " \n(){}[]":

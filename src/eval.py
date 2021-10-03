@@ -176,7 +176,9 @@ def parse_infix():
         elif token == '{':
             assert False
         elif token == '(':
-            assert False
+            child = parse_infix()
+            if child:
+                infix_tokens.extend(child)
         elif token == ',':
             parent_tokens.append(infix_tokens)
             infix_tokens = []
@@ -190,6 +192,14 @@ def parse_infix():
     expr = []
     for infix_tokens in parent_tokens:
         # print(f"{infix_tokens=}")
+        count = len(infix_tokens)
+
+        if count == 0:
+            continue
+        elif count == 1:
+            expr.append(infix_tokens[0])
+            continue
+
         arg, op, next_arg, *tail = infix_tokens
         expr.extend([arg, next_arg, op])
         # print(f"{arg=} {op=} {next_arg=} {tail=}")
