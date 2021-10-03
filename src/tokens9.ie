@@ -1,2 +1,3 @@
-printf("hello %s", "Dad")
+: puts .
+puts("hello dad")
 

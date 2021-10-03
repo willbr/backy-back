@@ -48,6 +48,10 @@ def eval(token):
         print(f"{token=}")
         print("")
 
+    if token[0] == '"':
+        param_stack.append(token)
+        return
+
     try:
         i = int(token)
         param_stack.append(i)
