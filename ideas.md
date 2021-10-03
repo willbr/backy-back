@@ -98,6 +98,16 @@ look into how Lisp does printf
 
     name "hello %s!\n" printf
 
+
+or cound the number of arguments?
+
+    printf("hello %s!\n", name)
+
+    to
+
+    printf "hello %s!\n" name 2
+
+
 # struct access
 
     struct ball
