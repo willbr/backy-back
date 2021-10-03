@@ -37,7 +37,7 @@ alt:
 run: src/*.c src/*.py alt
 
 test-py: src/*.py
-	python -m unittest src/test-eval.py
+	python -m unittest src/test-eval.py -f
 
 wtest-py:
 	watchexec -cr "make test-py"
