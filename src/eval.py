@@ -2,20 +2,25 @@ import fileinput
 import argparse
 from pprint import pprint
 
-parser = argparse.ArgumentParser(description='Eval thingy')
-parser.add_argument('--trace', action='store_true')
-args = parser.parse_args()
-
 
 input_stack = []
 param_stack = []
 env = None
-input = fileinput.input("-")
+input = None
 imediate_cmds = [':', 'do']
-
+args = None
 
 def main():
+    global input
+    global args
+
+    parser = argparse.ArgumentParser(description='Eval thingy')
+    parser.add_argument('--trace', action='store_true')
+    args = parser.parse_args()
+
     init()
+
+    input = fileinput.input("-")
 
     token = next_token()
     while token != '':
@@ -103,6 +108,10 @@ def parse_prefix():
             child = parse_prefix()
             if child:
                 expr.extend(child)
+        elif token == '{':
+            child = parse_postfix()
+            if child:
+                expr.extend(child)
         elif token == '(':
             child = parse_infix()
             if child:
@@ -114,12 +123,13 @@ def parse_prefix():
 
     expr.append(cmd)
 
-    # print(f"{expr=}")
-    return expr
+    new_expr = transform_prefix_expr(expr)
+
+    return new_expr
 
 
-def fn_prefix_expr():
-    *body, cmd = parse_prefix()
+def transform_prefix_expr(x):
+    *body, cmd = x
 
     its_an_imediate_cmd = cmd in imediate_cmds
     it_isnt_an_imediate_cmd = not its_an_imediate_cmd
@@ -136,7 +146,12 @@ def fn_prefix_expr():
     else:
         body.append(cmd)
 
-    input_stack.extend(reversed(body))
+    return body
+
+
+def fn_prefix_expr():
+    x = parse_prefix()
+    input_stack.extend(reversed(x))
 
 
 def parse_postfix():
@@ -226,8 +241,10 @@ def fn_infix_expr():
 def next_token():
     if input_stack:
         return input_stack.pop()
-    else:
+    elif input:
         return input.readline().strip()
+    else:
+        return ''
 
 
 def fn_add():

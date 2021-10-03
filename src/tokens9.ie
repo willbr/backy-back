@@ -1,3 +1,4 @@
 : puts .
-puts("hello dad")
+[puts "hello dad"]
+
 

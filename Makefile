@@ -32,9 +32,15 @@ test5: .\src\tokens5.ie
 
 alt:
 	python src/alt.py --echo-code
-	python src/alt.py | python src/eval.py
+	python src/alt.py | python src/eval.py --trace
 
 run: src/*.c src/*.py alt
+
+test-py: src/*.py
+	python -m unittest src/test-eval.py
+
+wtest-py:
+	watchexec -cr "make test-py"
 
 watch:
 	watchexec -cr "make run"

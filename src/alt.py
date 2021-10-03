@@ -2,9 +2,6 @@ import pdb
 import sys
 import argparse
 
-parser = argparse.ArgumentParser(description='alt transformer')
-parser.add_argument('--echo-code', action='store_true')
-args = parser.parse_args()
 
 running = True
 indent_width = 2
@@ -75,6 +72,9 @@ def read_word():
     j = i
     while j < code_len and code[j] not in break_chars:
         j += 1
+
+    if code[j] in "(){}[]":
+        raise ValueError(f"invalid char following word: {code[i:j+1]}")
 
     word = code[i:j]
     i = j
@@ -180,6 +180,10 @@ def main():
     global code
     global code_len
     global indent
+
+    parser = argparse.ArgumentParser(description='alt transformer')
+    parser.add_argument('--echo-code', action='store_true')
+    args = parser.parse_args()
 
     with open("src/tokens9.ie") as f:
         code = f.read()
