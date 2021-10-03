@@ -160,12 +160,14 @@ def parse_postfix():
     token = next_token()
     while token != "}" and token != '':
         if token == '[':
-            assert False
-            child = parse_prefix()
-            if child:
+            if child := parse_prefix():
                 expr.extend(child)
         elif token == '{':
-            assert False
+            if child := parse_postfix():
+                expr.extend(child)
+        elif token == '(':
+            if child := parse_infix():
+                expr.extend(child)
         else:
             expr.append(token)
 
@@ -185,51 +187,58 @@ def parse_infix():
     token = next_token()
 
     while token != ")" and token != '':
-        # print(f"{token=} {expr=}")
         if token == '[':
-            assert False
-            child = parse_prefix()
-            if child:
-                infix_tokens.extend(child)
+            if child := parse_prefix():
+                infix_tokens.append(child)
         elif token == '{':
-            assert False
+            if child := parse_postfix():
+                infix_tokens.append(child)
         elif token == '(':
-            child = parse_infix()
-            if child:
-                infix_tokens.extend(child)
+            if child := parse_infix():
+                infix_tokens.append(child)
         elif token == ',':
-            parent_tokens.append(infix_tokens)
+            parent_tokens.append((infix_tokens,))
             infix_tokens = []
         else:
-            infix_tokens.append(token)
+            infix_tokens.append((token,))
 
         token = next_token()
 
     parent_tokens.append(infix_tokens)
 
-    expr = []
+    # print(f"{parent_tokens=}")
+
+    postfix_expr = []
     for infix_tokens in parent_tokens:
-        # print(f"{infix_tokens=}")
+        # print(f"#    {infix_tokens=}")
         count = len(infix_tokens)
 
         if count == 0:
             continue
         elif count == 1:
-            expr.append(infix_tokens[0])
+            postfix_expr.append(infix_tokens[0])
             continue
 
+        # append args if they're a list
         arg, op, next_arg, *tail = infix_tokens
-        expr.extend([arg, next_arg, op])
+        postfix_expr.extend(arg)
+        postfix_expr.extend(next_arg)
+        postfix_expr.extend(op)
         # print(f"{arg=} {op=} {next_arg=} {tail=}")
         while tail:
             next_op, next_arg, *tail = tail
-            if op != next_op:
-                raise ValueError(f"operator precidence: {op=} {next_op=}")
             # print(f"{op=} {next_op=} {next_arg=}")
-            expr.extend([next_arg, next_op])
+            if op != next_op:
+                print("#error")
+                print(f"{op=} {next_op=} {next_arg=}")
+                print("#error")
+                raise ValueError(f"operator precidence: {op=} {next_op=}")
+            postfix_expr.extend(next_arg)
+            postfix_expr.extend(next_op)
             # print(f"{expr=}")
 
-    return expr
+    # print(f"{postfix_expr=}")
+    return postfix_expr
 
 
 def fn_infix_expr():
