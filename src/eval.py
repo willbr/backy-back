@@ -30,6 +30,7 @@ def init():
             '+':    [fn_add],
             '-':    [fn_sub],
             '*':    [fn_mult],
+            '/':    [fn_div],
             '.':    [fn_dot],
             '.s':   [fn_print_stack],
             ':':    [fn_defn],
@@ -134,8 +135,6 @@ def fn_prefix_expr():
             raise ValueError(f"unknown {cmd=}")
     else:
         body.append(cmd)
-
-    # print(f"{body=}")
 
     input_stack.extend(reversed(body))
 
@@ -247,6 +246,11 @@ def fn_mult():
     n2 = param_stack.pop()
     n1 = param_stack.pop()
     param_stack.append(n1 * n2)
+
+def fn_div():
+    n2 = param_stack.pop()
+    n1 = param_stack.pop()
+    param_stack.append(n1 / n2)
 
 
 def fn_dot():
