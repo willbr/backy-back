@@ -108,3 +108,19 @@ stack functions
     print
     get
 
+# typed version
+
+object is a union, it can be a list or a void*
+
+    struct list {
+        struct object *elem;
+        struct object *next;
+    }
+
+    struct object {
+        int tag;
+        union {
+            void *vs;
+        } u;
+    }
+
