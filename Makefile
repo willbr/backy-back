@@ -1,10 +1,14 @@
 phony: watch run test1 test2 test3
 
+test0: .\src\tokens0.ie
+	type $<
+	tcc -Wall -run src/tokeniser.c - < $<
+	tcc -run src/tokeniser.c - < $< | python src/eval.py
+
 test1: .\src\tokens1.ie
 	type $<
-	tcc -run src/main.c < $<
-	tcc -run src/main.c < $< | python src/transform.py
-	tcc -run src/main.c < $< | python src/transform.py | python src/eval.py
+	tcc -Wall -run src/tokeniser.c - < $<
+	tcc -run src/tokeniser.c - < $< | python src/eval.py
 
 test2: .\src\tokens2.ie
 	type $<
@@ -34,7 +38,7 @@ alt:
 	python src/alt.py --echo-code
 	python src/alt.py | python src/eval.py --trace
 
-run: src/*.c src/*.py alt
+run: src/*.c src/*.py test0
 
 test-py: src/*.py
 	python -m unittest src/test-eval.py -f
