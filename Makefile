@@ -3,7 +3,8 @@ phony: watch run test1 test2 test3
 test0: .\src\tokens0.ie
 	type $<
 	tcc -Wall -run src/tokeniser.c - < $<
-	tcc -run src/tokeniser.c - < $< | python src/eval.py
+	: tcc -run src/tokeniser.c - < $< | python src/eval.py
+	tcc -run src/tokeniser.c - < $< | tcc -run src/eval.c
 
 test1: .\src\tokens1.ie
 	type $<
