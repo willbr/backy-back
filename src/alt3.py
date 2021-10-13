@@ -3,14 +3,8 @@ import fileinput
 from dataclasses import dataclass
 from pprint import pprint
 
-@dataclass
-class State:
-    name: str
-    cmd: any
-
-
-states = []
-top_state = None
+cmds = []
+state = "indent head"
 next_token = None
 
 line_buffer = ""
@@ -23,6 +17,7 @@ break_chars = " (){}[],\n"
 evil_chars = '\r\t'
 indent_width = 2
 indent = 0
+new_indent = 0
 
 
 def main():
@@ -38,28 +33,56 @@ def main():
 
 
 def get_word():
-    global top_state
+    global state
+    global indent
+    global cmds
+
+    # print(f"{states=}")
+    # print(f"{new_indent=} {indent=}")
+    if new_indent == indent + 1:
+        indent = new_indent
+    elif new_indent == indent:
+        # print(f"{states=}")
+        pass
+    elif new_indent < indent:
+        indent -= 1
+        cmd = cmds.pop()
+        return cmd
+    elif new_indent > indent:
+        raise SyntaxError
+
+    # print(f"{t=}")
+
 
     t = get_token()
-
     if t is None:
         return None
 
-    if top_state == None:
-        top_state = State('indent expr', t)
-        states.append(top_state)
-        return get_word()
 
-    if top_state.name == "indent expr":
+    if state == "indent head":
+        cmds.append(t)
+        state = "indent tail"
+        return get_word()
+    elif state == "indent tail":
         if t == '\n':
-            nt = peek_token()
-            if nt is None:
-                cmd = pop_state()
+            parse_indent()
+            if new_indent == indent + 1:
+                nt = peek_token()
+                if nt == '\\':
+                    _ = get_token()
+                    return get_token()
+                else:
+                    state = "indent head"
+                    return get_word()
+            elif new_indent == indent:
+                cmd = cmds.pop()
                 return cmd
-            elif nt[0] == ' ':
-                return parse_indent()
-            print(f"{nt=}")
-            assert False
+            elif new_indent < indent:
+                cmd = cmds.pop()
+                state = "indent head"
+                return cmd
+            else:
+                return get_word()
         return t
     else:
         assert False
@@ -144,37 +167,22 @@ def get_token():
     return token
 
 
-def pop_state():
-    global top_state
-    cmd = top_state.cmd
-    top_state = states.pop()
-    return cmd
-
-
 def parse_indent():
-    global indent
+    global new_indent
 
-    s = get_token()
-    nt = peek_token()
-    # print(f"{nt=}")
+    s = peek_token()
+    if s is None:
+        return
 
-    new_indent = len(s) // indent_width
-
-    if len(s) % indent_width != 0:
-        raise SyntaxError
-
-    if new_indent == indent + 1:
-        if nt == '\\':
-            nt = get_token()
-            nt = get_token()
-            return nt
-        assert False
-    elif new_indent == indent:
-        assert False
-    elif new_indent < indent:
-        assert False
+    # print(f"{s=}")
+    if s[0] == ' ':
+        s = get_token()
+        new_indent = len(s) // indent_width
+        if len(s) % indent_width != 0:
+            print(f"{len(s) % indent_width}")
+            raise SyntaxError
     else:
-        assert False
+        new_indent = 0
 
 
 if __name__ == "__main__":
