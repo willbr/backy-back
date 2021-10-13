@@ -20,9 +20,9 @@ line_offset = 0
 input = None
 
 break_chars = " (){}[],\n"
-evil_chars = ' \r\t'
-# indent_width = 2
-# indent = 0
+evil_chars = '\r\t'
+indent_width = 2
+indent = 0
 
 
 def main():
@@ -56,6 +56,9 @@ def get_word():
             if nt is None:
                 cmd = pop_state()
                 return cmd
+            elif nt[0] == ' ':
+                return parse_indent()
+            print(f"{nt=}")
             assert False
         return t
     else:
@@ -110,16 +113,24 @@ def get_token():
     c = line_buffer[line_offset:line_offset+1]
     # print(f"{c=}")
 
+
     if c in evil_chars:
         print(f"{c=}")
         assert False
+
+
+    start_pos = end_pos = line_offset
+
+    if c == ' ':
+        chomp(' ')
+        token = line_buffer[start_pos:line_offset]
+        return token
 
     if c in break_chars:
         # print("break char")
         line_offset += 1
         return c
 
-    start_pos = end_pos = line_offset
     for c in line_buffer[line_offset:]:
         if c in break_chars:
             break
@@ -138,6 +149,32 @@ def pop_state():
     cmd = top_state.cmd
     top_state = states.pop()
     return cmd
+
+
+def parse_indent():
+    global indent
+
+    s = get_token()
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    new_indent = len(s) // indent_width
+
+    if len(s) % indent_width != 0:
+        raise SyntaxError
+
+    if new_indent == indent + 1:
+        if nt == '\\':
+            nt = get_token()
+            nt = get_token()
+            return nt
+        assert False
+    elif new_indent == indent:
+        assert False
+    elif new_indent < indent:
+        assert False
+    else:
+        assert False
 
 
 if __name__ == "__main__":
