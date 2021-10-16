@@ -7,6 +7,10 @@ from pprint import pprint
 states = []
 cmds = []
 
+macro_words = {
+        ':': ';',
+        }
+
 next_token = None
 
 line_buffer = ""
@@ -44,7 +48,7 @@ def main():
     input = fileinput.input(argv[1])
     get_line()
 
-    push_state(get_indent_head, None)
+    push_state(get_indent_head)
 
     word = get_word()
     while word:
@@ -58,11 +62,16 @@ def get_indent_head():
     if t is None:
         return None
 
-    cmds[-1] = t
+    macro_end = macro_words.get(t)
 
-    push_state(get_indent_body)
-
-    return get_word()
+    if macro_end:
+        cmds[-1] = macro_end
+        push_state(get_indent_body)
+        return t
+    else:
+        cmds[-1] = t
+        push_state(get_indent_body)
+        return get_word()
 
 
 def get_indent_body():
@@ -90,7 +99,7 @@ def get_indent_body():
                 t = get_token()
                 return t
             indent = new_indent
-            push_state(get_indent_head, None)
+            push_state(get_indent_head)
             return get_word()
         elif new_indent > indent:
             raise SyntaxError("invalid indent")
@@ -99,12 +108,12 @@ def get_indent_body():
         else:
             pop_state()
             t = pop_state()
-            push_state(get_dedent, None)
+            push_state(get_dedent)
             return t
 
         pop_state()
         t = pop_state()
-        push_state(get_indent_head, None)
+        push_state(get_indent_head)
         return t
     elif nt == '\\':
         get_token()
