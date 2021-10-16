@@ -71,14 +71,33 @@ def get_indent_body():
 
     if nt == '\n':
         get_token()
+        parse_indent()
+        if new_indent == indent + 1:
+            nt = peek_token()
+            if nt == None:
+                pass
+            elif nt == '\\':
+                get_token()
+                t = get_token()
+                return t
+            else:
+                assert False
+        else:
+            assert False
+
         pop_state()
         t = pop_state()
         push_state(get_indent_head, None)
+        return t
+    elif nt == '\\':
+        get_token()
+        t = get_token()
         return t
 
     t = get_token()
 
     return t
+
 
 def get_line():
     global line_buffer
