@@ -124,8 +124,11 @@ def get_indent_body():
         push_state(get_infix_first_arg)
         return get_word()
     elif nt == '{':
-        assert False
+        get_token()
+        push_state(get_postfix)
+        return get_word()
     elif nt in break_chars:
+        print(f"{nt=}")
         debug_state()
         assert False
 
@@ -212,6 +215,22 @@ def get_infix_next_op():
     return t
 
 
+def get_postfix():
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    if nt == '\n':
+        assert False
+    elif nt == '}':
+        get_token()
+        pop_state()
+        return get_word()
+    elif nt in break_chars:
+        assert False
+
+    return get_token()
+
+
 def get_dedent():
     global indent
 
@@ -282,6 +301,7 @@ def get_token():
 
     if c in break_chars:
         line_offset += 1
+        chomp(' ')
         return c
 
     for c in line_buffer[line_offset:]:
