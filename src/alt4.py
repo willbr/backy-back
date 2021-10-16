@@ -65,6 +65,8 @@ def get_indent_head():
 
 
 def get_indent_body():
+    global indent
+
     nt = peek_token()
     if nt is None:
         return None
@@ -75,15 +77,24 @@ def get_indent_body():
         if new_indent == indent + 1:
             nt = peek_token()
             if nt == None:
+                raise SyntaxError("EOF after indent")
                 pass
             elif nt == '\\':
                 get_token()
                 t = get_token()
                 return t
-            else:
-                assert False
+            indent = new_indent
+            push_state(get_indent_head, None)
+            return get_word()
+        elif new_indent > indent:
+            raise SyntaxError("invalid indent")
+        elif new_indent == indent:
+            pass
         else:
-            assert False
+            pop_state()
+            t = pop_state()
+            push_state(get_dedent, None)
+            return t
 
         pop_state()
         t = pop_state()
@@ -97,6 +108,21 @@ def get_indent_body():
     t = get_token()
 
     return t
+
+
+def get_dedent():
+    global indent
+
+    if new_indent == indent:
+        push_state(get_indent_head)
+        return get_word()
+
+    indent -= 1
+    pop_state()
+    pop_state()
+    cmd = pop_state()
+    push_state(get_dedent)
+    return cmd
 
 
 def get_line():
