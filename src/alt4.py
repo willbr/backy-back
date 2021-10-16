@@ -119,9 +119,96 @@ def get_indent_body():
         get_token()
         t = get_token()
         return t
+    elif nt == '(':
+        get_token()
+        push_state(get_infix_first_arg)
+        return get_word()
+    elif nt == '{':
+        assert False
+    elif nt in break_chars:
+        debug_state()
+        assert False
 
     t = get_token()
 
+    return t
+
+
+def get_infix_first_arg():
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    if nt == '\n':
+        assert False
+    elif nt == ')':
+        assert False
+    elif nt in break_chars:
+        assert False
+
+    t = get_token()
+    pop_state()
+    push_state(get_infix_first_op)
+    return t
+
+
+def get_infix_first_op():
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    if nt == '\n':
+        assert False
+    elif nt == ')':
+        assert False
+    elif nt in break_chars:
+        assert False
+
+    t = get_token()
+    cmds[-1] = t
+
+    push_state(get_infix_next_arg)
+    return get_word()
+
+
+def get_infix_next_arg():
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    if nt == '\n':
+        assert False
+    elif nt == ')':
+        assert False
+    elif nt in break_chars:
+        assert False
+
+    t = get_token()
+    pop_state()
+    push_state(get_infix_next_op)
+    return t
+
+
+def get_infix_next_op():
+    nt = peek_token()
+    # print(f"{nt=}")
+
+    if nt == '\n':
+        assert False
+    elif nt == ')':
+        get_token()
+        pop_state()
+        op = pop_state()
+        return op
+    elif nt in break_chars:
+        assert False
+
+    pop_state()
+
+    prev_op = cmds[-1]
+
+    if prev_op != nt:
+        assert False
+
+    t = get_token()
+    push_state(get_infix_next_arg)
     return t
 
 
