@@ -1,5 +1,6 @@
 import fileinput
 
+from sys import argv
 from dataclasses import dataclass
 from pprint import pprint
 
@@ -23,7 +24,8 @@ new_indent = 0
 def main():
     global input
 
-    input = fileinput.input("-")
+    #input = fileinput.input("-")
+    input = fileinput.input(argv[1])
     get_line()
 
     word = get_word()
@@ -75,8 +77,16 @@ def get_word():
                     state = "indent head"
                     return get_word()
             elif new_indent == indent:
-                cmd = cmds.pop()
-                return cmd
+                nt = peek_token()
+                if nt == '\\':
+                    _ = get_token()
+                    return get_token()
+                elif nt is None:
+                    cmd = cmds.pop()
+                    return cmd
+                else:
+                    state = "indent head"
+                    return get_word()
             elif new_indent < indent:
                 cmd = cmds.pop()
                 state = "indent head"
@@ -114,6 +124,7 @@ def peek_token():
         next_token = get_token()
 
     return next_token
+
 
 def get_token():
     global line_offset
