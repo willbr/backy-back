@@ -48,6 +48,7 @@ def main():
 
     word = get_word()
     while word:
+        # print(f"{word=} {indent=} {new_indent=}")
         print(f"{word=}")
         word = get_word()
 
@@ -73,10 +74,15 @@ def get_indent_body():
 
     if nt == '\n':
         get_token()
+        while peek_token() == '\n':
+            print("skipping new lines")
+            get_token()
+
         parse_indent()
         if new_indent == indent + 1:
             nt = peek_token()
             if nt == None:
+                debug_state()
                 raise SyntaxError("EOF after indent")
                 pass
             elif nt == '\\':
@@ -200,6 +206,7 @@ def parse_indent():
 
     s = peek_token()
     if s is None:
+        new_indent = indent
         return
 
     # print(f"{s=}")
@@ -212,6 +219,10 @@ def parse_indent():
     else:
         new_indent = 0
 
+
+def debug_state():
+    for i in range(len(states)-1,0,-1):
+        print(i, states[i], cmds[i])
 
 if __name__ == "__main__":
     main()
