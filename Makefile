@@ -46,12 +46,19 @@ alt2: .\src\tokens0.ie src/*.py
 walt2:
 	watchexec -cr "make alt2"
 
-alt3: .\src\tokens2.ie src/*.py
+alt3: .\src\tokens5.ie src/*.py
 	type $<
-	python src/alt3.py --echo-code < $<
+	python src/alt3.py $<
 
 walt3:
 	watchexec -cr "make alt3"
+
+alt4: .\src\tokens0.ie src/*.py
+	type $<
+	python src/alt4.py $<
+
+walt4:
+	watchexec -cr "make alt4"
 
 run: src/*.c src/*.py test0
 
