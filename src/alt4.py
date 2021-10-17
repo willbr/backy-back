@@ -44,7 +44,6 @@ def pop_state():
 
 def main():
     global input
-    global get_word
 
     input = fileinput.input(argv[1])
     get_line()
@@ -53,30 +52,27 @@ def main():
 
     word = get_word()
     while word:
-        # print(f"{word=} {indent=} {new_indent=}")
         print(f"{word=}")
         word = get_word()
 
 
 def get_indent_head():
-    t = get_token()
-    if t is None:
+    nt = peek_token()
+    if nt is None:
         return None
 
-    macro_end = macro_words.get(t)
+    macro_end = macro_words.get(nt)
 
     if macro_end:
+        t = get_token()
         cmds[-1] = macro_end
         push_state(get_indent_body)
         return t
-    elif t == '(':
-        assert False
-    elif t == '{':
-        assert False
-    elif t == '[':
-        push_state(get_prefix_head)
-        return get_word()
+    elif nt in prefix_chars:
+        push_state(get_indent_body)
+        return get_syntax()
     else:
+        t = get_token()
         cmds[-1] = t
         push_state(get_indent_body)
         return get_word()
@@ -127,18 +123,8 @@ def get_indent_body():
         get_token()
         t = get_token()
         return t
-    elif nt == '(':
-        get_token()
-        push_state(get_infix_first_arg)
-        return get_word()
-    elif nt == '[':
-        get_token()
-        push_state(get_prefix_head)
-        return get_word()
-    elif nt == '{':
-        get_token()
-        push_state(get_postfix)
-        return get_word()
+    elif nt in prefix_chars:
+        return get_syntax()
     elif nt in break_chars:
         print(f"{nt=}")
         debug_state()
@@ -151,12 +137,15 @@ def get_indent_body():
 
 def get_infix_first_arg():
     nt = peek_token()
-    # print(f"{nt=}")
 
     if nt == '\n':
         assert False
     elif nt == ')':
         assert False
+    elif nt in prefix_chars:
+        pop_state()
+        push_state(get_infix_first_op)
+        return get_syntax()
     elif nt in break_chars:
         assert False
 
@@ -168,7 +157,6 @@ def get_infix_first_arg():
 
 def get_infix_first_op():
     nt = peek_token()
-    # print(f"{nt=}")
 
     if nt == '\n':
         assert False
@@ -176,6 +164,10 @@ def get_infix_first_op():
         get_token()
         pop_state()
         return get_word()
+    elif nt in prefix_chars:
+        debug_state()
+        assert False
+        return get_syntax()
     elif nt in break_chars:
         assert False
 
@@ -202,9 +194,11 @@ def get_infix_next_arg():
         push_state(get_infix_first_arg)
         return op
     elif nt in prefix_chars:
+        pop_state()
+        push_state(get_infix_next_op)
         return get_syntax()
     elif nt in break_chars:
-        print(f"{nt=}")
+        debug_state()
         assert False
 
     t = get_token()
@@ -230,6 +224,8 @@ def get_infix_next_op():
         op = pop_state()
         push_state(get_infix_first_arg)
         return op
+    elif nt in prefix_chars:
+        assert False
     elif nt in break_chars:
         print(f"{nt=}")
         assert False
@@ -258,6 +254,8 @@ def get_postfix():
         get_token()
         pop_state()
         return get_word()
+    elif nt in prefix_chars:
+        return get_syntax()
     elif nt in break_chars:
         assert False
 
@@ -397,17 +395,21 @@ def get_string():
 
 
 def get_prefix_head():
-    t = get_token()
-    if t is None:
+    nt = peek_token()
+    if nt is None:
         return None
 
-    macro_end = macro_words.get(t)
+    macro_end = macro_words.get(nt)
 
     if macro_end:
+        t = get_token()
         cmds[-1] = macro_end
         push_state(get_prefix_body)
         return t
+    elif nt in prefix_chars:
+        return get_syntax()
     else:
+        t = get_token()
         cmds[-1] = t
         push_state(get_prefix_body)
         return get_word()
@@ -427,18 +429,8 @@ def get_prefix_body():
 
     if nt == '\\':
         raise SyntaxError
-    elif nt == '(':
-        get_token()
-        push_state(get_infix_first_arg)
-        return get_word()
-    elif nt == '[':
-        get_token()
-        push_state(get_prefix_head)
-        return get_word()
-    elif nt == '{':
-        get_token()
-        push_state(get_postfix)
-        return get_word()
+    elif nt in prefix_chars:
+        return get_syntax()
     elif nt == ']':
         get_token()
         pop_state()
@@ -456,16 +448,22 @@ def get_prefix_body():
 
 def get_syntax():
     t = get_token()
+    # print(f"{t=}")
 
     if t == '(':
         push_state(get_infix_first_arg)
         return get_word()
     elif t == '{':
-        assert False
+        push_state(get_postfix)
+        return get_word()
     elif t == '[':
-        assert False
+        push_state(get_prefix_head)
+        return get_word()
     else:
+        print(f"{t=}")
+        debug_state()
         assert False
+
 
 def debug_state():
     print()
@@ -476,8 +474,9 @@ def debug_state():
     print(line_offset * " ", end="")
     print("^")
 
-    for i in range(len(states)-1,0,-1):
-        print(i, states[i], cmds[i])
+    for i in reversed(range(0, len(states), 1)):
+        state = states[i].__name__
+        print(f"{i} {state} {cmds[i]}")
     print()
 
 if __name__ == "__main__":
