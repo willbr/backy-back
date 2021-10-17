@@ -20,6 +20,7 @@ line_offset = 0
 input = None
 
 break_chars = " (){}[],\n"
+prefix_chars = "({["
 evil_chars = '\r\t'
 indent_width = 2
 indent = 0
@@ -172,7 +173,9 @@ def get_infix_first_op():
     if nt == '\n':
         assert False
     elif nt == ')':
-        assert False
+        get_token()
+        pop_state()
+        return get_word()
     elif nt in break_chars:
         assert False
 
@@ -190,8 +193,18 @@ def get_infix_next_arg():
     if nt == '\n':
         assert False
     elif nt == ')':
+        debug_state()
         assert False
+    elif nt == ',':
+        get_token()
+        pop_state()
+        op = pop_state()
+        push_state(get_infix_first_arg)
+        return op
+    elif nt in prefix_chars:
+        return get_syntax()
     elif nt in break_chars:
+        print(f"{nt=}")
         assert False
 
     t = get_token()
@@ -211,7 +224,14 @@ def get_infix_next_op():
         pop_state()
         op = pop_state()
         return op
+    elif nt == ',':
+        get_token()
+        pop_state()
+        op = pop_state()
+        push_state(get_infix_first_arg)
+        return op
     elif nt in break_chars:
+        print(f"{nt=}")
         assert False
 
     pop_state()
@@ -219,6 +239,8 @@ def get_infix_next_op():
     prev_op = cmds[-1]
 
     if prev_op != nt:
+        print(f"{prev_op=} {nt=}")
+        debug_state()
         assert False
 
     t = get_token()
@@ -432,9 +454,31 @@ def get_prefix_body():
     return t
 
 
+def get_syntax():
+    t = get_token()
+
+    if t == '(':
+        push_state(get_infix_first_arg)
+        return get_word()
+    elif t == '{':
+        assert False
+    elif t == '[':
+        assert False
+    else:
+        assert False
+
 def debug_state():
+    print()
+
+    nt = peek_token()
+    print(f"{nt=}")
+    print(line_buffer)
+    print(line_offset * " ", end="")
+    print("^")
+
     for i in range(len(states)-1,0,-1):
         print(i, states[i], cmds[i])
+    print()
 
 if __name__ == "__main__":
     main()
