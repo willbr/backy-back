@@ -299,6 +299,10 @@ def get_token():
         token = line_buffer[start_pos:line_offset]
         return token
 
+
+    if c == '"':
+        return get_string()
+
     if c in break_chars:
         line_offset += 1
         chomp(' ')
@@ -334,6 +338,30 @@ def parse_indent():
             raise SyntaxError
     else:
         new_indent = 0
+        
+        
+def get_string():
+    global line_offset
+
+    start_pos = end_pos = line_offset
+    end_pos += 1
+
+    for c in line_buffer[end_pos:]:
+        if c == '"':
+            end_pos += 1
+            break
+        elif c == '\\':
+            assert False
+
+        end_pos += 1
+
+    token = line_buffer[start_pos:end_pos]
+    line_offset = end_pos
+
+    chomp(' ')
+    return token
+
+
 
 
 def debug_state():
