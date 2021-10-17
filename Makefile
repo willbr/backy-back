@@ -53,7 +53,7 @@ alt3: .\src\tokens5.ie src/*.py
 walt3:
 	watchexec -cr "make alt3"
 
-alt4: .\src\tokens9.ie src/*.py
+alt4: .\src\tokens8.ie src/*.py
 	type $<
 	python src/alt4.py $<
 

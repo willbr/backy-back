@@ -20,7 +20,7 @@ line_offset = 0
 input = None
 
 break_chars = " (){}[],\n"
-evil_chars = ' \r\t'
+evil_chars = '\r\t'
 indent_width = 2
 indent = 0
 new_indent = 0
@@ -300,6 +300,7 @@ def get_token():
     c = line_buffer[line_offset:line_offset+1]
 
     if c in evil_chars:
+        print(f"{line_buffer=}")
         print(f"{c=}")
         assert False
 
