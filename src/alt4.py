@@ -20,7 +20,7 @@ line_offset = 0
 input = None
 
 break_chars = " (){}[],\n"
-evil_chars = '\r\t'
+evil_chars = ' \r\t'
 indent_width = 2
 indent = 0
 new_indent = 0
@@ -68,6 +68,13 @@ def get_indent_head():
         cmds[-1] = macro_end
         push_state(get_indent_body)
         return t
+    elif t == '(':
+        assert False
+    elif t == '{':
+        assert False
+    elif t == '[':
+        push_state(get_prefix_head)
+        return get_word()
     else:
         cmds[-1] = t
         push_state(get_indent_body)
@@ -122,6 +129,10 @@ def get_indent_body():
     elif nt == '(':
         get_token()
         push_state(get_infix_first_arg)
+        return get_word()
+    elif nt == '[':
+        get_token()
+        push_state(get_prefix_head)
         return get_word()
     elif nt == '{':
         get_token()
@@ -362,6 +373,62 @@ def get_string():
     return token
 
 
+def get_prefix_head():
+    t = get_token()
+    if t is None:
+        return None
+
+    macro_end = macro_words.get(t)
+
+    if macro_end:
+        cmds[-1] = macro_end
+        push_state(get_prefix_body)
+        return t
+    else:
+        cmds[-1] = t
+        push_state(get_prefix_body)
+        return get_word()
+
+
+def get_prefix_body():
+    nt = peek_token()
+    if nt is None:
+        return None
+
+    if nt == '\n':
+        assert False
+        get_token()
+        while peek_token() == '\n':
+            print("skipping new lines")
+            get_token()
+
+    if nt == '\\':
+        raise SyntaxError
+    elif nt == '(':
+        get_token()
+        push_state(get_infix_first_arg)
+        return get_word()
+    elif nt == '[':
+        get_token()
+        push_state(get_prefix_head)
+        return get_word()
+    elif nt == '{':
+        get_token()
+        push_state(get_postfix)
+        return get_word()
+    elif nt == ']':
+        get_token()
+        pop_state()
+        cmd = pop_state()
+        return cmd
+    elif nt in break_chars:
+        print(f"{nt=}")
+        debug_state()
+        assert False
+
+    t = get_token()
+
+    return t
 
 
 def debug_state():
