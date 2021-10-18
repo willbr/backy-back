@@ -10,6 +10,10 @@ cmds = []
 macro_words = {
         ':': ';',
         'fn': 'end-fn',
+        'while': 'end-while',
+        'var': 'end-var',
+        'set': 'end-set',
+        'let': 'end-let',
         }
 
 next_token = None
@@ -54,7 +58,8 @@ def main():
 
     word = get_word()
     while word:
-        print(f"{word=}")
+        #print(f"{word=}")
+        print(word)
         word = get_word()
 
 

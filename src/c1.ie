@@ -1,0 +1,10 @@
+include-lib "stdio.h"
+
+fn main
+  var c int
+
+  set c getchar
+  while (c != EOF) do
+    putchar c
+    set c getchar
+
