@@ -376,18 +376,34 @@ def get_string():
     global line_offset
 
     start_pos = end_pos = line_offset
-    end_pos += 1
 
-    for c in line_buffer[end_pos:]:
+    escaped = False
+
+    c = line_buffer[end_pos:end_pos+1]
+    l = [c]
+    end_pos += 1
+    c = line_buffer[end_pos:end_pos+1]
+
+    while c != '':
         if c == '"':
+            l.append(c)
             end_pos += 1
             break
         elif c == '\\':
-            assert False
+            end_pos += 1
+            c = line_buffer[end_pos:end_pos+1]
+            if c == 'n':
+                l.append('\n')
+            else:
+                raise SyntaxError("Unknown escape code")
+                assert False
+        else:
+            l.append(c)
 
         end_pos += 1
+        c = line_buffer[end_pos:end_pos+1]
 
-    token = line_buffer[start_pos:end_pos]
+    token = ''.join(l)
     line_offset = end_pos
 
     chomp(' ')
