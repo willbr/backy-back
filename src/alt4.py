@@ -9,6 +9,7 @@ cmds = []
 
 macro_words = {
         ':': ';',
+        'fn': 'end-fn',
         }
 
 next_token = None
@@ -29,6 +30,7 @@ new_indent = 0
 
 def get_word():
     state_fn = states[-1]
+    # print(f"state={state_fn.__name__}")
     return state_fn()
 
 
@@ -83,15 +85,18 @@ def get_indent_body():
 
     nt = peek_token()
     if nt is None:
+        print("ere")
         return None
 
     if nt == '\n':
+        # print("newline")
         get_token()
         while peek_token() == '\n':
             print("skipping new lines")
             get_token()
 
         parse_indent()
+        # print(f"{new_indent=} {indent=}")
         if new_indent == indent + 1:
             nt = peek_token()
             if nt == None:
