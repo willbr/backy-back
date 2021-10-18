@@ -358,7 +358,7 @@ def parse_indent():
 
     s = peek_token()
     if s is None:
-        new_indent = indent
+        new_indent = 0
         return
 
     # print(f"{s=}")
