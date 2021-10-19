@@ -403,7 +403,7 @@ def get_string():
             end_pos += 1
             c = line_buffer[end_pos:end_pos+1]
             if c == 'n':
-                l.append('\n')
+                l.append('\\n')
             else:
                 raise SyntaxError("Unknown escape code")
                 assert False
