@@ -6,10 +6,9 @@ from pprint import pprint
 input = None
 indent = 0
 indent_str = "    "
-includes = []
+top_level = []
 functions = {}
 infix_words = []
-local_functions = {}
 global_variables = {}
 keywords = {}
 parsers = {}
@@ -33,7 +32,9 @@ def main():
 
         word = get_word()
 
-    print_file()
+    env = file_enviroment()
+
+    print_file(env)
 
     assert len(stack) == 0
 
@@ -48,6 +49,7 @@ def init():
     parsers = {
             'fn': parse_function,
             'include-lib': include_lib,
+            'define': parse_define,
             }
 
     keywords = {
@@ -55,10 +57,12 @@ def init():
             'let': print_let,
             'set': print_set,
             'while': print_while,
+            'for':   print_for,
             }
 
     functions['getchar'] = [None, None, None]
-    functions['putchar'] = [[int], None, None]
+    functions['putchar'] = [["int"], None, None]
+    functions['printf'] = [["cstring", "vargs"], None, None]
 
     global_variables['EOF'] = ['const', -1]
 
@@ -69,24 +73,39 @@ def init():
     -  -=
     *  *=
     /  /=
+    <  <=
+    >  >=
     && ||
     """.strip().split()
 
 
-def print_file():
-    for include in includes:
-        print(include)
+def print_file(env):
+    first_fn = None
+    for statement in top_level:
+        head, *tail = statement
+        if head == "include-lib":
+            assert len(tail) == 1
+            filename = tail[0]
+            print(f"#include <{filename}>")
+        elif head == "define":
+            name, val = tail
+            env[name] = ['define', name, val]
+            print(f"#define {name} = {val}")
+        elif head == "fn":
+            fn_name, *fn_spec = tail
+            print_function_header(env, fn_name, *fn_spec)
+        else:
+            print(head)
+            assert False
 
-    print()
-
-    for fn_name, fn_spec in local_functions.items():
-        print_function_header(fn_name, *fn_spec)
-
-    for fn_name, fn_spec in local_functions.items():
-        print_function(fn_name, *fn_spec)
+    for statement in top_level:
+        head, *tail = statement
+        if head == 'fn':
+            fn_name, *fn_spec = tail
+            print_function(env, fn_name, *fn_spec)
 
 
-def print_function(fn_name, fn_args, fn_returns, fn_body):
+def print_function(env, fn_name, fn_args, fn_returns, fn_body):
     global indent
 
     if fn_returns:
@@ -101,12 +120,11 @@ def print_function(fn_name, fn_args, fn_returns, fn_body):
     else:
         print("(void) ", end="")
 
-    env = function_enviroment()
     print_block(fn_body, env)
     print()
 
 
-def print_function_header(fn_name, fn_args, fn_returns, fn_body):
+def print_function_header(env, fn_name, fn_args, fn_returns, fn_body):
     if fn_name == 'main':
         return
 
@@ -132,10 +150,32 @@ def print_block(body, parent_env):
 
 def print_statements(body, env):
     while body:
-        print_indent()
         head = body[0]
-        print_eval_stack(body, env)
+        end = "end-" + head
+        statement = pluck_until(body, end)
+        print_indent()
+        print_statement(statement, env)
         print("" if head in ['while'] else ";")
+
+
+def print_statement(statement, env):
+    head, *tail = statement
+
+    if kw := keywords.get(head):
+        kw(tail, env)
+    elif e := env.get(head):
+        e_type, *spec = e
+        if e_type == 'fn':
+            params, returns, body = spec
+            args = tail
+            print(f"{head}(", end="")
+            eargs = eval_stack(args, env)
+            print(', '.join(eargs), end="")
+            print(")", end="")
+        else:
+            assert False
+    else:
+        assert False
 
 
 def print_indent():
@@ -143,9 +183,10 @@ def print_indent():
 
 
 def include_lib(stack):
-    lib_name = stack.pop()
-    lib_name = lib_name[1:-1]
-    includes.append(f"#include <{lib_name}>")
+    body = parse_until("end-include-lib")
+    assert len(body) == 1
+    lib_name = body[0]
+    top_level.append(["include-lib", lib_name])
 
 
 def parse_function(stack):
@@ -156,7 +197,7 @@ def parse_function(stack):
     returns = None
     body = parse_until('end-fn')
     functions[fn_name] = ([args, returns, body])
-    local_functions[fn_name] = ([args, returns, body])
+    top_level.append(["fn", fn_name, args, returns, body])
 
 
 def parse_until(end):
@@ -164,10 +205,12 @@ def parse_until(end):
 
     word = get_word()
     while word:
-        if word ==end:
+        if word == end:
             break
         body.append(word)
         word = get_word()
+
+    assert word == end
 
     return body
 
@@ -184,13 +227,13 @@ def pluck_until(queue, end):
 
 
 def print_var(queue, env):
-    body = pluck_until(queue, "end-var")
-    name, var_type, *init_val = body
+    name, var_type, *init_val = queue
     env[name] = ['var', var_type]
     print(f"{var_type} {name}", end="")
     if init_val and init_val != ['undef']:
-        print(" = ", end="")
-        print_eval_stack(init_val, env)
+        ev = eval_stack(init_val, env)
+        assert len(ev) == 1
+        print(f" = {ev[0]}", end="")
 
 
 def print_let(queue, env):
@@ -202,26 +245,42 @@ def print_let(queue, env):
 
 
 def print_set(queue, env):
-    body = pluck_until(queue, "end-set")
-    var_name, *stack = body
+    var_name, *stack = queue
     print(f"{var_name} = ", end="")
-    print_eval_stack(stack, env)
-
-
+    estack = eval_stack(stack, env)
+    print(', '.join(estack), end="")
+    assert len(stack) == 0
 
 
 def print_while(queue, env):
     clause = pluck_until(queue, "do")
-    body = pluck_until(queue, "end-while")
+    print("while (", end="")
+    eclause = eval_stack(clause, env)
+    print(', '.join(eclause), end="")
+    print(") ", end="")
+    print_block(queue, env)
+
+
+def print_for(queue, env):
+    clause = pluck_until(queue, "do")
+    body = pluck_until(queue, "end-for")
     # print(clause)
     # print(body)
-    print("while (", end="")
-    print_eval_stack(clause, env)
+    print("for (", end="")
+    # print(clause)
+    while clause:
+        print_eval_stack(clause, env)
+        if clause:
+            print(", ", end="")
     print(") ", end="")
     print_block(body, env)
 
 
 def print_eval_stack(input_stack, env):
+    assert False
+
+
+def eval_stack(input_stack, env):
     stack = []
     word = input_stack.pop(0)
     while word:
@@ -231,29 +290,33 @@ def print_eval_stack(input_stack, env):
 
         if val != None:
             stack.append(val)
+        elif word[0] == '"':
+            stack.append(word)
         elif kw:
             kw(input_stack, env)
-            return
         elif spec:
             type_name, *type_spec = spec
             if type_name == 'fn':
                 args, returns, body = type_spec
                 if args:
-                    print(f"{word}(", end="")
+                    r = []
+                    r.append(f"{word}(")
                     for i in range(len(args)):
                         arg = stack.pop()
-                        print(arg, end="")
-                    print(f")", end="")
+                        r.append(arg)
+                    r.append(")")
+                    stack.append(''.join(r))
                 else:
-                    print(f"{word}()", end="")
-                return
+                    stack.append(f"{word}()")
             elif type_name in ['var', 'const']:
                 stack.append(word)
             elif type_name == 'infix':
                 rhs = stack.pop()
                 lhs = stack.pop()
-                print(f"{lhs} {word} {rhs}", end="")
-                return
+                r = f"{lhs} {word} {rhs}"
+                stack.append(f"({r})")
+            elif type_name == 'define':
+                stack.append(word)
             else:
                 print(f"\n\n{word=} {type_name=}")
                 assert False
@@ -263,11 +326,7 @@ def print_eval_stack(input_stack, env):
 
         word = input_stack.pop(0) if input_stack else None
 
-    if len(stack) == 1:
-        print(stack[0], end="")
-        return
-
-    assert len(stack) == 0
+    return stack
 
 
 def print_word(word):
@@ -280,7 +339,7 @@ def new_env(env):
     return e
 
 
-def function_enviroment():
+def file_enviroment():
     e = {}
     e.update(global_variables)
 
@@ -314,6 +373,12 @@ def parse_number(word):
         return f
     except:
         pass
+
+
+def parse_define(stack):
+    body = parse_until('end-define')
+    name, *initial_value = body
+    top_level.append(['define', *body])
 
 
 if __name__ == "__main__":

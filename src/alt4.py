@@ -1,4 +1,5 @@
 import fileinput
+import argparse
 
 from sys import argv
 from dataclasses import dataclass
@@ -9,11 +10,6 @@ cmds = []
 
 macro_words = {
         ':': ';',
-        'fn': 'end-fn',
-        'while': 'end-while',
-        'var': 'end-var',
-        'set': 'end-set',
-        'let': 'end-let',
         }
 
 next_token = None
@@ -50,8 +46,14 @@ def pop_state():
 
 def main():
     global input
+    global args
 
-    input = fileinput.input(argv[1])
+    parser = argparse.ArgumentParser(description='alt transformer')
+    parser.add_argument('--wrap-everything', action='store_true')
+    parser.add_argument('files', metavar='file', nargs='+')
+    args = parser.parse_args()
+
+    input = fileinput.input(args.files[0])
     get_line()
 
     push_state(get_indent_head)
@@ -78,6 +80,11 @@ def get_indent_head():
     elif nt in prefix_chars:
         push_state(get_indent_body)
         return get_syntax()
+    elif args.wrap_everything:
+        t = get_token()
+        cmds[-1] = "end-" + t
+        push_state(get_indent_body)
+        return t
     else:
         t = get_token()
         cmds[-1] = t
