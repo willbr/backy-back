@@ -58,6 +58,7 @@ def init():
             'set': print_set,
             'while': print_while,
             'for':   print_for,
+            'inc':   print_inc,
             }
 
     functions['getchar'] = [None, None, None]
@@ -187,7 +188,7 @@ def print_indent():
 def include_lib(stack):
     body = parse_until("end-include-lib")
     assert len(body) == 1
-    lib_name = body[0]
+    lib_name = body[0][1:-1]
     top_level.append(["include-lib", lib_name])
 
 
@@ -242,7 +243,7 @@ def print_let(queue, env):
     body = pluck_until(queue, "end-let")
     var_name, *stack = body
     print(f"{var_name} = ", end="")
-    print_eval_stack(stack, env)
+    assert False
     assert len(stack) == 0
 
 
@@ -250,7 +251,7 @@ def print_set(queue, env):
     var_name, *stack = queue
     print(f"{var_name} = ", end="")
     estack = eval_stack(stack, env)
-    print(', '.join(estack), end="")
+    print(', '.join(map(str, estack)), end="")
     assert len(stack) == 0
 
 
@@ -264,6 +265,7 @@ def print_while(queue, env):
 
 
 def print_for(queue, env):
+    assert False
     clause = pluck_until(queue, "do")
     body = pluck_until(queue, "end-for")
     # print(clause)
@@ -271,19 +273,26 @@ def print_for(queue, env):
     print("for (", end="")
     # print(clause)
     while clause:
-        print_eval_stack(clause, env)
+        assert False
         if clause:
             print(", ", end="")
     print(") ", end="")
     print_block(body, env)
 
 
-def print_eval_stack(input_stack, env):
-    assert False
+def print_inc(queue, env):
+    var_name, *inc_expr = queue
+    e = eval_stack(inc_expr, env)
+    step = e[0] if e else "1"
+    print(f"{var_name} += {step}", end="")
 
 
 def eval_stack(input_stack, env):
+    if len(input_stack) == 0:
+        return []
+
     stack = []
+
     word = input_stack.pop(0)
     while word:
         val = parse_number(word)

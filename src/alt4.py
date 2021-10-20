@@ -64,10 +64,13 @@ def main():
         print(word)
         word = get_word()
 
+    assert len(states) == 1
+
 
 def get_indent_head():
     nt = peek_token()
     if nt is None:
+        assert len(states) == 1
         return None
 
     macro_end = macro_words.get(nt)
@@ -97,7 +100,7 @@ def get_indent_body():
 
     nt = peek_token()
     if nt is None:
-        print("ere")
+        assert False
         return None
 
     if nt == '\n':
@@ -282,7 +285,10 @@ def get_postfix():
 def get_dedent():
     global indent
 
+    # debug_state()
+
     if new_indent == indent:
+        pop_state()
         push_state(get_indent_head)
         return get_word()
 

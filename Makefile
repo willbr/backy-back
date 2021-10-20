@@ -53,7 +53,7 @@ alt3: .\src\tokens5.ie src/*.py
 walt3:
 	watchexec -cr "make alt3"
 
-alt4: .\src\c2.ie src/*.py
+alt4: .\src\c4.ie src/*.py
 	type $<
 	rem python src/alt4.py --wrap-everything $<
 	python src/alt4.py --wrap-everything $< | python src/c-printer.py -
