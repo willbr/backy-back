@@ -1,0 +1,7 @@
+include-lib "stdio.h"
+
+fn main
+  puts "hi"
+  var c int
+  while ((c = getchar) != EOF) do
+    putchar c

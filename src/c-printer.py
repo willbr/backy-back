@@ -167,15 +167,17 @@ def print_statement(statement, env):
         e_type, *spec = e
         if e_type == 'fn':
             params, returns, body = spec
-            args = tail
-            print(f"{head}(", end="")
-            eargs = eval_stack(args, env)
-            print(', '.join(eargs), end="")
-            print(")", end="")
+            print_function_call(head, tail, env)
         else:
             assert False
     else:
-        assert False
+        print_function_call(head, tail, env)
+
+
+def print_function_call(name, args_stack, env):
+    eargs = eval_stack(args_stack, env)
+    sargs = ', '.join(eargs)
+    print(f"{name}({sargs})", end="")
 
 
 def print_indent():
