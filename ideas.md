@@ -8,6 +8,8 @@
         * deref
         & address
         ' quote
+        % binary
+        $ hexadecimal
 
     read word
     try and promote to number
