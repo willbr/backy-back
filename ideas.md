@@ -124,3 +124,7 @@ object is a union, it can be a list or a void*
         } u;
     }
 
+# include version numbers
+
+    version 0
+
