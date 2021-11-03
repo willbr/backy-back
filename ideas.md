@@ -14,7 +14,21 @@
     read word
     try and promote to number
 
+# assignment syntax
+special case for infix assignment
+
+    a = 5
+
+to
+
+    5 a !
+
+instead of
+
+    a 5 =
+
 # implied infix
+
     1 + 1
     is
     (1 + 1)
