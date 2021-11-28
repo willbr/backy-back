@@ -4,5 +4,5 @@ fn main
   var a int 0
   var b int 1
   var c int 2
-  set a (3 * (b * c))
+  a = 3 * (b * c)
 

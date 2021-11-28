@@ -3,8 +3,8 @@ include-lib "stdio.h"
 fn main
   var c int
 
-  set c getchar
-  while (c != EOF) do
+  c = getchar()
+  while c != EOF
     putchar c
-    set c getchar
+    c = getchar()
 

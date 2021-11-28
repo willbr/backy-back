@@ -2,7 +2,7 @@ include-lib "stdio.h"
 
 fn main
   var nc long
-  set nc 0
-  while (getchar != EOF) do
+  nc = 0
+  while getchar() != EOF
     inc nc
   printf "%ld\n" nc
