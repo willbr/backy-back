@@ -1,14 +1,27 @@
 #include <stdio.h> /* puts, fopen, fprintf */
 #include <stdlib.h> /* exit */
 
+#define ESC "\x1b"
+#define RED_TEXT "31"
+#define YELLOW_TEXT "33"
+#define RESET ESC "[0m"
+
 #define ere \
     do { \
-        fprintf(stderr, "\n%s : %d : %s\n", __FILE__, __LINE__, __func__); \
+        fprintf(stderr, \
+                ESC "[" YELLOW_TEXT "m" \
+                "\n%s : %d : %s\n" \
+                RESET, \
+                __FILE__, __LINE__, __func__); \
     } while (0);
 
 #define die(msg) \
     do { \
-        fprintf(stderr, "\nerror: " msg "\n"); \
+        fprintf(stderr, \
+                ESC "[" RED_TEXT "m" \
+                "\nerror: " msg "\n" \
+                RESET \
+                ); \
         ere; \
         exit(1); \
     } while (0);
@@ -16,9 +29,22 @@
 typedef unsigned int uint;
 
 
+struct string {
+    uint size;
+    uint capacity;
+    char *cstr;
+};
+typedef struct string string;
+
+struct parser {
+    void (*chomp)();
+    void (*parse_token)();
+};
+typedef struct parser parser;
+
 uint cur_indent = 0;
 uint indent_width = 4;
-char *break_chars = " ,()[]{}\n";
+char break_buffer[256] = "";
 char line_buffer[256] = "";
 char token_buffer[256] = "";
 char *c = NULL;
@@ -27,13 +53,12 @@ uint i = 0;
 char *tok = NULL;
 uint tok_len = 0;
 
+string token       = {};
+string line        = {};
+string break_chars = {0, sizeof(break_buffer) - 1, break_buffer};
 
-struct parser {
-    void (*chomp)();
-    void (*parse_token)();
-};
-
-typedef struct parser parser;
+parser pp = {};
+parser *p = &pp;
 
 
 void
@@ -56,12 +81,14 @@ read_line(void)
 
 
 int
-str_contains(char *s, char c)
+str_contains(string *s, char c)
 {
-    while (*s != '\0') {
-        if (*s == c)
+    char *i = s->cstr;
+
+    while (*i != '\0') {
+        if (*i == c)
             return 1;
-        s += 1;
+        i += 1;
     }
 
     return 0;
@@ -69,7 +96,7 @@ str_contains(char *s, char c)
 
 
 uint
-str_ncmp(char *s1, char *s2, uint n)
+cstr_ncmp(char *s1, char *s2, uint n)
 {
     while (n && *s1 != '\0' && *s2 != '\0') {
         if (*s1 < *s2)
@@ -88,7 +115,7 @@ void
 parse_token(char *buf, uint *i)
 {
     tok = c;
-    while (!str_contains(break_chars, *c))
+    while (!str_contains(&break_chars, *c))
         c += 1;
     tok_len = c - tok;
 }
@@ -133,7 +160,7 @@ next_word(parser *p)
 
         p->parse_token();
 
-        if (!str_ncmp("\\", tok, tok_len)) {
+        if (!cstr_ncmp("\\", tok, tok_len)) {
             if (diff == 1) {
                 c += 1;
                 p->chomp();
@@ -155,13 +182,51 @@ next_word(parser *p)
 
 
 int
-main(int argc, char **argv)
+cstr_len(char *s)
 {
-    parser pp = {};
-    parser *p = &pp;
+    int i = 0;
 
+    if (s == NULL)
+        die("s is NULL");
+
+    while (*s++ != '\0')
+        i += 1;
+    return i;
+}
+
+
+void
+str_append_chars(string *s, char *cs)
+{
+    char *i = cs;
+    char *d = s->cstr + s->size;
+    int cs_len = cstr_len(cs);
+    uint new_size = s->size + cs_len;
+
+    if (new_size > s->capacity)
+        die("capacity reached");
+
+    while (*i != '\0')
+        *d++ = *i++;
+    *d = '\0';
+
+    s->size = new_size;
+}
+
+void
+init(void)
+{
     p->chomp = chomp;
     p->parse_token = parse_token;
+
+    str_append_chars(&break_chars, " ,()[]{}\n");
+}
+
+
+int
+main(int argc, char **argv)
+{
+    init();
 
     if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
         die("failed to open file");
