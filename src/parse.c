@@ -1,5 +1,6 @@
 #include <stdio.h> /* puts, fopen, fprintf */
 #include <stdlib.h> /* exit */
+#include <string.h> /* strncmp */
 
 #define ESC "\x1b"
 #define RED_TEXT "31"
@@ -95,22 +96,6 @@ str_contains(string *s, char c)
 }
 
 
-uint
-cstr_ncmp(char *s1, char *s2, uint n)
-{
-    while (n && *s1 != '\0' && *s2 != '\0') {
-        if (*s1 < *s2)
-            return -1;
-        else if (*s2 < *s1)
-            return 1;
-        s1 += 1;
-        s2 += 1;
-        n -= 1;
-    }
-    return 0;
-}
-
-
 void
 parse_token(char *buf, uint *i)
 {
@@ -129,7 +114,8 @@ parse_newline(parser *p)
     uint diff = 0;
 
     while(*c == '\n')
-        read_line();
+        if (read_line() == NULL)
+            return -1;
 
     first_char = c;
     chomp();
@@ -156,11 +142,16 @@ next_word(parser *p)
         return;
     } else if (*c == '\n') {
         new_indent = parse_newline(p);
+        if (new_indent = -1)
+            die("EOF");
         diff = new_indent - cur_indent;
 
         p->parse_token();
 
-        if (!cstr_ncmp("\\", tok, tok_len)) {
+        if (tok_len == 0)
+            return;
+
+        if (!strncmp("\\", tok, tok_len)) {
             if (diff == 1) {
                 c += 1;
                 p->chomp();
@@ -169,8 +160,8 @@ next_word(parser *p)
                 die("line continuation2");
             }
         } else {
-            printf("c %d\n", *c);
-            printf("tok %.*s\n", tok_len, tok);
+            printf("c: %d\n", *c);
+            printf("tok '%.*s'\n", tok_len, tok);
             die("newline");
         }
 
