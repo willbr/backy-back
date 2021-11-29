@@ -106,7 +106,7 @@ parse_token(char *buf, uint *i)
 }
 
 
-uint
+int
 parse_newline(parser *p)
 {
     char *first_char = NULL;
@@ -125,6 +125,7 @@ parse_newline(parser *p)
         die("invalid indent");
 
     indent = diff / indent_width;
+    /*fprintf(stderr, "indent: %d\n", indent);*/
     return indent;
 }
 
@@ -142,8 +143,11 @@ next_word(parser *p)
         return;
     } else if (*c == '\n') {
         new_indent = parse_newline(p);
-        if (new_indent = -1)
-            die("EOF");
+        if (new_indent == -1) {
+            /*ere;*/
+            tok = NULL;
+            return;
+        }
         diff = new_indent - cur_indent;
 
         p->parse_token();
