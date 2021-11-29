@@ -61,7 +61,8 @@ alt4: .\src\c4.ie src/*.py
 walt4:
 	watchexec -cr "make alt4"
 
-run: src/*.c src/*.py test0
+run: src/*.c
+	tcc -run src/parse.c
 
 test-py: src/*.py
 	python -m unittest src/test-eval.py -f
