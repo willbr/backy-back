@@ -94,15 +94,10 @@ parse_indent(int *indent)
     chomp(' ');
 
     diff = in - first_char;
-    ere;
-    debug_var("d", diff);
-    debug_var("d", in);
-    debug_var("d", first_char);
     if (diff % indent_width != 0)
         die("invalid indent");
 
     *indent = diff / indent_width;
-    /*fprintf(stderr, "indent: %d\n", indent);*/
     return 0;
 }
 
@@ -125,13 +120,40 @@ parse_prefix_body(void)
             return;
         }
 
-        ere;
-        debug_var("d", cur_indent);
-        debug_var("d", new_indent);
-
         diff = new_indent - cur_indent;
         cur_indent = new_indent;
-        debug_var("d", diff);
+        /*debug_var("d", diff);*/
+
+        read_token();
+        chomp(' ');
+
+        /*printf("tok: %.*s\n", tok_len, tok);*/
+
+        if (!strncmp("\\", tok, tok_len)) {
+            if (diff > 1) {
+                die(">1");
+            } else if (diff == 1) {
+                read_token();
+                chomp(' ');
+                return;
+                die("1");
+            } else if (diff == 0) {
+                die("0");
+            } else {
+                die("?");
+            }
+        } else {
+            if (diff > 1) {
+                die(">1");
+            } else if (diff == 1) {
+                die("1");
+            } else if (diff == 0) {
+                die("0");
+            } else {
+                die("?");
+            }
+        }
+
 
         die("newline")
     }
@@ -230,7 +252,7 @@ parse_prefix_head(void)
 int
 main(int argc, char **argv)
 {
-    if ((f = fopen(".\\src\\examples\\tokens0.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
