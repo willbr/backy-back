@@ -1,6 +1,6 @@
 : double
-  * 2
+    * 2
 
 double
-  \ 5
+    \ 5
 

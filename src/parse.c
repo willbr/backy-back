@@ -161,7 +161,6 @@ parse_prefix_body(void)
         }
 
         diff = new_indent - cur_indent;
-        cur_indent = new_indent;
 
         /*ere;*/
         peek_token();
@@ -185,24 +184,25 @@ parse_prefix_body(void)
                 debug_var("d", diff);
                 die("?");
             }
+        }
+
+        cur_indent = new_indent;
+        /*ere;*/
+        if (diff > 1) {
+            die(">1");
+        } else if (diff == 1) {
+            depth += 1;
+            state_fn[depth] = parse_prefix_head;
+            state_fn[depth]();
+            return;
+        } else if (diff == 0) {
+            die("0");
         } else {
             /*ere;*/
-            if (diff > 1) {
-                die(">1");
-            } else if (diff == 1) {
-                depth += 1;
-                state_fn[depth] = parse_prefix_head;
-                state_fn[depth]();
-                return;
-            } else if (diff == 0) {
-                die("0");
-            } else {
-                /*ere;*/
-                tok = cmds[depth];
-                tok_len = strlen(tok);
-                depth -= 1;
-                return;
-            }
+            tok = cmds[depth];
+            tok_len = strlen(tok);
+            depth -= 1;
+            return;
         }
 
         die("newline")
@@ -249,7 +249,7 @@ parse_prefix_head(void)
 int
 main(int argc, char **argv)
 {
-    if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens4.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
