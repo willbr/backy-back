@@ -197,7 +197,10 @@ parse_prefix_body(void)
             state_fn[depth]();
             return;
         } else if (diff == 0) {
-            die("0");
+            tok = cmds[depth];
+            tok_len = strlen(tok);
+            state_fn[depth] = parse_prefix_head;
+            return;
         } else {
             /*ere;*/
             tok = cmds[depth];
@@ -299,7 +302,7 @@ main(int argc, char **argv)
 
     define_wrap(":");
 
-    if ((f = fopen(".\\src\\examples\\tokens3.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens5.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
