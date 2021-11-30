@@ -44,7 +44,10 @@ char *prefix_breakchars = " ,()[]{}\n";
 
 char *cmds[16];
 uint depth = 0;
-void (*(state_fn[16]))(void);
+void (*state_fn[16])(void);
+
+int wrapped_index = 0;
+char *wrapped[64];
 
 void parse_prefix_body(void);
 void parse_prefix_head(void); 
@@ -213,12 +216,16 @@ parse_prefix_body(void)
 }
 
 
-char *
-lookup_end(char *s, int len)
+int
+is_wrapped(char *s, int len)
 {
-    fprintf(stderr, "lookup: '%.*s'\n", len, s);
-    die("todo");
-    return NULL;
+    int i;
+
+    for (i = 0; i < wrapped_index; i += 1)
+        if (!strncmp(wrapped[i], s, len))
+            return -1;
+
+    return 0;
 }
 
 
@@ -226,9 +233,8 @@ void
 parse_prefix_head(void)
 {
     /*ere;*/
-    char *cmd = NULL;
-    char *head = NULL;
-    char *end = NULL;
+    char *cmd  = NULL;
+    char *end  = NULL;
 
     if (*in == '\0' && read_line() == NULL) {
         tok = NULL;
@@ -247,7 +253,18 @@ parse_prefix_head(void)
     read_token();
     /*debug_token();*/
 
-    end = lookup_end(tok, tok_len);
+    if (is_wrapped(tok, tok_len)) {
+        end = malloc(4 + tok_len + 1);
+        if (end == NULL)
+            die("malloc failed");
+        *end = '\0';
+        strncat(end, "end-", 4);
+        strncat(end, tok, tok_len);
+        /*debug_var("s", end);*/
+        cmds[depth] = end;
+        state_fn[depth] = parse_prefix_body;
+        return;
+    }
 
     cmd = malloc(tok_len + 1);
     if (cmd == NULL)
@@ -257,15 +274,31 @@ parse_prefix_head(void)
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
-
     state_fn[depth] = parse_prefix_body;
     parse_prefix_body();
+}
+
+
+void
+define_wrap(char *s)
+{
+    int max_size = sizeof(wrapped) / sizeof(wrapped[0]);
+    /*debug_var("d", max_size);*/
+
+    if (wrapped_index >= max_size)
+        die("wrapped overflow");
+
+    wrapped[wrapped_index++] = s;
 }
 
 
 int
 main(int argc, char **argv)
 {
+    memset(wrapped, 0, sizeof(wrapped));
+
+    define_wrap(":");
+
     if ((f = fopen(".\\src\\examples\\tokens3.ie", "r")) == NULL)
         die("failed to open file");
 
