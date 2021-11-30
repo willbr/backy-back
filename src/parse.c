@@ -51,6 +51,16 @@ void (*(state_fn[16]))(void);
 void parse_prefix_body(void);
 void parse_prefix_head(void); 
 
+
+void
+debug_cmd_stack(void)
+{
+    int i = 0;
+    for (i = 0; i <= depth; i += 1) {
+        printf("cmd: %d, %s\n", i, cmds[i]);
+    }
+}
+
 void
 chomp(char c)
 {
@@ -80,6 +90,15 @@ read_token(void)
 }
 
 
+void
+peek_token(void)
+{
+    char *old = in;
+    read_token();
+    in = old;
+}
+
+
 int
 parse_indent(int *indent)
 {
@@ -105,13 +124,21 @@ parse_indent(int *indent)
 void
 parse_prefix_body(void)
 {
+    static int diff = 0;
+
+    if (diff < 0) {
+        tok = cmds[depth];
+        tok_len = strlen(tok);
+        state_fn[depth] = parse_prefix_head;
+        diff += 1;
+        return;
+    }
+
     if (*in == '\0')
         die("null char");
 
-
     if (*in == '\n') {
         int new_indent = 0;
-        int diff       = 0;
 
         if (parse_indent(&new_indent)) {
             tok = cmds[depth];
@@ -122,12 +149,8 @@ parse_prefix_body(void)
 
         diff = new_indent - cur_indent;
         cur_indent = new_indent;
-        /*debug_var("d", diff);*/
 
-        read_token();
-        chomp(' ');
-
-        /*printf("tok: %.*s\n", tok_len, tok);*/
+        peek_token();
 
         if (!strncmp("\\", tok, tok_len)) {
             if (diff > 1) {
@@ -140,20 +163,26 @@ parse_prefix_body(void)
             } else if (diff == 0) {
                 die("0");
             } else {
+                debug_var("d", diff);
                 die("?");
             }
         } else {
             if (diff > 1) {
                 die(">1");
             } else if (diff == 1) {
-                die("1");
+                depth += 1;
+                state_fn[depth] = parse_prefix_head;
+                state_fn[depth]();
+                return;
             } else if (diff == 0) {
                 die("0");
             } else {
-                die("?");
+                tok = cmds[depth];
+                tok_len = strlen(tok);
+                depth -= 1;
+                return;
             }
         }
-
 
         die("newline")
     }
@@ -163,22 +192,14 @@ parse_prefix_body(void)
 
     read_token();
     chomp(' ');
-
-
-
-
-    /*printf("tok: %.*s\n", tok_len, tok);*/
-    /*die("ere");;*/
 }
 
 void
 parse_prefix_head(void)
 {
-    if (*in == '\0') {
-        if (read_line() == NULL) {
-            tok = NULL;
-            return;
-        }
+    if (*in == '\0' && read_line() == NULL) {
+        tok = NULL;
+        return;
     }
 
     if (*in == '\0')
@@ -191,68 +212,24 @@ parse_prefix_head(void)
         die("space")
 
     read_token();
-    /*printf("%.*s\n", tok_len, tok);*/
 
     char *cmd = malloc(tok_len + 1);
     if (cmd == NULL)
         die("malloc failed");
     strncpy(cmd, tok, tok_len);
-    /*debug_var("s", cmd);*/
     cmds[depth] = cmd;
 
     chomp(' ');
 
     state_fn[depth] = parse_prefix_body;
     parse_prefix_body();
-
-    /*if (*in == '\0') {*/
-        /*tok = NULL;*/
-        /*return;*/
-    /*} else if (*in == '\n') {*/
-        /*new_indent = parse_indent();*/
-        /*if (new_indent == -1) {*/
-            /*[>ere;<]*/
-            /*tok = NULL;*/
-            /*return;*/
-        /*}*/
-
-        /*diff = new_indent - cur_indent;*/
-        /*cur_indent = new_indent;*/
-        /*debug_var("d", diff);*/
-
-        /*parse_token();*/
-
-        /*if (tok_len == 0)*/
-            /*return;*/
-
-        /*if (!strncmp("\\", tok, tok_len)) {*/
-            /*if (diff == 1) {*/
-                /*in += 1;*/
-                /*chomp(' ');*/
-                /*parse_token();*/
-            /*} else {*/
-                /*die("line continuation2");*/
-            /*}*/
-        /*} else {*/
-            /*[>debug_var("d", diff);<]*/
-            /*[>debug_var("d", new_indent);<]*/
-            /*[>debug_var("d", *c);<]*/
-            /*[>printf("tok '%.*s'\n", tok_len, tok);<]*/
-            /*[>die("newline");<]*/
-        /*}*/
-
-        /*return;*/
-    /*}*/
-
-    /*parse_token();*/
-    /*chomp(' ');*/
 }
 
 
 int
 main(int argc, char **argv)
 {
-    if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens2.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
@@ -264,9 +241,8 @@ main(int argc, char **argv)
         printf("tok: %d: '%.*s'\n", tok_len, tok_len, tok);
     }
 
-    /*debug_var("d", depth);*/
-
     while (depth) {
+        ere;
         printf("%s\n", cmds[depth]);
         depth -= 1;
     }
