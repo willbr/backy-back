@@ -35,7 +35,6 @@ typedef unsigned int uint;
 uint cur_indent = 0;
 uint indent_width = 4;
 char line_buffer[256] = "";
-char tokens_buffer[256] = "";
 char *in = NULL;
 FILE *f = NULL;
 char *tok = NULL;
@@ -46,7 +45,6 @@ char *prefix_breakchars = " ,()[]{}\n";
 char *cmds[16];
 uint depth = 0;
 void (*(state_fn[16]))(void);
-
 
 void parse_prefix_body(void);
 void parse_prefix_head(void); 
@@ -215,10 +213,23 @@ parse_prefix_body(void)
 }
 
 
+char *
+lookup_end(char *s, int len)
+{
+    fprintf(stderr, "lookup: '%.*s'\n", len, s);
+    die("todo");
+    return NULL;
+}
+
+
 void
 parse_prefix_head(void)
 {
     /*ere;*/
+    char *cmd = NULL;
+    char *head = NULL;
+    char *end = NULL;
+
     if (*in == '\0' && read_line() == NULL) {
         tok = NULL;
         return;
@@ -234,11 +245,17 @@ parse_prefix_head(void)
         die("space")
 
     read_token();
+    /*debug_token();*/
 
-    char *cmd = malloc(tok_len + 1);
+    end = lookup_end(tok, tok_len);
+
+    cmd = malloc(tok_len + 1);
     if (cmd == NULL)
         die("malloc failed");
+
     strncpy(cmd, tok, tok_len);
+    cmd[tok_len] = '\0';
+
     cmds[depth] = cmd;
 
     state_fn[depth] = parse_prefix_body;
@@ -249,7 +266,7 @@ parse_prefix_head(void)
 int
 main(int argc, char **argv)
 {
-    if ((f = fopen(".\\src\\examples\\tokens4.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens3.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
