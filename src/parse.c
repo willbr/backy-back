@@ -31,6 +31,7 @@
     fprintf(stderr, #v ": %" s "\n", v)
 
 typedef unsigned int uint;
+typedef void (void_fn)(void);
 
 uint cur_indent = 0;
 uint indent_width = 4;
@@ -40,25 +41,58 @@ FILE *f = NULL;
 char *tok = NULL;
 uint tok_len = 0;
 
+int prefix_index = 0;
+char prefix_chars[64] = "";
+void (*prefix_fns[64])(void);
+
 char *prefix_breakchars = " ,()[]{}\n";
 
 char *cmds[16];
-uint depth = 0;
-void (*state_fn[16])(void);
+int depth = 0;
+void (*state_fns[16])(void);
 
 int wrapped_index = 0;
 char *wrapped[64];
 
+void_fn * lookup_prefix(char c);
+
 void parse_prefix_body(void);
 void parse_prefix_head(void); 
 
+void parse_inline_prefix(void);
+void parse_inline_prefix_body(void);
+void parse_inline_prefix_end(void);
+
+void next_word(void);
+
 
 void
-debug_cmd_stack(void)
+debug_stack(void)
 {
     int i = 0;
+
+    if (depth < 0)
+        die("cmd stack underflow");
+
     for (i = 0; i <= depth; i += 1) {
-        fprintf(stderr, "cmd: %d, %s\n", i, cmds[i]);
+        char *fn = NULL;
+        if (state_fns[i] == NULL) {
+            fn = "(null)";
+        } else if (state_fns[i] == parse_prefix_head) {
+            fn = "prefix-head";
+        } else if (state_fns[i] == parse_prefix_body) {
+            fn = "prefix-body";
+        } else if (state_fns[i] == parse_inline_prefix) {
+            fn = "inline-prefix";
+        } else if (state_fns[i] == parse_inline_prefix_body) {
+            fn = "inline-prefix-body";
+        } else if (state_fns[i] == parse_inline_prefix_end) {
+            fn = "inline-prefix-end";
+        } else {
+            debug_var("p", state_fns[i]);
+            die("other");
+        }
+        fprintf(stderr, "%d, fn: %s, cmd: %s\n", i, fn, cmds[i]);
     }
 }
 
@@ -138,18 +172,25 @@ parse_prefix_body(void)
 {
     /*ere;*/
     static int diff = 0;
+    void (*prefix_fn)(void) = NULL;
 
     if (diff < 0) {
         /*ere;*/
         tok = cmds[depth];
         tok_len = strlen(tok);
-        state_fn[depth] = parse_prefix_head;
+        state_fns[depth] = parse_prefix_head;
         diff += 1;
         return;
     }
 
+    /*ere;*/
+    /*debug_var("c", *in);*/
+
     if (*in == '\0')
         die("null char");
+
+    if (*in == ' ')
+        die("space")
 
     if (*in == '\n') {
         int new_indent = 0;
@@ -157,7 +198,7 @@ parse_prefix_body(void)
         if (parse_indent(&new_indent)) {
             tok = cmds[depth];
             tok_len = strlen(tok);
-            state_fn[depth] = parse_prefix_head;
+            state_fns[depth] = parse_prefix_head;
             return;
         }
 
@@ -193,13 +234,13 @@ parse_prefix_body(void)
             die(">1");
         } else if (diff == 1) {
             depth += 1;
-            state_fn[depth] = parse_prefix_head;
-            state_fn[depth]();
+            state_fns[depth] = parse_prefix_head;
+            state_fns[depth]();
             return;
         } else if (diff == 0) {
             tok = cmds[depth];
             tok_len = strlen(tok);
-            state_fn[depth] = parse_prefix_head;
+            state_fns[depth] = parse_prefix_head;
             return;
         } else {
             /*ere;*/
@@ -212,8 +253,10 @@ parse_prefix_body(void)
         die("newline")
     }
 
-    if (*in == ' ')
-        die("space")
+    if (prefix_fn = lookup_prefix(*in)) {
+        prefix_fn();
+        return;
+    }
 
     read_token();
 }
@@ -238,6 +281,7 @@ parse_prefix_head(void)
     /*ere;*/
     char *cmd  = NULL;
     char *end  = NULL;
+    void_fn *prefix_fn = NULL;
 
     if (*in == '\0' && read_line() == NULL) {
         tok = NULL;
@@ -253,6 +297,12 @@ parse_prefix_head(void)
     if (*in == ' ')
         die("space")
 
+    if (prefix_fn = lookup_prefix(*in)) {
+        die("can you start a line with a prefix char?");
+        /*prefix_fn();*/
+        return;
+    }
+
     read_token();
     /*debug_token();*/
 
@@ -265,7 +315,7 @@ parse_prefix_head(void)
         strncat(end, tok, tok_len);
         /*debug_var("s", end);*/
         cmds[depth] = end;
-        state_fn[depth] = parse_prefix_body;
+        state_fns[depth] = parse_prefix_body;
         return;
     }
 
@@ -277,8 +327,91 @@ parse_prefix_head(void)
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
-    state_fn[depth] = parse_prefix_body;
+    state_fns[depth] = parse_prefix_body;
     parse_prefix_body();
+}
+
+
+void
+parse_inline_prefix_body(void)
+{
+    void_fn *prefix_fn = NULL;
+
+    /*ere;*/
+    /*debug_var("c", *in);*/
+    /*debug_stack();*/
+
+    if (*in == '\0')
+        die("null char")
+
+    if (*in == '\n')
+        die("newline")
+
+    if (*in == ' ')
+        die("space")
+
+    if (prefix_fn = lookup_prefix(*in)) {
+        /*ere;*/
+        prefix_fn();
+        return;
+    }
+
+    read_token();
+    /*debug_token();*/
+
+    return;
+}
+
+
+void
+parse_inline_prefix(void)
+{
+    char *cmd;
+    void_fn *prefix_fn = NULL;
+
+    /*ere;*/
+    /*debug_var("c", *in);*/
+
+    in += 1;
+    chomp(' ');
+
+    /*debug_var("c", *in);*/
+
+    if (prefix_fn = lookup_prefix(*in)) {
+        prefix_fn();
+        return;
+    }
+
+    /*ere;*/
+    read_token();
+    /*debug_token();*/
+
+    if (is_wrapped(tok, tok_len)) {
+        die("wrapped");
+    }
+
+    cmd = malloc(tok_len + 1);
+    if (cmd == NULL)
+        die("malloc failed");
+
+    strncpy(cmd, tok, tok_len);
+    cmd[tok_len] = '\0';
+
+    depth += 1;
+    cmds[depth] = cmd;
+    state_fns[depth] = parse_inline_prefix_body;
+    parse_inline_prefix_body();
+}
+
+
+void
+parse_inline_prefix_end(void)
+{
+    in += 1;
+    tok = cmds[depth];
+    tok_len = strlen(tok);
+    depth -= 1;
+    return;
 }
 
 
@@ -286,12 +419,48 @@ void
 define_wrap(char *s)
 {
     int max_size = sizeof(wrapped) / sizeof(wrapped[0]);
-    /*debug_var("d", max_size);*/
 
     if (wrapped_index >= max_size)
         die("wrapped overflow");
 
-    wrapped[wrapped_index++] = s;
+    wrapped[wrapped_index] = s;
+    wrapped_index += 1;
+}
+
+
+void_fn *
+lookup_prefix(char c)
+{
+    int i;
+    for (i = 0; i < prefix_index; i += 1)
+        if (c == prefix_chars[i])
+            return prefix_fns[i];
+    return NULL;
+}
+
+
+void
+define_prefix(char c, void (*fn)(void))
+{
+    int max_size = sizeof(prefix_chars);
+
+    if (prefix_index >= max_size)
+        die("prefix overflow");
+
+    prefix_chars[prefix_index] = c;
+    prefix_fns[prefix_index] = fn;
+    prefix_index += 1;
+}
+
+
+void
+next_word(void)
+{
+    /*ere;*/
+    /*debug_var("d", depth);*/
+    if (depth < 0)
+        die("state underflow");
+    state_fns[depth]();
 }
 
 
@@ -302,17 +471,26 @@ main(int argc, char **argv)
 
     define_wrap(":");
 
-    if ((f = fopen(".\\src\\examples\\tokens5.ie", "r")) == NULL)
+    define_prefix('[', parse_inline_prefix);
+    define_prefix(']', parse_inline_prefix_end);
+
+    if ((f = fopen(".\\src\\examples\\tokens10.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
 
     depth = 0;
-    state_fn[depth] = parse_prefix_head;
+    state_fns[depth] = parse_prefix_head;
 
-    while (state_fn[depth](), tok) {
+    int i = 10;
+    while (next_word(), tok) {
+        /*debug_var("c", *in);*/
         printf("token %.*s\n", tok_len, tok);
+        if (!i--)
+            die("limit");
     }
+
+    /*ere;*/
 
     while (depth) {
         ere;

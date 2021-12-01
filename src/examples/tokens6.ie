@@ -1,5 +1,5 @@
 : cr
-  emit 10
+    emit 10
 
 : space 32 emit
 : spaces 0 1 do space loop
@@ -12,11 +12,11 @@
 : bar margin 5 stars
 
 : f
-  bar
-  blip
-  bar
-  blip
-  blip
-  cr
+    bar
+    blip
+    bar
+    blip
+    blip
+    cr
 
 f
