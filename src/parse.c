@@ -62,6 +62,12 @@ void parse_inline_prefix_end(void);
 
 void next_word(void);
 
+#define LIST_OF_STATES \
+    X(parse_prefix_head) \
+    X(parse_prefix_body) \
+    X(parse_inline_prefix) \
+    X(parse_inline_prefix_body) \
+    X(parse_inline_prefix_end)
 
 void
 debug_stack(void)
@@ -71,26 +77,23 @@ debug_stack(void)
     if (depth < 0)
         die("cmd stack underflow");
 
+    fprintf(stderr, "\nstack:\n");
     for (i = 0; i <= depth; i += 1) {
         char *fn = NULL;
+#define X(s) \
+    } else if (state_fns[i] == s) { \
+        fn = #s;
         if (state_fns[i] == NULL) {
             fn = "(null)";
-        } else if (state_fns[i] == parse_prefix_head) {
-            fn = "prefix-head";
-        } else if (state_fns[i] == parse_prefix_body) {
-            fn = "prefix-body";
-        } else if (state_fns[i] == parse_inline_prefix) {
-            fn = "inline-prefix";
-        } else if (state_fns[i] == parse_inline_prefix_body) {
-            fn = "inline-prefix-body";
-        } else if (state_fns[i] == parse_inline_prefix_end) {
-            fn = "inline-prefix-end";
+            LIST_OF_STATES
         } else {
             debug_var("p", state_fns[i]);
             die("other");
         }
-        fprintf(stderr, "%d, fn: %s, cmd: %s\n", i, fn, cmds[i]);
+#undef X
+        fprintf(stderr, "    %d, %s, %s\n", i, fn, cmds[i]);
     }
+    fprintf(stderr, "\n");
 }
 
 
@@ -455,6 +458,7 @@ next_word(void)
 {
     /*ere;*/
     /*debug_var("d", depth);*/
+    /*debug_stack();*/
     if (depth < 0)
         die("state underflow");
     state_fns[depth]();
