@@ -66,6 +66,10 @@ void parse_inline_infix_first_op(void);
 void parse_inline_infix_op(void);
 void parse_inline_infix_end(void);
 
+void parse_inline_postfix(void);
+void parse_inline_postfix_body(void);
+void parse_inline_postfix_end(void);
+
 void next_word(void);
 
 #define LIST_OF_STATES \
@@ -78,7 +82,10 @@ void next_word(void);
     X(parse_inline_infix_arg) \
     X(parse_inline_infix_first_op) \
     X(parse_inline_infix_op) \
-    X(parse_inline_infix_end)
+    X(parse_inline_infix_end) \
+    X(parse_inline_postfix) \
+    X(parse_inline_postfix_body) \
+    X(parse_inline_postfix_end)
 
 void
 debug_stack(void)
@@ -556,6 +563,42 @@ parse_inline_infix_end(void)
 
 
 void
+parse_inline_postfix(void)
+{
+    in += 1;
+    chomp(' ');
+    depth += 1;
+    state_fns[depth] = parse_inline_postfix_body;
+    next_word();
+}
+
+
+void
+parse_inline_postfix_body(void)
+{
+    /*ere;*/
+    void_fn *prefix_fn = NULL;
+
+    if (prefix_fn = lookup_prefix(*in)) {
+        prefix_fn();
+        return;
+    }
+
+    read_token();
+}
+
+
+void
+parse_inline_postfix_end(void)
+{
+    in += 1;
+    chomp(' ');
+    depth -= 1;
+    next_word();
+}
+
+
+void
 define_wrap(char *s)
 {
     int max_size = sizeof(wrapped) / sizeof(wrapped[0]);
@@ -616,8 +659,10 @@ main(int argc, char **argv)
     define_prefix(']', parse_inline_prefix_end);
     define_prefix('(', parse_inline_infix);
     define_prefix(')', parse_inline_infix_end);
+    define_prefix('{', parse_inline_postfix);
+    define_prefix('}', parse_inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens7.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens12.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
@@ -625,7 +670,7 @@ main(int argc, char **argv)
     depth = 0;
     state_fns[depth] = parse_prefix_head;
 
-    int i = 90;
+    int i = 10;
     while (next_word(), tok && tok_len) {
         /*ere;*/
         /*debug_stack();*/
