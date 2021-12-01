@@ -7,22 +7,19 @@
 #define YELLOW_TEXT "33"
 #define RESET ESC "[0m"
 
+#define CTEXT(c, s) ESC "[" c "m" s RESET
+
 #define ere \
     do { \
         fprintf(stderr, \
-                ESC "[" YELLOW_TEXT "m" \
-                "\n%s : %d : %s\n" \
-                RESET, \
+                CTEXT(YELLOW_TEXT, "\n%s : %d : %s\n"), \
                 __FILE__, __LINE__, __func__); \
     } while (0);
 
 #define die(msg) \
     do { \
         fprintf(stderr, \
-                ESC "[" RED_TEXT "m" \
-                "\nerror: " msg "\n" \
-                RESET \
-                ); \
+                CTEXT(RED_TEXT, "\nerror: " msg "\n")); \
         ere; \
         exit(1); \
     } while (0);
