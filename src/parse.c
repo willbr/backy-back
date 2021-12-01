@@ -62,6 +62,7 @@ void parse_inline_prefix_end(void);
 
 void parse_inline_infix(void);
 void parse_inline_infix_arg(void);
+void parse_inline_infix_first_op(void);
 void parse_inline_infix_op(void);
 void parse_inline_infix_end(void);
 
@@ -75,6 +76,7 @@ void next_word(void);
     X(parse_inline_prefix_end) \
     X(parse_inline_infix) \
     X(parse_inline_infix_arg) \
+    X(parse_inline_infix_first_op) \
     X(parse_inline_infix_op) \
     X(parse_inline_infix_end)
 
@@ -455,14 +457,14 @@ parse_inline_infix(void)
 
     depth += 1;
     cmds[depth] = NULL;
-    state_fns[depth] = parse_inline_infix_op;
+    state_fns[depth] = parse_inline_infix_first_op;
     /*debug_stack();*/
     /*debug_token();*/
 }
 
 
 void
-parse_inline_infix_op(void)
+parse_inline_infix_first_op(void)
 {
     char *cmd = NULL;
     void_fn *prefix_fn = NULL;
@@ -490,8 +492,45 @@ parse_inline_infix_op(void)
 
 
 void
+parse_inline_infix_op(void)
+{
+    void_fn *prefix_fn = NULL;
+
+    /*ere;*/
+    /*debug_stack();*/
+
+    if (prefix_fn = lookup_prefix(*in)) {
+        prefix_fn();
+        return;
+    }
+
+    peek_token();
+
+    if (!strncmp(cmds[depth], tok, tok_len)) {
+        read_token();
+    } else {
+        debug_var("s", cmds[depth]);
+        debug_token();
+        die("different");
+    }
+
+    /*tok = cmds[depth];*/
+    /*tok_len = strlen(tok);*/
+    state_fns[depth] = parse_inline_infix_arg;
+    /*die("adsf");*/
+}
+
+
+void
 parse_inline_infix_arg(void)
 {
+    void_fn *prefix_fn = NULL;
+
+    if (prefix_fn = lookup_prefix(*in)) {
+        prefix_fn();
+        return;
+    }
+
     read_token();
     state_fns[depth] = parse_inline_infix_op;
 }
@@ -500,10 +539,18 @@ parse_inline_infix_arg(void)
 void
 parse_inline_infix_end(void)
 {
+    /*ere;*/
+    /*debug_stack();*/
+
     in += 1;
     tok = cmds[depth];
-    tok_len = strlen(tok);
     depth -= 1;
+
+    if (tok == NULL) {
+        next_word();
+    } else {
+        tok_len = strlen(tok);
+    }
 }
 
 
