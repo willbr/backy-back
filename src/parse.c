@@ -255,7 +255,7 @@ parse_prefix_body(void)
             state_fns[depth] = parse_prefix_head;
             return;
         } else {
-            ere;
+            /*ere;*/
             tok = cmds[depth];
             tok_len = strlen(tok);
             depth -= 1;
@@ -543,6 +543,7 @@ parse_inline_infix_end(void)
     /*debug_stack();*/
 
     in += 1;
+    chomp(' ');
     tok = cmds[depth];
     depth -= 1;
 
@@ -616,7 +617,7 @@ main(int argc, char **argv)
     define_prefix('(', parse_inline_infix);
     define_prefix(')', parse_inline_infix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens11.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens7.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
