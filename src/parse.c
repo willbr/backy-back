@@ -54,39 +54,39 @@ char *wrapped[64];
 
 void_fn * lookup_prefix(char c);
 
-void parse_prefix_body(void);
-void parse_prefix_head(void); 
+void prefix_body(void);
+void prefix_head(void); 
 
-void parse_inline_prefix(void);
-void parse_inline_prefix_body(void);
-void parse_inline_prefix_end(void);
+void inline_prefix(void);
+void inline_prefix_body(void);
+void inline_prefix_end(void);
 
-void parse_inline_infix(void);
-void parse_inline_infix_arg(void);
-void parse_inline_infix_first_op(void);
-void parse_inline_infix_op(void);
-void parse_inline_infix_end(void);
+void inline_infix(void);
+void inline_infix_arg(void);
+void inline_infix_first_op(void);
+void inline_infix_op(void);
+void inline_infix_end(void);
 
-void parse_inline_postfix(void);
-void parse_inline_postfix_body(void);
-void parse_inline_postfix_end(void);
+void inline_postfix(void);
+void inline_postfix_body(void);
+void inline_postfix_end(void);
 
 void next_word(void);
 
 #define LIST_OF_STATES \
-    X(parse_prefix_head) \
-    X(parse_prefix_body) \
-    X(parse_inline_prefix) \
-    X(parse_inline_prefix_body) \
-    X(parse_inline_prefix_end) \
-    X(parse_inline_infix) \
-    X(parse_inline_infix_arg) \
-    X(parse_inline_infix_first_op) \
-    X(parse_inline_infix_op) \
-    X(parse_inline_infix_end) \
-    X(parse_inline_postfix) \
-    X(parse_inline_postfix_body) \
-    X(parse_inline_postfix_end)
+    X(prefix_head) \
+    X(prefix_body) \
+    X(inline_prefix) \
+    X(inline_prefix_body) \
+    X(inline_prefix_end) \
+    X(inline_infix) \
+    X(inline_infix_arg) \
+    X(inline_infix_first_op) \
+    X(inline_infix_op) \
+    X(inline_infix_end) \
+    X(inline_postfix) \
+    X(inline_postfix_body) \
+    X(inline_postfix_end)
 
 void
 debug_stack(void)
@@ -187,7 +187,7 @@ parse_indent(int *indent)
 
 
 void
-parse_prefix_body(void)
+prefix_body(void)
 {
     /*ere;*/
     static int diff = 0;
@@ -197,7 +197,7 @@ parse_prefix_body(void)
         /*ere;*/
         tok = cmds[depth];
         tok_len = strlen(tok);
-        state_fns[depth] = parse_prefix_head;
+        state_fns[depth] = prefix_head;
         diff += 1;
         return;
     }
@@ -218,7 +218,7 @@ parse_prefix_body(void)
         if (parse_indent(&new_indent)) {
             tok = cmds[depth];
             tok_len = strlen(tok);
-            state_fns[depth] = parse_prefix_head;
+            state_fns[depth] = prefix_head;
             return;
         }
 
@@ -254,13 +254,13 @@ parse_prefix_body(void)
             die(">1");
         } else if (diff == 1) {
             depth += 1;
-            state_fns[depth] = parse_prefix_head;
+            state_fns[depth] = prefix_head;
             state_fns[depth]();
             return;
         } else if (diff == 0) {
             tok = cmds[depth];
             tok_len = strlen(tok);
-            state_fns[depth] = parse_prefix_head;
+            state_fns[depth] = prefix_head;
             return;
         } else {
             /*ere;*/
@@ -298,7 +298,7 @@ is_wrapped(char *s, int len)
 
 
 void
-parse_prefix_head(void)
+prefix_head(void)
 {
     /*ere;*/
     char *cmd  = NULL;
@@ -337,7 +337,7 @@ parse_prefix_head(void)
         strncat(end, tok, tok_len);
         /*debug_var("s", end);*/
         cmds[depth] = end;
-        state_fns[depth] = parse_prefix_body;
+        state_fns[depth] = prefix_body;
         return;
     }
 
@@ -349,13 +349,13 @@ parse_prefix_head(void)
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
-    state_fns[depth] = parse_prefix_body;
-    parse_prefix_body();
+    state_fns[depth] = prefix_body;
+    prefix_body();
 }
 
 
 void
-parse_inline_prefix_body(void)
+inline_prefix_body(void)
 {
     void_fn *prefix_fn = NULL;
 
@@ -386,7 +386,7 @@ parse_inline_prefix_body(void)
 
 
 void
-parse_inline_prefix(void)
+inline_prefix(void)
 {
     char *cmd;
     void_fn *prefix_fn = NULL;
@@ -421,13 +421,13 @@ parse_inline_prefix(void)
 
     depth += 1;
     cmds[depth] = cmd;
-    state_fns[depth] = parse_inline_prefix_body;
-    parse_inline_prefix_body();
+    state_fns[depth] = inline_prefix_body;
+    inline_prefix_body();
 }
 
 
 void
-parse_inline_prefix_end(void)
+inline_prefix_end(void)
 {
     in += 1;
     tok = cmds[depth];
@@ -438,7 +438,7 @@ parse_inline_prefix_end(void)
 
 
 void
-parse_inline_infix(void)
+inline_infix(void)
 {
     void_fn *prefix_fn = NULL;
 
@@ -465,14 +465,14 @@ parse_inline_infix(void)
 
     depth += 1;
     cmds[depth] = NULL;
-    state_fns[depth] = parse_inline_infix_first_op;
+    state_fns[depth] = inline_infix_first_op;
     /*debug_stack();*/
     /*debug_token();*/
 }
 
 
 void
-parse_inline_infix_first_op(void)
+inline_infix_first_op(void)
 {
     char *cmd = NULL;
     void_fn *prefix_fn = NULL;
@@ -494,13 +494,13 @@ parse_inline_infix_first_op(void)
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
-    state_fns[depth] = parse_inline_infix_arg;
+    state_fns[depth] = inline_infix_arg;
     next_word();
 }
 
 
 void
-parse_inline_infix_op(void)
+inline_infix_op(void)
 {
     void_fn *prefix_fn = NULL;
 
@@ -524,13 +524,13 @@ parse_inline_infix_op(void)
 
     /*tok = cmds[depth];*/
     /*tok_len = strlen(tok);*/
-    state_fns[depth] = parse_inline_infix_arg;
+    state_fns[depth] = inline_infix_arg;
     /*die("adsf");*/
 }
 
 
 void
-parse_inline_infix_arg(void)
+inline_infix_arg(void)
 {
     void_fn *prefix_fn = NULL;
 
@@ -540,12 +540,12 @@ parse_inline_infix_arg(void)
     }
 
     read_token();
-    state_fns[depth] = parse_inline_infix_op;
+    state_fns[depth] = inline_infix_op;
 }
 
 
 void
-parse_inline_infix_end(void)
+inline_infix_end(void)
 {
     /*ere;*/
     /*debug_stack();*/
@@ -564,18 +564,18 @@ parse_inline_infix_end(void)
 
 
 void
-parse_inline_postfix(void)
+inline_postfix(void)
 {
     in += 1;
     chomp(' ');
     depth += 1;
-    state_fns[depth] = parse_inline_postfix_body;
+    state_fns[depth] = inline_postfix_body;
     next_word();
 }
 
 
 void
-parse_inline_postfix_body(void)
+inline_postfix_body(void)
 {
     /*ere;*/
     void_fn *prefix_fn = NULL;
@@ -590,7 +590,7 @@ parse_inline_postfix_body(void)
 
 
 void
-parse_inline_postfix_end(void)
+inline_postfix_end(void)
 {
     in += 1;
     chomp(' ');
@@ -656,12 +656,12 @@ main(int argc, char **argv)
 
     define_wrap(":");
 
-    define_prefix('[', parse_inline_prefix);
-    define_prefix(']', parse_inline_prefix_end);
-    define_prefix('(', parse_inline_infix);
-    define_prefix(')', parse_inline_infix_end);
-    define_prefix('{', parse_inline_postfix);
-    define_prefix('}', parse_inline_postfix_end);
+    define_prefix('[', inline_prefix);
+    define_prefix(']', inline_prefix_end);
+    define_prefix('(', inline_infix);
+    define_prefix(')', inline_infix_end);
+    define_prefix('{', inline_postfix);
+    define_prefix('}', inline_postfix_end);
 
     if ((f = fopen(".\\src\\examples\\tokens12.ie", "r")) == NULL)
         die("failed to open file");
@@ -669,7 +669,7 @@ main(int argc, char **argv)
     read_line();
 
     depth = 0;
-    state_fns[depth] = parse_prefix_head;
+    state_fns[depth] = prefix_head;
 
     int i = 10;
     while (next_word(), tok && tok_len) {
