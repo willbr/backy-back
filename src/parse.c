@@ -16,10 +16,11 @@
                 __FILE__, __LINE__, __func__); \
     } while (0);
 
-#define die(msg) \
+#define die(msg, ...) \
     do { \
         fprintf(stderr, \
-                CTEXT(RED_TEXT, "\nerror: " msg "\n")); \
+                CTEXT(RED_TEXT, "\nerror: " msg "\n"), \
+                ## __VA_ARGS__); \
         ere; \
         exit(1); \
     } while (0);
