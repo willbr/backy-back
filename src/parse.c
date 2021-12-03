@@ -657,8 +657,8 @@ inline_postfix(void)
     in += 1;
     chomp(' ');
     state_index += 1;
+    strncpy(token_buffer, "{", 256);
     state_fns[state_index] = inline_postfix_body;
-    next_word();
 }
 
 
@@ -683,7 +683,7 @@ inline_postfix_end(void)
     in += 1;
     chomp(' ');
     state_index -= 1;
-    next_word();
+    strncpy(token_buffer, "}", 256);
 }
 
 
@@ -753,7 +753,7 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens10.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens12.ie", "r")) == NULL)
         die("failed to open file");
 
     in = line_buffer;
