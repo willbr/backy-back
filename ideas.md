@@ -63,6 +63,9 @@ pointer methods
 
     [printf ("hello %s", "Bob")]
 
+    tokens:
+    [ printf ( "hello %s" , "Bob" ) ]
+
 do I need to swap the argument orders?
 is this only needed for vaargs?
 

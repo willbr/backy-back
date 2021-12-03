@@ -1,10 +1,10 @@
 include-lib "stdio.h"
 
 fn main
-  var c int
+    var c int
 
-  c = getchar()
-  while c != EOF
-    putchar c
     c = getchar()
+    while c != EOF
+        putchar c
+        c = getchar()
 

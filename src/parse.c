@@ -39,6 +39,7 @@ char *in = NULL;
 char line_buffer[256] = "";
 
 char token_buffer[256] = "";
+char next_token_buffer[256] = "";
 
 FILE *f = NULL;
 
@@ -71,7 +72,9 @@ char* next_word(void);
     X(inline_infix) \
     X(inline_infix_end) \
     X(inline_postfix) \
-    X(inline_postfix_end)
+    X(inline_postfix_end) \
+    X(neoteric) \
+    X(neoteric_end)
 
 #define X(s) \
     void s(void);
@@ -229,6 +232,8 @@ read_line(void)
     if (r == NULL)
         line_buffer[0] = '\0';
     in = &line_buffer[0];
+    /*ere;*/
+    /*fprintf(stderr, "line: %s\n", line_buffer);*/
     return r;
 }
 
@@ -352,6 +357,42 @@ parse_indent(int *indent)
 
 
 void
+neoteric(void)
+{
+    /*ere;*/
+    /*debug_var("c", *in);*/
+    /*debug_token();*/
+    /*debug_stack();*/
+    state_fns[state_index] = neoteric_end;
+    inline_body();
+}
+
+
+void
+neoteric_end(void)
+{
+    /*ere;*/
+    strncpy(token_buffer, "]", 256);
+    state_index -= 1;
+}
+
+
+void
+is_neoteric(void)
+{
+    if (strchr("([{", *in) && *(in - 1) != ' ') {
+        /*ere;*/
+        /*debug_var("c", *in);*/
+        /*debug_token();*/
+        /*debug_stack();*/
+        strncpy(next_token_buffer, token_buffer, 256);
+        strncpy(token_buffer, "[", 256);
+        state_index += 1;
+        state_fns[state_index] = neoteric;
+    }
+}
+
+void
 prefix_body(void)
 {
     /*ere;*/
@@ -378,6 +419,7 @@ prefix_body(void)
     }
 
     read_token();
+    is_neoteric();
 }
 
 
@@ -632,12 +674,17 @@ inline_body(void)
     /*ere;*/
     void_fn *prefix_fn = NULL;
 
+    /*debug_var("c", *in);*/
+
     if (prefix_fn = lookup_prefix(*in)) {
+        /*ere;*/
         prefix_fn();
+        /*ere;*/
         return;
     }
 
     read_token();
+    is_neoteric();
 }
 
 
@@ -692,11 +739,17 @@ define_prefix(char c, void (*fn)(void))
 char *
 next_word(void)
 {
-    /*ere;*/
-    /*debug_var("d", state_index);*/
-    /*debug_stack();*/
-    if (state_index < 0)
+    if (next_token_buffer[0] != '\0') {
+        strncpy(token_buffer, next_token_buffer, 256);
+        next_token_buffer[0] = '\0';
+        return;
+    }
+
+    if (state_index < 0) {
+        /*ere;*/
+        debug_stack();
         die("state underflow");
+    }
 
     state_fns[state_index]();
     return token_buffer;
@@ -730,13 +783,14 @@ main(int argc, char **argv)
     init();
 
 
-    if ((f = fopen(".\\src\\examples\\tokens8.ie", "r")) == NULL)
+    /*if ((f = fopen(".\\src\\examples\\c0.ie", "r")) == NULL)*/
+    if ((f = fopen(".\\src\\examples\\tokens14.ie", "r")) == NULL)
         die("failed to open file");
 
-    int i = 0xff;
+    int limit = 0xfff;
     while (next_word(), token_buffer[0] != '\0') {
         printf("%s ", token_buffer);
-        if (!i--) {
+        if (!limit--) {
             debug_var("c", *in);
             die("limit");
         }

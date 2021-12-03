@@ -1,7 +1,7 @@
 include-lib "stdio.h"
 
 fn main
-  puts "hi"
-  var c int
-  while (c = getchar()) != EOF
-    putchar c
+    puts "hi"
+    var c int
+    while (c = getchar()) != EOF
+        putchar c
