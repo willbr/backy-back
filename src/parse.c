@@ -124,6 +124,49 @@ debug_token(void)
 
 
 void
+dump(void *v, int n)
+{
+    char *c = v;
+
+    fprintf(stderr, "dumping: %d bytes @ %p\n\n", n, v);
+
+    while (n > 0) {
+        ptrdiff_t offset = c - v;
+        int i = 4;
+        int line_length = n > 7 ? 8 : n % 8;
+
+        fprintf(stderr, "%.03zu ", offset);
+
+        for (i = 0; i < 8; i++) {
+            char *x = c + i;
+            char *gap = i % 2 ? " " : "";
+            if (i < line_length)
+                fprintf(stderr, "%02x%s", *x, gap);
+            else
+                fprintf(stderr, "  %s", gap);
+        }
+
+        fprintf(stderr, " ");
+
+        for (i = 0; i < 8; i++) {
+            char *x = c + i;
+            char xx = *x > 10 ? *x : '.';
+            char *gap = i % 2 ? " " : "";
+            if (i < line_length)
+                fprintf(stderr, "%c", xx);
+            else
+                fprintf(stderr, " ");
+        }
+
+        fprintf(stderr, "\n");
+
+        c += 8;
+        n -= 8;
+    }
+
+    fprintf(stderr, "\n");
+}
+void
 chomp(char c)
 {
     while (*in == c)
