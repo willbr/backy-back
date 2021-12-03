@@ -34,10 +34,10 @@ typedef void (void_fn)(void);
 uint cur_indent = 0;
 uint indent_width = 4;
 char line_buffer[256] = "";
+char token_buffer[256] = "";
+int tok_len = 0;
 char *in = NULL;
 FILE *f = NULL;
-char *tok = NULL;
-uint tok_len = 0;
 
 int prefix_index = 0;
 char prefix_chars[64] = "";
@@ -71,7 +71,7 @@ void inline_postfix(void);
 void inline_postfix_body(void);
 void inline_postfix_end(void);
 
-void next_word(void);
+char* next_word(void);
 
 #define LIST_OF_STATES \
     X(prefix_head) \
@@ -104,7 +104,7 @@ debug_stack(void)
         fn = #s;
         if (state_fns[i] == NULL) {
             fn = "(null)";
-            LIST_OF_STATES
+        LIST_OF_STATES
         } else {
             debug_var("p", state_fns[i]);
             die("other");
@@ -119,7 +119,7 @@ debug_stack(void)
 void
 debug_token(void)
 {
-    fprintf(stderr, "tok: %d, '%.*s'\n", tok_len, tok_len, tok);
+    fprintf(stderr, "tok: %d, '%s'\n", strlen(token_buffer), token_buffer);
 }
 
 
@@ -145,13 +145,21 @@ read_line(void)
 void
 read_token(void)
 {
-    /*ere;*/
-    /*debug_var("d", *in);*/
-    tok = in;
+    char *tok = in;
+
     while (!strchr(prefix_breakchars, *in))
         in += 1;
+
     tok_len = in - tok;
+
     chomp(' ');
+
+    if (tok_len) {
+        strncpy(token_buffer, tok, tok_len);
+        token_buffer[tok_len] = '\0';
+    } else {
+        token_buffer[0] = '\0';
+    }
 }
 
 
@@ -195,8 +203,7 @@ prefix_body(void)
 
     if (diff < 0) {
         /*ere;*/
-        tok = cmds[depth];
-        tok_len = strlen(tok);
+        strncpy(token_buffer, cmds[depth], 256);
         state_fns[depth] = prefix_head;
         diff += 1;
         return;
@@ -216,8 +223,7 @@ prefix_body(void)
         /*ere;*/
 
         if (parse_indent(&new_indent)) {
-            tok = cmds[depth];
-            tok_len = strlen(tok);
+            strncpy(token_buffer, cmds[depth], 256);
             state_fns[depth] = prefix_head;
             return;
         }
@@ -228,7 +234,7 @@ prefix_body(void)
         peek_token();
         /*debug_token();*/
 
-        if (!strncmp("\\", tok, tok_len)) {
+        if (!strcmp("\\", token_buffer)) {
             /*ere;*/
             if (diff > 1) {
                 die(">1");
@@ -258,14 +264,12 @@ prefix_body(void)
             state_fns[depth]();
             return;
         } else if (diff == 0) {
-            tok = cmds[depth];
-            tok_len = strlen(tok);
+            strncpy(token_buffer, cmds[depth], 256);
             state_fns[depth] = prefix_head;
             return;
         } else {
             /*ere;*/
-            tok = cmds[depth];
-            tok_len = strlen(tok);
+            strncpy(token_buffer, cmds[depth], 256);
             depth -= 1;
             return;
         }
@@ -285,12 +289,12 @@ prefix_body(void)
 
 
 int
-is_wrapped(char *s, int len)
+is_wrapped(char *s)
 {
     int i;
 
     for (i = 0; i < wrapped_index; i += 1)
-        if (!strncmp(wrapped[i], s, len))
+        if (!strncmp(wrapped[i], s, 256))
             return -1;
 
     return 0;
@@ -306,7 +310,7 @@ prefix_head(void)
     void_fn *prefix_fn = NULL;
 
     if (*in == '\0' && read_line() == NULL) {
-        tok = NULL;
+        token_buffer[0] = '\0';
         return;
     }
 
@@ -328,13 +332,13 @@ prefix_head(void)
     read_token();
     /*debug_token();*/
 
-    if (is_wrapped(tok, tok_len)) {
-        end = malloc(4 + tok_len + 1);
+    if (is_wrapped(token_buffer)) {
+        end = malloc(4 + strlen(token_buffer) + 1);
         if (end == NULL)
             die("malloc failed");
         *end = '\0';
         strncat(end, "end-", 4);
-        strncat(end, tok, tok_len);
+        strncat(end, token_buffer, 256-4);
         /*debug_var("s", end);*/
         cmds[depth] = end;
         state_fns[depth] = prefix_body;
@@ -345,7 +349,7 @@ prefix_head(void)
     if (cmd == NULL)
         die("malloc failed");
 
-    strncpy(cmd, tok, tok_len);
+    strncpy(cmd, token_buffer, 256);
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
@@ -408,7 +412,7 @@ inline_prefix(void)
     read_token();
     /*debug_token();*/
 
-    if (is_wrapped(tok, tok_len)) {
+    if (is_wrapped(token_buffer)) {
         die("wrapped");
     }
 
@@ -416,7 +420,7 @@ inline_prefix(void)
     if (cmd == NULL)
         die("malloc failed");
 
-    strncpy(cmd, tok, tok_len);
+    strncpy(cmd, token_buffer, 256);
     cmd[tok_len] = '\0';
 
     depth += 1;
@@ -430,8 +434,8 @@ void
 inline_prefix_end(void)
 {
     in += 1;
-    tok = cmds[depth];
-    tok_len = strlen(tok);
+    strncpy(token_buffer, cmds[depth], 256);
+    tok_len = strlen(token_buffer);
     depth -= 1;
     return;
 }
@@ -459,7 +463,7 @@ inline_infix(void)
     read_token();
     /*debug_token();*/
 
-    if (is_wrapped(tok, tok_len)) {
+    if (is_wrapped(token_buffer)) {
         die("wrapped");
     }
 
@@ -490,7 +494,7 @@ inline_infix_first_op(void)
     if (cmd == NULL)
         die("malloc failed");
 
-    strncpy(cmd, tok, tok_len);
+    strncpy(cmd, token_buffer, 256);
     cmd[tok_len] = '\0';
 
     cmds[depth] = cmd;
@@ -514,7 +518,7 @@ inline_infix_op(void)
 
     peek_token();
 
-    if (!strncmp(cmds[depth], tok, tok_len)) {
+    if (!strcmp(cmds[depth], token_buffer)) {
         read_token();
     } else {
         debug_var("s", cmds[depth]);
@@ -552,13 +556,13 @@ inline_infix_end(void)
 
     in += 1;
     chomp(' ');
-    tok = cmds[depth];
+    strncpy(token_buffer, cmds[depth], 256);
     depth -= 1;
 
-    if (tok == NULL) {
+    if (token_buffer[0] == '\0') {
         next_word();
     } else {
-        tok_len = strlen(tok);
+        tok_len = strlen(token_buffer);
     }
 }
 
@@ -637,7 +641,7 @@ define_prefix(char c, void (*fn)(void))
 }
 
 
-void
+char *
 next_word(void)
 {
     /*ere;*/
@@ -645,6 +649,7 @@ next_word(void)
     /*debug_stack();*/
     if (depth < 0)
         die("state underflow");
+
     state_fns[depth]();
 }
 
@@ -663,7 +668,7 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens12.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens0.ie", "r")) == NULL)
         die("failed to open file");
 
     read_line();
@@ -672,10 +677,10 @@ main(int argc, char **argv)
     state_fns[depth] = prefix_head;
 
     int i = 10;
-    while (next_word(), tok && tok_len) {
+    while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/
-        printf("token '%.*s'\n", tok_len, tok);
+        printf("token '%s'\n", token_buffer);
         if (!i--) {
             debug_var("c", *in);
             die("limit");
