@@ -131,7 +131,7 @@ debug_token(void)
 
 
 void
-dump(void *v, int n)
+debug_dump(void *v, int n)
 {
     char *c = v;
 
@@ -199,7 +199,7 @@ alloc_cmd(char *s)
     /*debug_var("d", cmds_index);*/
 
     /*debug_var("s", rval);*/
-    /*dump(cmds_buffer, cmds_index);*/
+    /*debug_dump(cmds_buffer, cmds_index);*/
 
     /*debug_var("d", len);*/
     return rval;
@@ -220,10 +220,10 @@ alloc_prefixed_cmd(char *prefix, char* s)
     /*ere;*/
     strncat(prefixed, prefix, 256);
     /*debug_var("s", prefixed);*/
-    /*dump(prefixed, 0x20);*/
+    /*debug_dump(prefixed, 0x20);*/
 
     strncat(prefixed, s, 256 - prefix_len);
-    /*dump(prefixed, 0x20);*/
+    /*debug_dump(prefixed, 0x20);*/
     /*debug_var("s", prefixed);*/
 
     return alloc_cmd(prefixed);
