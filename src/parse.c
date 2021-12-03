@@ -394,19 +394,24 @@ prefix_newline(void)
     if (diff > 1) {
         die(">1");
     } else if (diff == 1) {
-        ere;
+        /*ere;*/
         state_index += 1;
         state_fns[state_index] = prefix_head;
         state_fns[state_index]();
         return;
     } else if (diff == 0) {
+        /*ere;*/
         strncpy(token_buffer, "]", 256);
         state_fns[state_index] = prefix_head;
         return;
     } else {
-        ere;
         /*ere;*/
-        strncpy(token_buffer, cmds[state_index], 256);
+        /*ere;*/
+        /*debug_var("d", diff);*/
+        strncpy(token_buffer, "]", 256);
+        diff += 1;
+        /*ere;*/
+        /*strncpy(token_buffer, cmds[state_index], 256);*/
         state_index -= 1;
         return;
     }
@@ -784,7 +789,7 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens2.ie", "r")) == NULL)
         die("failed to open file");
 
     in = line_buffer;
@@ -797,12 +802,14 @@ main(int argc, char **argv)
         /*ere;*/
         /*debug_stack();*/
         /*printf("token '%s'\n", token_buffer);*/
-        printf("%s\n", token_buffer);
+        /*printf("%s\n", token_buffer);*/
+        printf("%s ", token_buffer);
         if (!i--) {
             debug_var("c", *in);
             die("limit");
         }
     }
+    printf("\n");
     /*ere;*/
 
     if (*in)
@@ -810,6 +817,7 @@ main(int argc, char **argv)
     /*ere;*/
 
     /*ere;*/
+    /*debug_stack();*/
     while (state_index) {
         /*ere;*/
         printf("token %s\n", cmds[state_index]);
