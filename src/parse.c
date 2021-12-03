@@ -306,12 +306,11 @@ prefix_body(void)
     /*ere;*/
     void (*prefix_fn)(void) = NULL;
 
-
-    /*ere;*/
-    /*debug_var("c", *in);*/
-
-    if (*in == '\0')
-        die("null char");
+    if (*in == '\0') {
+        /* EOF */
+        prefix_newline();
+        return;
+    }
 
     if (*in == ' ')
         die("space")
@@ -323,8 +322,6 @@ prefix_body(void)
     }
 
     if (prefix_fn = lookup_prefix(*in)) {
-        /*ere;*/
-        /*debug_var("c", *in);*/
         prefix_fn();
         return;
     }
@@ -499,19 +496,6 @@ inline_prefix_body(void)
 {
     void_fn *prefix_fn = NULL;
 
-    /*ere;*/
-    /*debug_var("c", *in);*/
-    /*debug_stack();*/
-
-    if (*in == '\0')
-        die("null char")
-
-    if (*in == '\n')
-        die("newline")
-
-    if (*in == ' ')
-        die("space")
-
     if (prefix_fn = lookup_prefix(*in)) {
         /*ere;*/
         prefix_fn();
@@ -528,33 +512,12 @@ inline_prefix_body(void)
 void
 inline_prefix(void)
 {
-    void_fn *prefix_fn = NULL;
-
-    /*ere;*/
-    /*debug_var("c", *in);*/
-
     in += 1;
     chomp(' ');
 
-    /*debug_var("c", *in);*/
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        prefix_fn();
-        return;
-    }
-
-    /*ere;*/
-    read_token();
-    /*debug_token();*/
-
-    if (is_wrapped(token_buffer)) {
-        die("wrapped");
-    }
-
+    strncpy(token_buffer, "[", 256);
     state_index += 1;
-    cmds[state_index] = alloc_cmd(token_buffer);
     state_fns[state_index] = inline_prefix_body;
-    inline_prefix_body();
 }
 
 
@@ -562,8 +525,9 @@ void
 inline_prefix_end(void)
 {
     in += 1;
-    strncpy(token_buffer, cmds[state_index], 256);
-    tok_len = strlen(token_buffer);
+    chomp(' ');
+
+    strncpy(token_buffer, "]", 256);
     state_index -= 1;
     return;
 }
@@ -789,7 +753,7 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens2.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens10.ie", "r")) == NULL)
         die("failed to open file");
 
     in = line_buffer;
@@ -797,7 +761,7 @@ main(int argc, char **argv)
     state_index = 0;
     state_fns[state_index] = prefix_head;
 
-    int i = 60;
+    int i = 0xff;
     while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/
