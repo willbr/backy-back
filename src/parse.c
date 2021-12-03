@@ -28,15 +28,19 @@
 #define debug_var(s,v) \
     fprintf(stderr, #v ": %" s "\n", v)
 
+typedef unsigned char u8;
 typedef unsigned int uint;
 typedef void (void_fn)(void);
 
 uint cur_indent = 0;
 uint indent_width = 4;
+
+char *in = NULL;
 char line_buffer[256] = "";
+
 char token_buffer[256] = "";
 int tok_len = 0;
-char *in = NULL;
+
 FILE *f = NULL;
 
 int prefix_index = 0;
@@ -45,9 +49,12 @@ void (*prefix_fns[64])(void);
 
 char *prefix_breakchars = " ,()[]{}\n";
 
+int state_index = 0;
 char *cmds[16];
-int depth = 0;
 void (*state_fns[16])(void);
+
+int cmds_index = 0;
+char cmds_buffer[16 * (256 + 1)] = "";
 
 int wrapped_index = 0;
 char *wrapped[64];
@@ -93,11 +100,11 @@ debug_stack(void)
 {
     int i = 0;
 
-    if (depth < 0)
+    if (state_index < 0)
         die("cmd stack underflow");
 
     fprintf(stderr, "\nstack:\n");
-    for (i = 0; i <= depth; i += 1) {
+    for (i = 0; i <= state_index; i += 1) {
         char *fn = NULL;
 #define X(s) \
     } else if (state_fns[i] == s) { \
@@ -166,6 +173,63 @@ dump(void *v, int n)
 
     fprintf(stderr, "\n");
 }
+
+
+char *
+alloc_cmd(char *s)
+{
+    char *rval = &cmds_buffer[cmds_index];
+    int len = strlen(s);
+    int max_size = sizeof(cmds_buffer) / sizeof(cmds_buffer[0]);
+    /*debug_var("d", max_size);*/
+
+    if (len > 255)
+        die("command string is too long: %d > 255", len);
+
+    /*debug_var("d", cmds_index);*/
+    cmds_index += len + 1;
+    /*debug_var("d", cmds_index);*/
+
+    if (cmds_index >= max_size)
+        die("cmds_buffer overflowed");
+
+    strncpy(rval, s, len+ 1);
+    cmds_buffer[cmds_index] = (u8)len;
+    cmds_index += 1;
+    /*debug_var("d", cmds_index);*/
+
+    /*debug_var("s", rval);*/
+    /*dump(cmds_buffer, cmds_index);*/
+
+    /*debug_var("d", len);*/
+    return rval;
+}
+
+
+char *
+alloc_prefixed_cmd(char *prefix, char* s)
+{
+    static char prefixed[256] = "";
+    int prefix_len = strlen(prefix);
+    int s_len = strlen(s);
+    int total_len = prefix_len + s_len;
+
+    if (total_len > 255)
+        die("prefixed cmd is too long: %d > 255", total_len);
+
+    /*ere;*/
+    strncat(prefixed, prefix, 256);
+    /*debug_var("s", prefixed);*/
+    /*dump(prefixed, 0x20);*/
+
+    strncat(prefixed, s, 256 - prefix_len);
+    /*dump(prefixed, 0x20);*/
+    /*debug_var("s", prefixed);*/
+
+    return alloc_cmd(prefixed);
+}
+
+
 void
 chomp(char c)
 {
@@ -246,8 +310,8 @@ prefix_body(void)
 
     if (diff < 0) {
         /*ere;*/
-        strncpy(token_buffer, cmds[depth], 256);
-        state_fns[depth] = prefix_head;
+        strncpy(token_buffer, cmds[state_index], 256);
+        state_fns[state_index] = prefix_head;
         diff += 1;
         return;
     }
@@ -266,8 +330,8 @@ prefix_body(void)
         /*ere;*/
 
         if (parse_indent(&new_indent)) {
-            strncpy(token_buffer, cmds[depth], 256);
-            state_fns[depth] = prefix_head;
+            strncpy(token_buffer, cmds[state_index], 256);
+            state_fns[state_index] = prefix_head;
             return;
         }
 
@@ -302,18 +366,18 @@ prefix_body(void)
         if (diff > 1) {
             die(">1");
         } else if (diff == 1) {
-            depth += 1;
-            state_fns[depth] = prefix_head;
-            state_fns[depth]();
+            state_index += 1;
+            state_fns[state_index] = prefix_head;
+            state_fns[state_index]();
             return;
         } else if (diff == 0) {
-            strncpy(token_buffer, cmds[depth], 256);
-            state_fns[depth] = prefix_head;
+            strncpy(token_buffer, cmds[state_index], 256);
+            state_fns[state_index] = prefix_head;
             return;
         } else {
             /*ere;*/
-            strncpy(token_buffer, cmds[depth], 256);
-            depth -= 1;
+            strncpy(token_buffer, cmds[state_index], 256);
+            state_index -= 1;
             return;
         }
 
@@ -348,7 +412,6 @@ void
 prefix_head(void)
 {
     /*ere;*/
-    char *cmd  = NULL;
     char *end  = NULL;
     void_fn *prefix_fn = NULL;
 
@@ -376,28 +439,15 @@ prefix_head(void)
     /*debug_token();*/
 
     if (is_wrapped(token_buffer)) {
-        end = malloc(4 + strlen(token_buffer) + 1);
-        if (end == NULL)
-            die("malloc failed");
-        *end = '\0';
-        strncat(end, "end-", 4);
-        strncat(end, token_buffer, 256-4);
-        /*debug_var("s", end);*/
-        cmds[depth] = end;
-        state_fns[depth] = prefix_body;
+        cmds[state_index] = alloc_prefixed_cmd("end-", token_buffer);
+        state_fns[state_index] = prefix_body;
         return;
     }
 
-    cmd = malloc(tok_len + 1);
-    if (cmd == NULL)
-        die("malloc failed");
 
-    strncpy(cmd, token_buffer, 256);
-    cmd[tok_len] = '\0';
-
-    cmds[depth] = cmd;
-    state_fns[depth] = prefix_body;
-    prefix_body();
+    cmds[state_index] = alloc_cmd(token_buffer);
+    state_fns[state_index] = prefix_body;
+    next_word();
 }
 
 
@@ -435,7 +485,6 @@ inline_prefix_body(void)
 void
 inline_prefix(void)
 {
-    char *cmd;
     void_fn *prefix_fn = NULL;
 
     /*ere;*/
@@ -459,16 +508,9 @@ inline_prefix(void)
         die("wrapped");
     }
 
-    cmd = malloc(tok_len + 1);
-    if (cmd == NULL)
-        die("malloc failed");
-
-    strncpy(cmd, token_buffer, 256);
-    cmd[tok_len] = '\0';
-
-    depth += 1;
-    cmds[depth] = cmd;
-    state_fns[depth] = inline_prefix_body;
+    state_index += 1;
+    cmds[state_index] = alloc_cmd(token_buffer);
+    state_fns[state_index] = inline_prefix_body;
     inline_prefix_body();
 }
 
@@ -477,9 +519,9 @@ void
 inline_prefix_end(void)
 {
     in += 1;
-    strncpy(token_buffer, cmds[depth], 256);
+    strncpy(token_buffer, cmds[state_index], 256);
     tok_len = strlen(token_buffer);
-    depth -= 1;
+    state_index -= 1;
     return;
 }
 
@@ -510,9 +552,9 @@ inline_infix(void)
         die("wrapped");
     }
 
-    depth += 1;
-    cmds[depth] = NULL;
-    state_fns[depth] = inline_infix_first_op;
+    state_index += 1;
+    cmds[state_index] = NULL;
+    state_fns[state_index] = inline_infix_first_op;
     /*debug_stack();*/
     /*debug_token();*/
 }
@@ -521,7 +563,6 @@ inline_infix(void)
 void
 inline_infix_first_op(void)
 {
-    char *cmd = NULL;
     void_fn *prefix_fn = NULL;
 
     if (prefix_fn = lookup_prefix(*in)) {
@@ -533,15 +574,8 @@ inline_infix_first_op(void)
     read_token();
     /*debug_token();*/
 
-    cmd = malloc(tok_len + 1);
-    if (cmd == NULL)
-        die("malloc failed");
-
-    strncpy(cmd, token_buffer, 256);
-    cmd[tok_len] = '\0';
-
-    cmds[depth] = cmd;
-    state_fns[depth] = inline_infix_arg;
+    cmds[state_index] = alloc_cmd(token_buffer);
+    state_fns[state_index] = inline_infix_arg;
     next_word();
 }
 
@@ -561,17 +595,17 @@ inline_infix_op(void)
 
     peek_token();
 
-    if (!strcmp(cmds[depth], token_buffer)) {
+    if (!strcmp(cmds[state_index], token_buffer)) {
         read_token();
     } else {
-        debug_var("s", cmds[depth]);
+        debug_var("s", cmds[state_index]);
         debug_token();
         die("different");
     }
 
-    /*tok = cmds[depth];*/
+    /*tok = cmds[state_index];*/
     /*tok_len = strlen(tok);*/
-    state_fns[depth] = inline_infix_arg;
+    state_fns[state_index] = inline_infix_arg;
     /*die("adsf");*/
 }
 
@@ -587,7 +621,7 @@ inline_infix_arg(void)
     }
 
     read_token();
-    state_fns[depth] = inline_infix_op;
+    state_fns[state_index] = inline_infix_op;
 }
 
 
@@ -599,8 +633,8 @@ inline_infix_end(void)
 
     in += 1;
     chomp(' ');
-    strncpy(token_buffer, cmds[depth], 256);
-    depth -= 1;
+    strncpy(token_buffer, cmds[state_index], 256);
+    state_index -= 1;
 
     if (token_buffer[0] == '\0') {
         next_word();
@@ -615,8 +649,8 @@ inline_postfix(void)
 {
     in += 1;
     chomp(' ');
-    depth += 1;
-    state_fns[depth] = inline_postfix_body;
+    state_index += 1;
+    state_fns[state_index] = inline_postfix_body;
     next_word();
 }
 
@@ -641,7 +675,7 @@ inline_postfix_end(void)
 {
     in += 1;
     chomp(' ');
-    depth -= 1;
+    state_index -= 1;
     next_word();
 }
 
@@ -688,12 +722,12 @@ char *
 next_word(void)
 {
     /*ere;*/
-    /*debug_var("d", depth);*/
+    /*debug_var("d", state_index);*/
     /*debug_stack();*/
-    if (depth < 0)
+    if (state_index < 0)
         die("state underflow");
 
-    state_fns[depth]();
+    state_fns[state_index]();
 }
 
 
@@ -716,10 +750,10 @@ main(int argc, char **argv)
 
     read_line();
 
-    depth = 0;
-    state_fns[depth] = prefix_head;
+    state_index = 0;
+    state_fns[state_index] = prefix_head;
 
-    int i = 10;
+    int i = 60;
     while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/
@@ -729,16 +763,19 @@ main(int argc, char **argv)
             die("limit");
         }
     }
+    /*ere;*/
 
     if (*in)
         debug_var("c", *in);
     /*ere;*/
 
-    while (depth) {
-        ere;
-        printf("token %s\n", cmds[depth]);
-        depth -= 1;
+    /*ere;*/
+    while (state_index) {
+        /*ere;*/
+        printf("token %s\n", cmds[state_index]);
+        state_index -= 1;
     }
+    /*ere;*/
 
     fclose(f);
 
