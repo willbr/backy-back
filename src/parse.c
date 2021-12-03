@@ -364,6 +364,7 @@ neoteric(void)
     /*debug_token();*/
     /*debug_stack();*/
     state_fns[state_index] = neoteric_end;
+    /*ere;*/
     inline_body();
 }
 
@@ -427,43 +428,28 @@ void
 prefix_newline(void)
 {
     static int diff = 0;
-    /*ere;*/
-    /*debug_var("d", *in);*/
 
     if (*in == '\n') {
         in += 1;
         strncpy(token_buffer, "newline", 256);
         return;
     }
-    /*ere;*/
 
     if (diff < 0) {
-        ere;
-        die("ere");
-        /*strncpy(token_buffer, cmds[state_index], 256);*/
-        /*state_fns[state_index] = prefix_cmd;*/
+        strncpy(token_buffer, "]", 256);
+        state_index -= 1;
         diff += 1;
         return;
     }
 
     int new_indent = 0;
-
-    /*ere;*/
     parse_indent(&new_indent);
 
-    /*ere;*/
     diff = new_indent - cur_indent;
-    /*debug_var("d", diff);*/
 
-    /*ere;*/
-    /*debug_var("d", *in);*/
-    /*debug_token();*/
     peek_token();
-    /*debug_var("d", *in);*/
-    /*debug_token();*/
 
     if (!strcmp("\\", token_buffer)) {
-        /*ere;*/
         if (diff > 1) {
             die(">1");
         } else if (diff == 1) {
@@ -480,28 +466,20 @@ prefix_newline(void)
     }
 
     cur_indent = new_indent;
-    /*ere;*/
     if (diff > 1) {
         die(">1");
     } else if (diff == 1) {
-        /*ere;*/
         state_index += 1;
         state_fns[state_index] = prefix_head;
         state_fns[state_index]();
         return;
     } else if (diff == 0) {
-        /*ere;*/
         strncpy(token_buffer, "]", 256);
         state_fns[state_index] = prefix_head;
         return;
     } else {
-        /*ere;*/
-        /*ere;*/
-        /*debug_var("d", diff);*/
         strncpy(token_buffer, "]", 256);
         diff += 1;
-        /*ere;*/
-        /*strncpy(token_buffer, cmds[state_index], 256);*/
         state_index -= 1;
         return;
     }
@@ -620,11 +598,6 @@ inline_infix(void)
     chomp(' ');
 
     /*debug_var("c", *in);*/
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        prefix_fn();
-        return;
-    }
 
     /*ere;*/
     /*read_token();*/
@@ -783,8 +756,7 @@ main(int argc, char **argv)
     init();
 
 
-    /*if ((f = fopen(".\\src\\examples\\c0.ie", "r")) == NULL)*/
-    if ((f = fopen(".\\src\\examples\\tokens14.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\c1.ie", "r")) == NULL)
         die("failed to open file");
 
     int limit = 0xfff;
