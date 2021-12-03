@@ -39,7 +39,6 @@ char *in = NULL;
 char line_buffer[256] = "";
 
 char token_buffer[256] = "";
-int tok_len = 0;
 
 FILE *f = NULL;
 
@@ -238,6 +237,7 @@ void
 read_token(void)
 {
     char *tok;
+    int tok_len = 0;
 
     if (*in == '\0')
         if (!read_line())
@@ -249,6 +249,14 @@ read_token(void)
         in += 1;
 
     tok_len = in - tok;
+
+    /*ere;*/
+    if (tok_len == 0) {
+        if (*in == ' ')
+            die("what?");
+        in += 1;
+        tok_len = 1;
+    }
 
     chomp(' ');
 
@@ -265,6 +273,7 @@ void
 read_string(void)
 {
     char *tok;
+    int tok_len = 0;
 
     /*ere;*/
     /*debug_var("d", *in);*/
@@ -721,7 +730,7 @@ main(int argc, char **argv)
     init();
 
 
-    if ((f = fopen(".\\src\\examples\\tokens9.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens8.ie", "r")) == NULL)
         die("failed to open file");
 
     int i = 0xff;
