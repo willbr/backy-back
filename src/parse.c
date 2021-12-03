@@ -728,6 +728,7 @@ next_word(void)
         die("state underflow");
 
     state_fns[state_index]();
+    return token_buffer;
 }
 
 
