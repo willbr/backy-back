@@ -50,7 +50,6 @@ void (*prefix_fns[64])(void);
 char *prefix_breakchars = " ,()[]{}\n";
 
 int state_index = 0;
-char *cmds[16];
 void (*state_fns[16])(void);
 
 int cmds_index = 0;
@@ -67,16 +66,12 @@ char* next_word(void);
     X(prefix_head) \
     X(prefix_body) \
     X(prefix_newline) \
+    X(inline_body) \
     X(inline_prefix) \
-    X(inline_prefix_body) \
     X(inline_prefix_end) \
     X(inline_infix) \
-    X(inline_infix_arg) \
-    X(inline_infix_first_op) \
-    X(inline_infix_op) \
     X(inline_infix_end) \
     X(inline_postfix) \
-    X(inline_postfix_body) \
     X(inline_postfix_end)
 
 #define X(s) \
@@ -106,7 +101,7 @@ debug_stack(void)
             die("other");
         }
 #undef X
-        fprintf(stderr, "    %d, %s, %s\n", i, fn, cmds[i]);
+        fprintf(stderr, "    %d, %s\n", i, fn);
     }
     fprintf(stderr, "\n");
 }
@@ -479,33 +474,15 @@ prefix_cmd(void)
     /*debug_token();*/
 
     if (is_wrapped(token_buffer)) {
-        cmds[state_index] = alloc_prefixed_cmd("end-", token_buffer);
+        /*cmds[state_index] = alloc_prefixed_cmd("end-", token_buffer);*/
         state_fns[state_index] = prefix_body;
         return;
     }
 
 
-    cmds[state_index] = alloc_cmd(token_buffer);
+    /*cmds[state_index] = alloc_cmd(token_buffer);*/
     state_fns[state_index] = prefix_body;
     next_word();
-}
-
-
-void
-inline_prefix_body(void)
-{
-    void_fn *prefix_fn = NULL;
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        /*ere;*/
-        prefix_fn();
-        return;
-    }
-
-    read_token();
-    /*debug_token();*/
-
-    return;
 }
 
 
@@ -517,7 +494,7 @@ inline_prefix(void)
 
     strncpy(token_buffer, "[", 256);
     state_index += 1;
-    state_fns[state_index] = inline_prefix_body;
+    state_fns[state_index] = inline_body;
 }
 
 
@@ -552,83 +529,19 @@ inline_infix(void)
     }
 
     /*ere;*/
-    read_token();
+    /*read_token();*/
     /*debug_token();*/
 
     if (is_wrapped(token_buffer)) {
         die("wrapped");
     }
 
+    strncpy(token_buffer, "(", 256);
     state_index += 1;
-    cmds[state_index] = NULL;
-    state_fns[state_index] = inline_infix_first_op;
+    /*cmds[state_index] = NULL;*/
+    state_fns[state_index] = inline_body;
     /*debug_stack();*/
     /*debug_token();*/
-}
-
-
-void
-inline_infix_first_op(void)
-{
-    void_fn *prefix_fn = NULL;
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        prefix_fn();
-        return;
-    }
-
-    /*ere;*/
-    read_token();
-    /*debug_token();*/
-
-    cmds[state_index] = alloc_cmd(token_buffer);
-    state_fns[state_index] = inline_infix_arg;
-    next_word();
-}
-
-
-void
-inline_infix_op(void)
-{
-    void_fn *prefix_fn = NULL;
-
-    /*ere;*/
-    /*debug_stack();*/
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        prefix_fn();
-        return;
-    }
-
-    peek_token();
-
-    if (!strcmp(cmds[state_index], token_buffer)) {
-        read_token();
-    } else {
-        debug_var("s", cmds[state_index]);
-        debug_token();
-        die("different");
-    }
-
-    /*tok = cmds[state_index];*/
-    /*tok_len = strlen(tok);*/
-    state_fns[state_index] = inline_infix_arg;
-    /*die("adsf");*/
-}
-
-
-void
-inline_infix_arg(void)
-{
-    void_fn *prefix_fn = NULL;
-
-    if (prefix_fn = lookup_prefix(*in)) {
-        prefix_fn();
-        return;
-    }
-
-    read_token();
-    state_fns[state_index] = inline_infix_op;
 }
 
 
@@ -640,14 +553,9 @@ inline_infix_end(void)
 
     in += 1;
     chomp(' ');
-    strncpy(token_buffer, cmds[state_index], 256);
-    state_index -= 1;
 
-    if (token_buffer[0] == '\0') {
-        next_word();
-    } else {
-        tok_len = strlen(token_buffer);
-    }
+    strncpy(token_buffer, ")", 256);
+    state_index -= 1;
 }
 
 
@@ -658,12 +566,12 @@ inline_postfix(void)
     chomp(' ');
     state_index += 1;
     strncpy(token_buffer, "{", 256);
-    state_fns[state_index] = inline_postfix_body;
+    state_fns[state_index] = inline_body;
 }
 
 
 void
-inline_postfix_body(void)
+inline_body(void)
 {
     /*ere;*/
     void_fn *prefix_fn = NULL;
@@ -739,11 +647,10 @@ next_word(void)
 }
 
 
-int
-main(int argc, char **argv)
+void
+init(void)
 {
     memset(wrapped, 0, sizeof(wrapped));
-
     define_wrap(":");
 
     define_prefix('[', inline_prefix);
@@ -753,41 +660,38 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens12.ie", "r")) == NULL)
-        die("failed to open file");
-
     in = line_buffer;
 
     state_index = 0;
     state_fns[state_index] = prefix_head;
+}
+
+
+int
+main(int argc, char **argv)
+{
+    init();
+
+
+    if ((f = fopen(".\\src\\examples\\tokens11.ie", "r")) == NULL)
+        die("failed to open file");
 
     int i = 0xff;
     while (next_word(), token_buffer[0] != '\0') {
-        /*ere;*/
-        /*debug_stack();*/
-        /*printf("token '%s'\n", token_buffer);*/
-        /*printf("%s\n", token_buffer);*/
         printf("%s ", token_buffer);
         if (!i--) {
             debug_var("c", *in);
             die("limit");
         }
     }
+
     printf("\n");
-    /*ere;*/
 
     if (*in)
         debug_var("c", *in);
-    /*ere;*/
 
-    /*ere;*/
-    /*debug_stack();*/
-    while (state_index) {
-        /*ere;*/
-        printf("token %s\n", cmds[state_index]);
-        state_index -= 1;
-    }
-    /*ere;*/
+    if (state_index)
+        die("ere");
 
     fclose(f);
 
