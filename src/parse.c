@@ -47,7 +47,7 @@ int prefix_index = 0;
 char prefix_chars[64] = "";
 void (*prefix_fns[64])(void);
 
-char *prefix_breakchars = " ,()[]{}\n";
+char *token_breakchars = " ,()[]{}\n";
 
 int state_index = 0;
 void (*state_fns[16])(void);
@@ -245,7 +245,7 @@ read_token(void)
 
     tok = in;
 
-    while (!strchr(prefix_breakchars, *in))
+    while (!strchr(token_breakchars, *in))
         in += 1;
 
     tok_len = in - tok;
@@ -258,6 +258,53 @@ read_token(void)
     } else {
         token_buffer[0] = '\0';
     }
+}
+
+
+void
+read_string(void)
+{
+    char *tok;
+
+    /*ere;*/
+    /*debug_var("d", *in);*/
+
+    if (*in == '\0')
+        if (!read_line())
+            return;
+
+    tok = in;
+
+    in += 1;
+
+    while (*in != '"' && *in != '\n' && *in != '\0') {
+        if (*in == '\\') {
+            in += 1;
+            if (*in == '\n' || *in == '\0')
+                die("invalid char:%d, '%c'", *in, *in);
+        } else {
+            in += 1;
+        }
+    }
+
+    if (*in != '"')
+        die("invalid char:%d, '%c'", *in, *in);
+
+    in += 1;
+
+    tok_len = in - tok;
+
+    chomp(' ');
+
+    if (tok_len) {
+        strncpy(token_buffer, tok, tok_len);
+        token_buffer[tok_len] = '\0';
+    } else {
+        token_buffer[0] = '\0';
+    }
+
+    /*ere;*/
+    /*debug_token();*/
 }
 
 
@@ -659,6 +706,7 @@ init(void)
     define_prefix(')', inline_infix_end);
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
+    define_prefix('"', read_string);
 
     in = line_buffer;
 
@@ -673,7 +721,7 @@ main(int argc, char **argv)
     init();
 
 
-    if ((f = fopen(".\\src\\examples\\tokens11.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens9.ie", "r")) == NULL)
         die("failed to open file");
 
     int i = 0xff;
@@ -690,8 +738,10 @@ main(int argc, char **argv)
     if (*in)
         debug_var("c", *in);
 
-    if (state_index)
+    if (state_index) {
+        debug_stack();
         die("ere");
+    }
 
     fclose(f);
 
