@@ -61,28 +61,12 @@ char *wrapped[64];
 
 void_fn * lookup_prefix(char c);
 
-void prefix_body(void);
-void prefix_head(void); 
-
-void inline_prefix(void);
-void inline_prefix_body(void);
-void inline_prefix_end(void);
-
-void inline_infix(void);
-void inline_infix_arg(void);
-void inline_infix_first_op(void);
-void inline_infix_op(void);
-void inline_infix_end(void);
-
-void inline_postfix(void);
-void inline_postfix_body(void);
-void inline_postfix_end(void);
-
 char* next_word(void);
 
 #define LIST_OF_STATES \
     X(prefix_head) \
     X(prefix_body) \
+    X(prefix_newline) \
     X(inline_prefix) \
     X(inline_prefix_body) \
     X(inline_prefix_end) \
@@ -94,6 +78,11 @@ char* next_word(void);
     X(inline_postfix) \
     X(inline_postfix_body) \
     X(inline_postfix_end)
+
+#define X(s) \
+    void s(void);
+LIST_OF_STATES
+#undef X
 
 void
 debug_stack(void)
@@ -241,6 +230,7 @@ chomp(char c)
 char *
 read_line(void)
 {
+    /*ere;*/
     char *r = fgets(line_buffer, 256, f);
     if (r == NULL)
         line_buffer[0] = '\0';
@@ -252,7 +242,13 @@ read_line(void)
 void
 read_token(void)
 {
-    char *tok = in;
+    char *tok;
+
+    if (*in == '\0')
+        if (!read_line())
+            return;
+
+    tok = in;
 
     while (!strchr(prefix_breakchars, *in))
         in += 1;
@@ -285,6 +281,9 @@ parse_indent(int *indent)
     char *first_char = NULL;
     uint diff = 0;
 
+    if (*in == '\0')
+        read_line();
+
     while(*in == '\n')
         if (read_line() == NULL)
             return -1;
@@ -305,16 +304,8 @@ void
 prefix_body(void)
 {
     /*ere;*/
-    static int diff = 0;
     void (*prefix_fn)(void) = NULL;
 
-    if (diff < 0) {
-        /*ere;*/
-        strncpy(token_buffer, cmds[state_index], 256);
-        state_fns[state_index] = prefix_head;
-        diff += 1;
-        return;
-    }
 
     /*ere;*/
     /*debug_var("c", *in);*/
@@ -326,62 +317,9 @@ prefix_body(void)
         die("space")
 
     if (*in == '\n') {
-        int new_indent = 0;
-        /*ere;*/
-
-        if (parse_indent(&new_indent)) {
-            strncpy(token_buffer, cmds[state_index], 256);
-            state_fns[state_index] = prefix_head;
-            return;
-        }
-
-        diff = new_indent - cur_indent;
-
-        /*ere;*/
-        peek_token();
-        /*debug_token();*/
-
-        if (!strcmp("\\", token_buffer)) {
-            /*ere;*/
-            if (diff > 1) {
-                die(">1");
-            } else if (diff == 1) {
-                /*ere;*/
-                read_token();
-                /*debug_token();*/
-                /*ere;*/
-                read_token();
-                /*debug_token();*/
-                return;
-            } else if (diff == 0) {
-                die("0");
-            } else {
-                debug_var("d", diff);
-                die("?");
-            }
-        }
-
-        cur_indent = new_indent;
-        /*ere;*/
-        if (diff > 1) {
-            die(">1");
-        } else if (diff == 1) {
-            state_index += 1;
-            state_fns[state_index] = prefix_head;
-            state_fns[state_index]();
-            return;
-        } else if (diff == 0) {
-            strncpy(token_buffer, cmds[state_index], 256);
-            state_fns[state_index] = prefix_head;
-            return;
-        } else {
-            /*ere;*/
-            strncpy(token_buffer, cmds[state_index], 256);
-            state_index -= 1;
-            return;
-        }
-
-        die("newline")
+        state_fns[state_index] = prefix_newline;
+        next_word();
+        return;
     }
 
     if (prefix_fn = lookup_prefix(*in)) {
@@ -392,6 +330,88 @@ prefix_body(void)
     }
 
     read_token();
+}
+
+
+void
+prefix_newline(void)
+{
+    static int diff = 0;
+    /*ere;*/
+    /*debug_var("d", *in);*/
+
+    if (*in == '\n') {
+        in += 1;
+        strncpy(token_buffer, "newline", 256);
+        return;
+    }
+    /*ere;*/
+
+    if (diff < 0) {
+        ere;
+        die("ere");
+        /*strncpy(token_buffer, cmds[state_index], 256);*/
+        /*state_fns[state_index] = prefix_cmd;*/
+        diff += 1;
+        return;
+    }
+
+    int new_indent = 0;
+
+    /*ere;*/
+    parse_indent(&new_indent);
+
+    /*ere;*/
+    diff = new_indent - cur_indent;
+    /*debug_var("d", diff);*/
+
+    /*ere;*/
+    /*debug_var("d", *in);*/
+    /*debug_token();*/
+    peek_token();
+    /*debug_var("d", *in);*/
+    /*debug_token();*/
+
+    if (!strcmp("\\", token_buffer)) {
+        /*ere;*/
+        if (diff > 1) {
+            die(">1");
+        } else if (diff == 1) {
+            read_token();
+            state_fns[state_index] = prefix_body;
+            next_word();
+            return;
+        } else if (diff == 0) {
+            die("0");
+        } else {
+            debug_var("d", diff);
+            die("?");
+        }
+    }
+
+    cur_indent = new_indent;
+    /*ere;*/
+    if (diff > 1) {
+        die(">1");
+    } else if (diff == 1) {
+        ere;
+        state_index += 1;
+        state_fns[state_index] = prefix_head;
+        state_fns[state_index]();
+        return;
+    } else if (diff == 0) {
+        strncpy(token_buffer, "]", 256);
+        state_fns[state_index] = prefix_head;
+        return;
+    } else {
+        ere;
+        /*ere;*/
+        strncpy(token_buffer, cmds[state_index], 256);
+        state_index -= 1;
+        return;
+    }
+
+    die("newline")
 }
 
 
@@ -410,6 +430,24 @@ is_wrapped(char *s)
 
 void
 prefix_head(void)
+{
+    /*ere;*/
+    /*debug_var("d", *in);*/
+    peek_token();
+
+    if (*in == '\0') {
+        /*ere;*/
+        token_buffer[0] = '\0';
+        return;
+    }
+
+    strncpy(token_buffer, "[", 256);
+    state_fns[state_index] = prefix_body;
+}
+
+
+void
+prefix_cmd(void)
 {
     /*ere;*/
     char *end  = NULL;
@@ -746,10 +784,10 @@ main(int argc, char **argv)
     define_prefix('{', inline_postfix);
     define_prefix('}', inline_postfix_end);
 
-    if ((f = fopen(".\\src\\examples\\tokens0.ie", "r")) == NULL)
+    if ((f = fopen(".\\src\\examples\\tokens1.ie", "r")) == NULL)
         die("failed to open file");
 
-    read_line();
+    in = line_buffer;
 
     state_index = 0;
     state_fns[state_index] = prefix_head;
@@ -758,7 +796,8 @@ main(int argc, char **argv)
     while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/
-        printf("token '%s'\n", token_buffer);
+        /*printf("token '%s'\n", token_buffer);*/
+        printf("%s\n", token_buffer);
         if (!i--) {
             debug_var("c", *in);
             die("limit");
