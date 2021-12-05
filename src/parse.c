@@ -770,22 +770,42 @@ init(void)
 int
 main(int argc, char **argv)
 {
+    char **arg = argv + 1;
+
+    if (!*arg)
+        die("missing input filename");
+
+    if (!strcmp(*arg, "-")) {
+        /*puts("stdin");*/
+        f = stdin;
+    } else {
+        if ((f = fopen(*arg, "r")) == NULL)
+            die("failed to open file");
+    }
+
     init();
 
 
-    if ((f = fopen(".\\src\\examples\\c1.ie", "r")) == NULL)
-        die("failed to open file");
-
-    int limit = 0xfff;
+    int limit = 0xf;
     while (next_word(), token_buffer[0] != '\0') {
-        printf("%s ", token_buffer);
+        /*ere;*/
+        /*debug_stack();*/
+        /*debug_var("d", token_buffer[0]);*/
+        /*debug_var("c", token_buffer[0]);*/
+        /*debug_var("d", token_buffer[1]);*/
+        /*debug_var("c", token_buffer[1]);*/
+        /*debug_var("d", strlen(token_buffer));*/
+        /*debug_var("s", token_buffer);*/
+        printf("%s\n", token_buffer);
         if (!limit--) {
+            ere;
+            debug_var("d", *in);
             debug_var("c", *in);
             die("limit");
         }
     }
 
-    printf("\n");
+    /*printf("\n");*/
 
     if (*in)
         debug_var("c", *in);
@@ -797,7 +817,7 @@ main(int argc, char **argv)
 
     fclose(f);
 
-    puts("bye");
+    /*puts("bye");*/
     return 0;
 }
 
