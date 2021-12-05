@@ -381,7 +381,15 @@ neoteric_end(void)
 void
 is_neoteric(void)
 {
-    if (strchr("([{", *in) && *(in - 1) != ' ') {
+    /*ere;*/
+    /*debug_var("s", line_buffer);*/
+    /*debug_var("d", in > line_buffer);*/
+    /*debug_var("p", in);*/
+    /*debug_var("d", *in);*/
+    /*debug_var("d", strchr("([{", *in));*/
+    if (*in != '\0' &&
+        strchr("([{", *in) &&
+        *(in - 1) != ' ') {
         /*ere;*/
         /*debug_var("c", *in);*/
         /*debug_token();*/
