@@ -720,7 +720,12 @@ define_prefix(char c, void (*fn)(void))
 char *
 next_word(void)
 {
+    void_fn *fn;
+
+    /*ere;*/
+    /*debug_stack();*/
     if (next_token_buffer[0] != '\0') {
+        ere;
         strncpy(token_buffer, next_token_buffer, 256);
         next_token_buffer[0] = '\0';
         return;
@@ -731,8 +736,12 @@ next_word(void)
         debug_stack();
         die("state underflow");
     }
+    /*ere;*/
 
-    state_fns[state_index]();
+    if ((fn = state_fns[state_index]) == NULL)
+        die("fn is NULL");
+
+    fn();
     return token_buffer;
 }
 
