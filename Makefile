@@ -64,6 +64,12 @@ walt4:
 run: src/*.c
 	tcc -run src/parse.c
 
+test-c:
+	python src/test-c.py
+
+wtest-c:
+	watchexec -cr "make test-c"
+
 test-py: src/*.py
 	python -m unittest src/test-eval.py -f
 

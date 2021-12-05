@@ -1,35 +1,50 @@
 from multiprocessing import Pool
-from subprocess import run, PIPE
+from subprocess import Popen, run, PIPE
+from difflib import context_diff, unified_diff, ndiff
+from helper import *
 
 
-def parse_output(o):
-    return [x.strip() for x in o.split('\n')]
+def run_test(t):
+    prog, er = t
 
+    # print(repr(prog))
+    p = Popen(["tcc", "-run", "./src/parse.c", "-"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    out, err = [x.decode() for x in p.communicate(prog.encode())]
 
-def parse_test(t):
-    arg, er = [x.strip() for x in t.split("-----")]
-    return arg, parse_output(er)
+    if err:
+        return err
 
+    er  = er.split('\n')
+    out = out.replace('\r\n', '\n').strip().split('\n')
 
-def tests():
-    with open("./src/tests.txt") as f:
-        return [parse_test(t) for t in f.read().split("#####")]
+    # print(er)
+    # print(out)
 
+    diff = '\n'.join(unified_diff(out, er))
+    if diff != '':
+        print(er)
+        print(out)
+        return diff
 
-def f(x):
-    print(x)
-    cp = None
-    # cp = run(["tcc", "-run", "./src/parse.c", "-"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    # cp.communicate("hello")
-    # print(cp)
-    return cp
+    return None
 
 
 if __name__ == '__main__':
+    number_of_tests = 0
+    fails = 0
+
     with Pool(1) as p:
-        for r in p.map(f, tests()):
-            # print(r.stdout)
+        for r in p.map(run_test, tests()):
+            number_of_tests += 1
+            if r:
+                fails += 1
+                # print(r)
             pass
 
-	# tcc -run src/parse.c
+    if fails:
+        print(f"{fails=}")
+        print(f"{number_of_tests=}")
+    else:
+        print("all passed")
+        print(f"{number_of_tests=}")
 

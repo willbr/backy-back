@@ -4,7 +4,9 @@ puts "hello"
 puts
 "hello"
 ]
+
 #####
+
 print (1 + 1)
 -----
 [
@@ -14,5 +16,13 @@ print
 +
 1
 )
+]
+
+#####
+fn double
+-----
+[
+fn
+double
 ]
 
