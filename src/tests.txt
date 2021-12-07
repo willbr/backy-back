@@ -26,3 +26,18 @@ fn
 double
 ]
 
+#####
+fn double
+    puts "bye"
+-----
+[
+fn
+double
+newline
+[
+puts
+"bye"
+newline
+]
+]
+

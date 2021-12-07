@@ -76,6 +76,12 @@ test-py: src/*.py
 wtest-py:
 	watchexec -cr "make test-py"
 
+pparse:
+	python src/pluck-test.py 3 | tcc -run src/parse.c - | python src/parse.py
+
+wpparse:
+	watchexec -cr "make pparse"
+
 watch:
 	watchexec -cr "make run"
 
