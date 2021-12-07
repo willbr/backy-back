@@ -12,7 +12,7 @@ def parse_test(t):
 
 
 def tests():
-    test_path = path.join(script_dir, "tests.txt")
+    test_path = path.join(script_dir, "../tests.txt")
     with open(test_path) as f:
         return [parse_test(t) for t in f.read().split("#####")]
 

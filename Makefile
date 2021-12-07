@@ -70,14 +70,14 @@ test-c:
 wtest-c:
 	watchexec -cr "make test-c"
 
-test-py: src/*.py
+test-py: src/py/*.py
 	python -m unittest src/test-eval.py -f
 
 wtest-py:
 	watchexec -cr "make test-py"
 
 pparse:
-	python src/pluck-test.py 3 | tcc -run src/parse.c - | python src/parse.py
+	python src/py/pluck-test.py 3 | tcc -run src/c/parse.c - | python src/py/parse.py
 
 wpparse:
 	watchexec -cr "make pparse"
