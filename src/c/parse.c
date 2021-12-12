@@ -786,7 +786,7 @@ main(int argc, char **argv)
     init();
 
 
-    int limit = 0xf;
+    int limit = 0x1f;
     while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/

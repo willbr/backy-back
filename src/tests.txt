@@ -28,16 +28,27 @@ double
 
 #####
 fn double
-    puts "bye"
+    * 2
+double 10
+.
 -----
 [
 fn
 double
 newline
 [
-puts
-"bye"
+*
+2
 newline
 ]
+]
+[
+double
+10
+newline
+]
+[
+.
+newline
 ]
 
