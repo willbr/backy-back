@@ -24,25 +24,37 @@ def parse_file(filename):
     return prog
 
 
-def isatom(x):
+def is_atom(x):
     return not isinstance(x, list)
 
+
 def print_expr(x, depth=0, wrap=False):
-    if isatom(x):
+
+    if is_atom(x):
         print(x, end="")
         return
 
-    # print()
-    print(depth * "    ", end="")
+    print("[", end="")
 
-    for e in x:
-        if e == 'newline':
-            print()
-        elif isatom(e):
-            print_expr(e)
-            print(" ", end="")
+    car, *cdr = x
+
+    print_expr(car, depth+1)
+
+    prev_it = car
+
+    for it in cdr:
+        if is_atom(it):
+            if is_atom(prev_it):
+                print(" ", end="")
+            else:
+                print("\n" + (depth+1) * "    ", end="")
+            print_expr(it, depth+1)
         else:
-            print_expr(e, depth+1)
+            print("\n" + (depth+1) * "    ", end="")
+            print_expr(it, depth+1)
+        prev_it = it
+
+    print("]", end="")
 
 
 if __name__ == '__main__':
@@ -50,6 +62,8 @@ if __name__ == '__main__':
     # pprint(prog)
     print()
     for x in prog:
+        # print('x:', x)
         print_expr(x)
+        print("\n")
     print()
 
