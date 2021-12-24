@@ -7,10 +7,10 @@ puts
 
 #####
 
-print (1 + 1)
+puts (1 + 1)
 -----
 [
-print
+puts
 (
 1
 +
