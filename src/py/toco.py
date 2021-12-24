@@ -1,13 +1,23 @@
 from parse import parse_file, is_atom, remove_newline
 
+libs = set()
 functions = {}
+infix_symbols = "= == !=".split()
 
 def compile(x):
     head, *args = x
     if head == 'fn':
         compile_fn(*args)
+    elif head == 'include-lib':
+        compile_lib(*args)
     else:
+        print(head)
         assert False
+
+
+def compile_lib(lib_name, *body):
+    assert body == ('newline',)
+    libs.add(lib_name)
 
 
 def compile_fn(fn_name, *spec):
@@ -23,30 +33,107 @@ def compile_fn(fn_name, *spec):
 def compile_statement(x):
     head, *rest = x
     args, body = split_newline(rest)
+
     # print(x)
     # print(head)
     # print(args)
     # print(body)
-    cargs = ', '.join(compile_expression(a) for a in args)
+
+    if args[0] in infix_symbols:
+        head, *args = transform_infix([head] + args)
+
+    if head == 'while':
+        return compile_while(args, body)
+    elif head == 'var':
+        return compile_var(args, body) + ";"
+
     assert body == []
-    return f"{head}({cargs});"
+    return compile_expression([head, *args]) + ";"
+
+
+def compile_var(args, body):
+    assert body == []
+    var_name, *type_spec = args
+    # print(var_name, type_spec)
+    return f"{type_spec[0]} {var_name}"
+
+
+def compile_while(pred, body):
+    cpred = compile_expression(transform_infix(pred))
+    cbody = [compile_statement(s) for s in body]
+    return f"while ({cpred})", cbody
 
 
 def compile_expression(x):
     if is_atom(x):
         if x[0] == '"':
             return x
+        return x
+
+    head, *rest = x
+
+    if head == 'infix':
+        if x == ['infix']:
+            return ''
+        head, *rest = transform_infix(rest)
+
+    args, body = split_newline(rest)
+    assert body == None
+    cargs = (compile_expression(a) for a in args)
+
+    if head in infix_symbols:
+        return f" {head} ".join(cargs)
+    else:
+        return f"{head}({', '.join(cargs)})"
+
+
+def transform_infix(x):
+    n = len(x)
+
+    if n == 0:
+        return x
+    elif n == 1:
+        assert False
+    elif n % 3:
         assert False
 
-    print(x)
-    assert False
+    first_arg, first_op, *rest = x
+    xx = [first_op, first_arg]
+    for i in range(2, len(x)):
+        if i % 2:
+            assert first_op == x[i]
+        else:
+            xx.append(x[i])
+    return xx
 
 
 def split_newline(x):
-    pos = x.index('newline')
-    lhs = x[:pos]
-    rhs = x[pos+1:]
-    return lhs, rhs
+    try:
+        pos = x.index('newline')
+        lhs = x[:pos]
+        rhs = x[pos+1:]
+    except ValueError:
+        lhs = x
+        rhs = None
+    finally:
+        return lhs, rhs
+
+
+def print_block(body, depth):
+    print("{")
+    indent = "    " * depth
+
+    for s in body:
+        print(indent, end="")
+        if isinstance(s, str):
+            print(s)
+        else:
+            head, sub = s
+            print(head + " ", end="")
+            print_block(sub, depth+1)
+
+    indent = "    " * (depth-1)
+    print(indent + "}")
 
 
 if __name__ == "__main__":
@@ -57,9 +144,7 @@ if __name__ == "__main__":
 
     for name, spec in functions.items():
         print("void")
-        print(f"{name}(void) {{")
-        for s in spec:
-            print("    " + s)
-        print("}")
+        print(f"{name}(void) ", end="")
+        print_block(spec, 1)
 
 

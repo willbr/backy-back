@@ -725,7 +725,7 @@ next_word(void)
     /*ere;*/
     /*debug_stack();*/
     if (next_token_buffer[0] != '\0') {
-        ere;
+        /*ere;*/
         strncpy(token_buffer, next_token_buffer, 256);
         next_token_buffer[0] = '\0';
         return;
@@ -786,7 +786,7 @@ main(int argc, char **argv)
     init();
 
 
-    int limit = 0x1f;
+    int limit = 0xff;
     while (next_word(), token_buffer[0] != '\0') {
         /*ere;*/
         /*debug_stack();*/
