@@ -67,10 +67,17 @@ def puts_expr(x, print_brackets=True):
     print("")
 
 
+def remove_newline(prog):
+    if is_atom(prog):
+        return prog
+
+    return [remove_newline(x) for x in prog if x != 'newline']
+
+
 if __name__ == '__main__':
     prog = parse_file('-')
-    # pprint(prog)
-    puts_expr(prog, False)
+    for s in remove_newline(prog):
+        puts_expr(s, False)
     print()
 
 
