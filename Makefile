@@ -82,6 +82,12 @@ pparse:
 wpparse:
 	watchexec -cr "make pparse"
 
+eval:
+	python src/py/pluck-test.py 3 | tcc -run src/c/parse.c - | python src/py/eval.py
+
+weval:
+	watchexec -cr "make eval"
+
 watch:
 	watchexec -cr "make run"
 
