@@ -89,7 +89,7 @@ weval:
 	watchexec -cr "make eval"
 
 toco:
-	type src\examples\c1.ie | tcc -run src/c/parse.c - | python src/py/toco.py
+	type src\examples\c2.ie | tcc -run src/c/parse.c - | python src/py/toco.py
 
 wtoco:
 	watchexec -cr "make toco"

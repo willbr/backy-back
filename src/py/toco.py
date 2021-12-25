@@ -2,7 +2,8 @@ from parse import parse_file, is_atom, remove_newline
 
 libs = set()
 functions = {}
-infix_symbols = "= == !=".split()
+infix_symbols = "= == != *".split()
+
 
 def compile(x):
     head, *args = x
@@ -39,6 +40,10 @@ def compile_statement(x):
     # print(args)
     # print(body)
 
+    if args[0] == "=":
+        args = [head, ['infix', *args[1:]]]
+        head = '='
+
     if args[0] in infix_symbols:
         head, *args = transform_infix([head] + args)
 
@@ -48,14 +53,16 @@ def compile_statement(x):
         return compile_var(args, body) + ";"
 
     assert body == []
-    return compile_expression([head, *args]) + ";"
+    ce = compile_expression([head, *args])
+    if ce[0] == "(" and ce[-1] == ")":
+        ce = ce[1:-1]
+    return ce + ";"
 
 
 def compile_var(args, body):
     assert body == []
-    var_name, *type_spec = args
-    # print(var_name, type_spec)
-    return f"{type_spec[0]} {var_name}"
+    var_name, var_type, var_val = args
+    return f"{var_type} {var_name} = {var_val}"
 
 
 def compile_while(pred, body):
@@ -79,22 +86,27 @@ def compile_expression(x):
 
     args, body = split_newline(rest)
     assert body == None
-    cargs = (compile_expression(a) for a in args)
+    cargs = [compile_expression(a) for a in args]
 
     if head in infix_symbols:
-        return f" {head} ".join(cargs)
+        # print(head, cargs)
+        return "(" + f" {head} ".join(cargs) + ")"
     else:
         return f"{head}({', '.join(cargs)})"
 
 
 def transform_infix(x):
     n = len(x)
+    # print(x)
+    # print(n)
+    # print(n % 2)
 
     if n == 0:
         return x
     elif n == 1:
         assert False
-    elif n % 3:
+    elif (n % 2) == 0:
+        print(x)
         assert False
 
     first_arg, first_op, *rest = x
@@ -142,9 +154,17 @@ if __name__ == "__main__":
     for x in prog:
         compile(x)
 
+    for name in libs:
+        name = name.strip('"')
+        print(f"#include <{name}>")
+
+    if libs:
+        print()
+
     for name, spec in functions.items():
         print("void")
         print(f"{name}(void) ", end="")
         print_block(spec, 1)
+    print()
 
 
