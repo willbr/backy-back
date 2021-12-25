@@ -54,15 +54,20 @@ def compile_statement(x):
 
     assert body == []
     ce = compile_expression([head, *args])
-    if ce[0] == "(" and ce[-1] == ")":
-        ce = ce[1:-1]
     return ce + ";"
 
 
 def compile_var(args, body):
     assert body == []
-    var_name, var_type, var_val = args
-    return f"{var_type} {var_name} = {var_val}"
+    num_args = len(args)
+    if num_args == 2:
+        var_name, var_type = args
+        return f"{var_type} {var_name}"
+    elif num_args == 3:
+        var_name, var_type, var_val = args
+        return f"{var_type} {var_name} = {var_val}"
+    else:
+        assert False
 
 
 def compile_while(pred, body):
@@ -71,7 +76,7 @@ def compile_while(pred, body):
     return f"while ({cpred})", cbody
 
 
-def compile_expression(x):
+def compile_expression(x, depth=0):
     if is_atom(x):
         if x[0] == '"':
             return x
@@ -86,11 +91,15 @@ def compile_expression(x):
 
     args, body = split_newline(rest)
     assert body == None
-    cargs = [compile_expression(a) for a in args]
+    cargs = [compile_expression(a, depth+1) for a in args]
 
     if head in infix_symbols:
         # print(head, cargs)
-        return "(" + f" {head} ".join(cargs) + ")"
+        r =  f" {head} ".join(cargs)
+        if depth:
+            return "(" + r + ")"
+        else:
+            return r
     else:
         return f"{head}({', '.join(cargs)})"
 
