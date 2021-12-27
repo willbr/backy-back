@@ -1,4 +1,4 @@
-from parse import parse_file, is_atom, remove_newline
+from parse import parse_file, is_atom, remove_newline, puts_expr
 
 libs = set()
 functions = {}
@@ -35,16 +35,20 @@ def compile_statement(x):
     head, *rest = x
     args, body = split_newline(rest)
 
-    # print(x)
-    # print(head)
-    # print(args)
-    # print(body)
+    # print('x', x)
+    # print('head', head)
+    # print('args', args)
+    # print('body', body)
 
-    if args[0] == "=":
+    if args == []:
+        pass
+    elif args[0] == "=":
         args = [head, ['infix', *args[1:]]]
         head = '='
 
-    if args[0] in infix_symbols:
+    if args == []:
+        pass
+    elif args[0] in infix_symbols:
         head, *args = transform_infix([head] + args)
 
     if head == 'while':
@@ -77,6 +81,7 @@ def compile_while(pred, body):
 
 
 def compile_expression(x, depth=0):
+    # print(x)
     if is_atom(x):
         if x[0] == '"':
             return x
@@ -88,6 +93,8 @@ def compile_expression(x, depth=0):
         if x == ['infix']:
             return ''
         head, *rest = transform_infix(rest)
+        if rest == []:
+            return head
 
     args, body = split_newline(rest)
     assert body == None
@@ -100,6 +107,9 @@ def compile_expression(x, depth=0):
             return "(" + r + ")"
         else:
             return r
+    elif head == "inc":
+        assert len(cargs) == 1
+        return f"{cargs[0]} += 1"
     else:
         return f"{head}({', '.join(cargs)})"
 
@@ -113,7 +123,7 @@ def transform_infix(x):
     if n == 0:
         return x
     elif n == 1:
-        assert False
+        return x[0]
     elif (n % 2) == 0:
         print(x)
         assert False
@@ -161,6 +171,7 @@ if __name__ == "__main__":
     prog = parse_file("-")
 
     for x in prog:
+        # puts_expr(x)
         compile(x)
 
     for name in libs:
