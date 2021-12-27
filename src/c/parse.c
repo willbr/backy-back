@@ -33,6 +33,7 @@ typedef unsigned int uint;
 typedef void (void_fn)(void);
 
 int echo_newlines = 1;
+int echo_indents = 1;
 int cur_indent = 0;
 int new_indent = 0;
 uint indent_width = 4;
@@ -70,6 +71,7 @@ char* next_word(void);
     X(prefix_newline) \
     X(prefix_indent) \
     X(prefix_dedent) \
+    X(prefix_end) \
     X(inline_body) \
     X(inline_prefix) \
     X(inline_prefix_end) \
@@ -135,11 +137,14 @@ debug_stack(void)
     fprintf(stderr, "\nstack:\n");
     for (i = 0; i <= state_index; i += 1) {
         char *fn = NULL;
+
+        if (state_fns[i] == NULL) {
+            fn = "(null)";
+
 #define X(s) \
     } else if (state_fns[i] == s) { \
         fn = #s;
-        if (state_fns[i] == NULL) {
-            fn = "(null)";
+
         LIST_OF_STATES
         } else {
             debug_var("p", state_fns[i]);
@@ -481,8 +486,15 @@ prefix_body(void)
 void
 prefix_newline(void)
 {
-    if (*in != '\n')
+    if (*in == '\0') {
+        strncpy(token_buffer, "", 256);
+        return;
+    }
+
+    if (*in != '\n') {
+        /*debug_var("d", *in);*/
         die("opps");
+    }
 
     /*ere;*/
     in += 1;
@@ -492,7 +504,7 @@ prefix_newline(void)
     if (echo_newlines)
         strncpy(token_buffer, "newline", 256);
     else
-        next_word(); /* REMOVE */
+        next_word();
 
     return;
 }
@@ -516,6 +528,7 @@ prefix_indent(void)
         if (diff > 1) {
             die(">1");
         } else if (diff == 1) {
+            new_indent = cur_indent;
             read_token();
             state_fns[state_index] = prefix_body;
             next_word();
@@ -532,6 +545,7 @@ prefix_indent(void)
         die(">1");
     } else if (diff == 1) {
         cur_indent = new_indent;
+        state_fns[state_index] = prefix_end;
         state_index += 1;
         state_fns[state_index] = prefix_head;
         state_fns[state_index]();
@@ -554,16 +568,27 @@ prefix_dedent(void)
     if (new_indent > cur_indent) {
         die("opps");
     } else if (new_indent == cur_indent) {
-        strncpy(token_buffer, "]", 256);
-        state_fns[state_index] = prefix_head;
+        state_fns[state_index] = prefix_end;
+        state_fns[state_index]();
         return;
     } else {
+        /*ere;*/
         strncpy(token_buffer, "]", 256);
         cur_indent  -= 1;
         state_index -= 1;
-        state_fns[state_index] = prefix_dedent;
+        /*state_fns[state_index]();*/
         return;
     }
+}
+
+
+void
+prefix_end(void)
+{
+    /*ere;*/
+    state_fns[state_index] = prefix_head;
+    strncpy(token_buffer, "]", 256);
+    return;
 }
 
 
@@ -589,6 +614,16 @@ prefix_head(void)
 
     if (*in == '\0') {
         /*ere;*/
+        /*debug_var("d", cur_indent);*/
+        /*debug_var("d", new_indent);*/
+
+        if(cur_indent) {
+            new_indent = 0;
+            state_fns[state_index] = prefix_dedent;
+            next_word();
+            return;
+        }
+
         token_buffer[0] = '\0';
         return;
     }
@@ -869,8 +904,9 @@ main(int argc, char **argv)
         /*debug_var("d", strlen(token_buffer));*/
         /*debug_var("s", token_buffer);*/
 
-        /*for (int i = cur_indent; i; i -= 1)*/
-            /*fprintf(stderr, "    ");*/
+        if (echo_indents)
+            for (int i = cur_indent; i; i -= 1)
+                fprintf(stderr, "    ");
 
         printf("%s\n", token_buffer);
         if (!limit--) {

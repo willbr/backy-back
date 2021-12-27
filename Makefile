@@ -88,11 +88,11 @@ eval:
 weval:
 	watchexec -cr "make eval"
 
-toco:
-	rem type src\examples\c4.ie
-	rem type src\examples\c4.ie | tcc -run src/c/parse.c -
-	rem type src\examples\c4.ie | tcc -run src/c/parse.c - | python src/py/parse.py
-	type src\examples\c4.ie | tcc -run src/c/parse.c - | python src/py/toco.py
+toco: src\examples\c1.ie
+	type $<
+	type $< | tcc -run src/c/parse.c -
+	type $< | tcc -run src/c/parse.c - | python src/py/parse.py
+	rem type $< | tcc -run src/c/parse.c - | python src/py/toco.py
 
 wtoco:
 	watchexec -cr "make toco"
