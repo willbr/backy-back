@@ -106,6 +106,14 @@ simple: src\examples\tokens3.ie
 wsimple:
 	watchexec -cr "make simple"
 
+indent: src\examples\indent2.ie
+	type $<
+	rem type $< | tcc -run src/c/simple-tokens.c -
+	type $< | tcc -run src/c/simple-tokens.c - | python src/py/parse.py
+
+windent:
+	watchexec -cr "make indent"
+
 watch:
 	watchexec -cr "make run"
 

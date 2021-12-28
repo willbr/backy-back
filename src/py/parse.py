@@ -37,6 +37,11 @@ def print_expr(x, depth=0, print_brackets=True):
     if print_brackets:
         print("[", end="")
 
+    if x == []:
+        if print_brackets:
+            print("]", end="")
+        return
+
     car, *cdr = x
 
     if not is_atom(car):
