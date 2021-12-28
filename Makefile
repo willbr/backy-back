@@ -97,6 +97,15 @@ toco: src\examples\c1.ie
 wtoco:
 	watchexec -cr "make toco"
 
+simple: src\examples\tokens3.ie
+	type $<
+	type $< | tcc -run src/c/simple-tokens.c -
+	type $< | tcc -run src/c/simple-tokens.c - | python src/py/parse.py
+	rem type $< | tcc -run src/c/simple-tokens.c - | python src/py/toco.py
+
+wsimple:
+	watchexec -cr "make simple"
+
 watch:
 	watchexec -cr "make run"
 
