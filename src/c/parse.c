@@ -33,7 +33,7 @@ typedef unsigned int uint;
 typedef void (void_fn)(void);
 
 int echo_newlines = 1;
-int echo_indents = 1;
+int echo_indents = 0;
 int cur_indent = 0;
 int new_indent = 0;
 uint indent_width = 4;
@@ -70,7 +70,6 @@ char* next_word(void);
     X(prefix_body) \
     X(prefix_newline) \
     X(prefix_indent) \
-    X(prefix_dedent) \
     X(prefix_end) \
     X(inline_body) \
     X(inline_prefix) \
@@ -390,8 +389,10 @@ parse_indent(void)
         read_line();
 
     while(*in == '\n')
-        if (read_line() == NULL)
+        if (read_line() == NULL) {
+            new_indent = 0;
             return;
+        }
 
     first_char = in;
     chomp(' ');
@@ -410,12 +411,7 @@ parse_indent(void)
 void
 neoteric(void)
 {
-    /*ere;*/
-    /*debug_var("c", *in);*/
-    /*debug_token();*/
-    /*debug_stack();*/
     state_fns[state_index] = neoteric_end;
-    /*ere;*/
     inline_body();
 }
 
@@ -504,7 +500,7 @@ prefix_newline(void)
     if (echo_newlines)
         strncpy(token_buffer, "newline", 256);
     else
-        next_word();
+        prefix_indent();
 
     return;
 }
@@ -531,7 +527,7 @@ prefix_indent(void)
             new_indent = cur_indent;
             read_token();
             state_fns[state_index] = prefix_body;
-            next_word();
+            prefix_body();
             return;
         } else if (diff == 0) {
             die("0");
@@ -548,37 +544,13 @@ prefix_indent(void)
         state_fns[state_index] = prefix_end;
         state_index += 1;
         state_fns[state_index] = prefix_head;
-        state_fns[state_index]();
+        prefix_head();
         return;
     }
 
-    state_fns[state_index] = prefix_dedent;
-    state_fns[state_index]();
+    state_fns[state_index] = prefix_end;
+    prefix_end();
 
-}
-
-
-void
-prefix_dedent(void)
-{
-    /*ere;*/
-    /*debug_var("d", new_indent);*/
-    /*debug_var("d", cur_indent);*/
-
-    if (new_indent > cur_indent) {
-        die("opps");
-    } else if (new_indent == cur_indent) {
-        state_fns[state_index] = prefix_end;
-        state_fns[state_index]();
-        return;
-    } else {
-        /*ere;*/
-        strncpy(token_buffer, "]", 256);
-        cur_indent  -= 1;
-        state_index -= 1;
-        /*state_fns[state_index]();*/
-        return;
-    }
 }
 
 
@@ -586,8 +558,21 @@ void
 prefix_end(void)
 {
     /*ere;*/
-    state_fns[state_index] = prefix_head;
+    /*debug_var("d", cur_indent);*/
+    /*debug_var("d", new_indent);*/
+    /*debug_stack();*/
+
     strncpy(token_buffer, "]", 256);
+
+    if (new_indent == cur_indent) {
+        state_fns[state_index] = prefix_head;
+    } else if (new_indent < cur_indent) {
+        cur_indent  -= 1;
+        state_index -= 1;
+    } else {
+        die("opps");
+    }
+
     return;
 }
 
@@ -619,8 +604,8 @@ prefix_head(void)
 
         if(cur_indent) {
             new_indent = 0;
-            state_fns[state_index] = prefix_dedent;
-            next_word();
+            state_fns[state_index] = prefix_end;
+            prefix_end();
             return;
         }
 
@@ -672,7 +657,7 @@ prefix_cmd(void)
 
     /*cmds[state_index] = alloc_cmd(token_buffer);*/
     state_fns[state_index] = prefix_body;
-    next_word();
+    prefix_body();
 }
 
 
