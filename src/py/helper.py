@@ -1,4 +1,5 @@
 from os import path
+from glob import glob
 
 script_dir = path.dirname(path.realpath(__file__))
 
@@ -7,12 +8,12 @@ def parse_output(o):
 
 
 def parse_test(t):
-    arg, er = [x.strip() for x in t.split("-----")]
-    return arg, parse_output(er)
+    with open(t) as f:
+        sections = [s.strip() for s in f.read().split("-----")]
+        return [path.basename(t), *sections]
 
 
 def tests():
-    test_path = path.join(script_dir, "../tests.txt")
-    with open(test_path) as f:
-        return [parse_test(t) for t in f.read().split("#####")]
+    needle = path.join(script_dir, "../tests/*.txt")
+    return [parse_test(t) for t in glob(needle)]
 

@@ -5,10 +5,10 @@ from helper import *
 
 
 def run_test(t):
-    prog, er = t
+    basename, prog, er = t
 
     # print(repr(prog))
-    p = Popen(["tcc", "-run", "./src/parse.c", "-"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    p = Popen(["tcc", "-run", "./src/c/parse.c", "-"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = [x.decode() for x in p.communicate(prog.encode())]
 
     if err:
@@ -22,8 +22,13 @@ def run_test(t):
 
     diff = '\n'.join(unified_diff(out, er))
     if diff != '':
-        print(er)
-        print(out)
+        print("File:")
+        print(basename)
+        print("Expected:")
+        print('\n'.join(er))
+        print("\nOutput:")
+        print(' '.join(out))
+        print()
         return diff
 
     return None
@@ -36,9 +41,10 @@ if __name__ == '__main__':
     with Pool(1) as p:
         for r in p.map(run_test, tests()):
             number_of_tests += 1
+            # print(r)
             if r:
                 fails += 1
-                # print(r)
+                print(r)
             pass
 
     if fails:

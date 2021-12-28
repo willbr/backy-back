@@ -65,7 +65,7 @@ run: src/*.c
 	tcc -run src/parse.c
 
 test-c:
-	python src/test-c.py
+	python src/py/test-c.py
 
 wtest-c:
 	watchexec -cr "make test-c"
