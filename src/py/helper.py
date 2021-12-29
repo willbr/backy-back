@@ -3,13 +3,10 @@ from glob import glob
 
 script_dir = path.dirname(path.realpath(__file__))
 
-def parse_output(o):
-    return '\n'.join([x.strip() for x in o.split('\n')])
-
-
 def parse_test(t):
     with open(t) as f:
-        sections = [s.strip() for s in f.read().split("-----")]
+        text = f.read()
+        sections = [s for s in text.split("\n-----\n")]
         return [path.basename(t), *sections]
 
 

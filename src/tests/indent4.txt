@@ -2,4 +2,10 @@ double
     \ 1
 
 -----
-[ double newline 1 newline ]
+[
+double
+newline
+1
+newline
+]
+

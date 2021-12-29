@@ -8,7 +8,7 @@ def main():
         print(e)
         exit(1)
 
-    prog, er = tests()[i]
+    basename, prog, er = tests()[i]
     print(prog)
 
 

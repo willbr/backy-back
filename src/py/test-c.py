@@ -12,24 +12,39 @@ def run_test(t):
     out, err = [x.decode() for x in p.communicate(prog.encode())]
 
     if err:
+        print("#Error:")
+        print(f"{basename=}")
+        print("prog")
+        print(prog.replace(' ', '.'))
+        print("out")
+        print(out)
+        print("err", err)
         return err
 
-    er  = er.split('\n')
+    er  = er.strip().split('\n')
     out = out.replace('\r\n', '\n').strip().split('\n')
 
-    # print(er)
-    # print(out)
+    #print(er)
+    #print(out)
 
     diff = '\n'.join(unified_diff(out, er))
     if diff != '':
-        print("File:")
-        print(basename)
-        print("Expected:")
-        print('\n'.join(er))
-        print("\nOutput:")
-        print(' '.join(out))
-        print()
-        return diff
+        err_msg = '\n'.join([
+            "\nFile:",
+            basename,
+            "\nInput:",
+            prog,
+            "\nExpected:",
+            ' '.join(er),
+            "\nOutput:",
+            ' '.join(out),
+            "\nDiff:",
+            diff,
+            ])
+        return err_msg
+    else:
+        # print("good: ", basename)
+        pass
 
     return None
 
@@ -47,10 +62,6 @@ if __name__ == '__main__':
                 print(r)
             pass
 
-    if fails:
-        print(f"{fails=}")
-        print(f"{number_of_tests=}")
-    else:
-        print("all passed")
-        print(f"{number_of_tests=}")
+    print(f"{fails=}" if fails else "all passed")
+    print(f"{number_of_tests=}")
 

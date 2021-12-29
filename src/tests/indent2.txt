@@ -3,4 +3,16 @@ a
         c
 
 -----
-[a[b[c]]]
+[
+a
+newline
+[
+b
+newline
+[
+c
+newline
+]
+]
+]
+
