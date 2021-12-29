@@ -456,7 +456,8 @@ prefix_body(void)
 
     if (*in == '\0') {
         /* EOF */
-        prefix_newline();
+        state_fns[state_index] = prefix_end;
+        prefix_end();
         return;
     }
 
@@ -465,7 +466,7 @@ prefix_body(void)
 
     if (*in == '\n') {
         state_fns[state_index] = prefix_newline;
-        next_word();
+        prefix_newline();
         return;
     }
 
