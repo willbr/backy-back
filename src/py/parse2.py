@@ -88,6 +88,9 @@ def main():
                     assert token == ')'
                     print(token)
                     print(']')
+                elif open_char == '(':
+                    assert token == ')'
+                    print(token)
                 else:
                     assert False
             else:
