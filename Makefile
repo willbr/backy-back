@@ -117,11 +117,12 @@ windent:
 watch:
 	watchexec -cr "make run"
 
-pytok: src\examples\indent7.ie
+pytok: src\examples\c4.ie
 	type $<
 	rem python src/py/tokenise.py $<
 	rem python src/py/tokenise.py $< | python src/py/parse2.py -
 	python src/py/tokenise.py $< | python src/py/parse2.py - | python src/py/parse.py
+	python src/py/tokenise.py $< | python src/py/parse2.py - | python src/py/toco.py
 
 wpytok:
 	watchexec -cr "make pytok"

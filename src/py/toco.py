@@ -56,7 +56,7 @@ def compile_statement(x):
     elif head == 'var':
         return compile_var(args, body) + ";"
 
-    assert body == []
+    assert body == [] or body == None
     ce = compile_expression([head, *args])
     return ce + ";"
 
