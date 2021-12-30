@@ -54,8 +54,13 @@ def print_expr(x, depth=0, print_brackets=True):
     prev_it = car
 
     for it in cdr:
-        if is_atom(it) and is_atom(prev_it):
-            print(" ", end="")
+        if is_atom(it):
+            if is_atom(prev_it):
+                print(" ", end="")
+            else:
+                print("\n" + (depth+1) * "    ", end="")
+                if not print_brackets:
+                    print("\\ ", end= "")
         else:
             print("\n" + (depth+1) * "    ", end="")
 
@@ -82,7 +87,7 @@ def remove_newline(prog):
 if __name__ == '__main__':
     prog = parse_file('-')
     for s in remove_newline(prog):
-        puts_expr(s, True)
+        puts_expr(s, False)
     print()
 
 
