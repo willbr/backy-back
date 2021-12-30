@@ -44,11 +44,18 @@ def main():
                     assert False # unmatch syntax
                 print(token)
                 token = peek_token()
-                if token[0] == ' ':
+                while token == 'newline':
                     _ = read_token()
-                    spaces = len(token)
+                    token = peek_token()
+
+                if token[0] == ' ':
+                    space_token = read_token()
+                    spaces = len(space_token)
                     assert not spaces % indent_width
-                    new_indent = spaces // indent_width
+                    if peek_token() == 'newline':
+                        pass
+                    else:
+                        new_indent = spaces // indent_width
                 else:
                     new_indent = 0
 

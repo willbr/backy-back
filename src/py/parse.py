@@ -82,7 +82,7 @@ def remove_newline(prog):
 if __name__ == '__main__':
     prog = parse_file('-')
     for s in remove_newline(prog):
-        puts_expr(s, False)
+        puts_expr(s, True)
     print()
 
 
