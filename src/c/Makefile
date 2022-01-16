@@ -4,5 +4,5 @@ w:
 	watchexec -cr "make tokens2"
 
 tokens2: tokens2.c
-	tcc -run $< ../examples/c0.ie
+	tcc -run $< ../examples/indent6.ie
 
