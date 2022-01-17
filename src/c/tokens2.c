@@ -47,6 +47,7 @@ FILE *f = NULL;
 char *token_breakchars = " ,()[]{}\n";
 
 void next_word(void);
+void read_word(void);
 
 #define LIST_OF_STATES \
     X(prefix_head) \
@@ -162,6 +163,13 @@ parse_indent(void)
     char *first_char = NULL;
     uint diff = 0;
 
+    /*ere;*/
+    if (*in != ' ') {
+        /*ere;*/
+        /*debug_var("d", *in);*/
+        new_indent = 0;
+    }
+
     while (*in == ' ') {
         /*ere;*/
         first_char = in;
@@ -170,7 +178,7 @@ parse_indent(void)
         diff = in - first_char;
         /*ere;*/
         /*debug_var("d", diff);*/
-        if (diff % indent_width != 0)
+        if ((diff % indent_width) != 0)
             die("invalid indent");
 
         /*ere;*/
@@ -193,22 +201,59 @@ void
 read_indent()
 {
     /*ere;*/
-    parse_indent();
+    /*debug_var("d", new_indent);*/
+    /*debug_var("d", cur_indent);*/
+
     int diff = new_indent - cur_indent;
+    if (diff > 0) {
+        /*ere;*/
+        /*debug_var("d", diff);*/
+        /*debug_var("d", new_indent);*/
+        /*debug_var("d", cur_indent);*/
+        /*die("e");*/
+        /*ere;*/
+        strncpy(token_buffer, "ie/dedent", 256);
+        cur_indent += 1;
+        return;
+    }
+
+    /*ere;*/
+    /*debug_var("d", diff);*/
+
+    parse_indent();
+    diff = new_indent - cur_indent;
+
+    /*ere;*/
+    /*debug_var("s", line_buffer);*/
+    /*debug_var("d", new_indent);*/
+    /*debug_var("d", cur_indent);*/
+    /*debug_var("d", diff);*/
 
     if (diff == 0) {
+        read_word();
+        cur_indent = new_indent;
+        state = prefix_head;
         /* pass */
-    } else if (diff == 1) {
-        strncpy(token_buffer, "ie/indent", 256);
-    } else {
+    } else if (diff > +1) {
         ere;
         debug_var("d", new_indent);
         debug_var("d", cur_indent);
         debug_var("d", diff);
-        die("??");
+        die("invalid indent");
+    } else if (diff == +1) {
+        strncpy(token_buffer, "ie/indent", 256);
+        cur_indent = new_indent;
+        state = prefix_head;
+    } else {
+        /*ere;*/
+        strncpy(token_buffer, "ie/dedent", 256);
+        cur_indent = new_indent - 1;
+        /*ere;*/
+        /*debug_var("s", line_buffer);*/
+        /*debug_var("d", new_indent);*/
+        /*debug_var("d", cur_indent);*/
     }
 
-    cur_indent = new_indent;
 }
 
 
@@ -216,6 +261,7 @@ void
 read_word(void)
 {
     /*ere;*/
+    /*debug_var("s", line_buffer);*/
     /*debug_var("d", *in);*/
 
     switch (*in) {
@@ -254,19 +300,24 @@ next_word(void)
         }
     }
 
-    /*fprintf(stderr, "\n");*/
+    /*ere;*/
+    /*debug_var("d", new_indent);*/
+    /*debug_var("d", cur_indent);*/
     /*debug_var("s", state_names[state]);*/
+    /*debug_var("s", line_buffer);*/
     /*debug_var("d", *in);*/
     /*debug_var("c", *in);*/
 
     switch (state) {
     case prefix_indent:
-        if (*in == '\n') {
-            read_word();
-            return;
-        }
+        /*ere;*/
+        /*switch (*in) {*/
+        /*case '\n':*/
+            /*read_word();*/
+            /*return;*/
+        /*}*/
         read_indent();
-        state = prefix_head;
+        /*state = prefix_head;*/
         break;
 
     case prefix_head:
@@ -329,7 +380,7 @@ main(int argc, char **argv)
                 fprintf(stderr, "    ");
 
         /*printf(CTEXT(RED_TEXT, "%s\n"), token_buffer);*/
-        printf("%s\n", token_buffer);
+        printf("tok: %s\n", token_buffer);
 
         if (!limit--) {
             ere;

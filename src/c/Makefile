@@ -1,8 +1,12 @@
 phony:
 
+f=..\examples\indent7.ie
+f=..\examples\tokens9.ie
+
 w:
 	watchexec -cr "make tokens2"
 
 tokens2: tokens2.c
-	tcc -run $< ../examples/indent6.ie
+	type $f
+	tcc -run $< $f
 
