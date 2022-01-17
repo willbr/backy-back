@@ -1,7 +1,7 @@
 phony:
 
 f=..\examples\indent7.ie
-f=..\examples\tokens9.ie
+f=..\examples\c1.ie
 
 w:
 	watchexec -cr "make tokens2"
