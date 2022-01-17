@@ -135,8 +135,13 @@ read_string(void)
     int tok_len = 0;
 
     tok = in;
+    in += 1;
 
     for (;*in != '\0';in += 1) {
+        if (*in == '"') {
+            in += 1;
+            break;
+        }
     }
 
     tok_len = in - tok;
