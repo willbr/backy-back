@@ -11,9 +11,9 @@ def parse_file(filename):
         if token == '[':
             stack.append([])
         elif token == '(':
-            stack.append(["infix"])
+            stack.append(["ie/infix"])
         elif token == '{':
-            stack.append(["postfix"])
+            stack.append(["ie/postfix"])
         elif token in (']', ')', '}'):
             tos = stack.pop()
             stack[-1].append(tos)
@@ -81,13 +81,13 @@ def remove_newline(prog):
     if is_atom(prog):
         return prog
 
-    return [remove_newline(x) for x in prog if x != 'newline']
+    return [remove_newline(x) for x in prog if x != 'ie/newline']
 
 
 if __name__ == '__main__':
     prog = parse_file('-')
     for s in remove_newline(prog):
-        puts_expr(s, False)
+        puts_expr(s, True)
     print()
 
 

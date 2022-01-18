@@ -39,17 +39,19 @@ def read_string():
 
 
 def read_token():
-    global i
+    global i, next_token
     start_pos = i
     while i < len_line and line[i] not in breakchars:
-        i += 1
-
-    if line[i] in '({[':
         i += 1
 
     len_word = i - start_pos
     assert len_word
     word = line[start_pos:i]
+
+    if line[i] in '({[':
+        next_token = word
+        word = "ie/neoteric"
+
     return word
 
 
@@ -68,7 +70,7 @@ def next_word():
         get_line()
         chomp(' ')
         next_token = ' ' * i
-        word = 'newline'
+        word = 'ie/newline'
 
     elif line[i] == '"':
         word = read_string()
