@@ -1,4 +1,4 @@
-from parse import parse_file, is_atom, remove_newline, puts_expr
+from parse2_syntax import parse_file, is_atom, remove_newline, puts_expr
 
 libs = set()
 functions = {}
@@ -17,12 +17,12 @@ def compile(x):
 
 
 def compile_lib(lib_name, *body):
-    assert body == ('newline',)
+    assert body == ('ie/newline',)
     libs.add(lib_name)
 
 
 def compile_fn(fn_name, *spec):
-    assert spec[0] == 'newline'
+    assert spec[0] == 'ie/newline'
     body = []
     for x in spec[1:]:
         s = compile_statement(x)
@@ -43,7 +43,7 @@ def compile_statement(x):
     if args == []:
         pass
     elif args[0] == "=":
-        args = [head, ['infix', *args[1:]]]
+        args = [head, ['ie/infix', *args[1:]]]
         head = '='
 
     if args == []:
@@ -89,12 +89,16 @@ def compile_expression(x, depth=0):
 
     head, *rest = x
 
-    if head == 'infix':
-        if x == ['infix']:
-            return ''
-        head, *rest = transform_infix(rest)
-        if rest == []:
-            return head
+
+    while head in ['ie/infix', 'ie/neoteric']:
+        if head == 'ie/infix':
+            if x == ['ie/infix']:
+                return ''
+            head, *rest = transform_infix(rest)
+            if rest == []:
+                return head
+        elif head == 'ie/neoteric':
+            head, *rest = rest
 
     args, body = split_newline(rest)
     assert body == None
@@ -140,7 +144,7 @@ def transform_infix(x):
 
 def split_newline(x):
     try:
-        pos = x.index('newline')
+        pos = x.index('ie/newline')
         lhs = x[:pos]
         rhs = x[pos+1:]
     except ValueError:
