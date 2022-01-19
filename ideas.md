@@ -147,3 +147,24 @@ object is a union, it can be a list or a void*
 
     version 0
 
+#format rules
+
+## close markers can only be followed by other close markers or whitespace
+
+    e.g. ))]]]}}\n
+
+    However: this is an error:
+
+    )bob
+     ^
+     expected close or whitespace
+
+## commas have to be followed by whitespace
+
+    printf("hello %s\n", "bob")
+                             ^
+                             this is valid
+
+    printf("hello %s\n","bob")
+                             ^ this isn't
+
