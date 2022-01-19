@@ -14,8 +14,16 @@ def parse_file(filename):
             stack.append(["ie/infix"])
         elif token == '{':
             stack.append(["ie/postfix"])
+        elif token == 'ie/neoteric':
+            stack.append(["ie/neoteric"])
         elif token in (']', ')', '}'):
             tos = stack.pop()
+            try:
+                if stack[-1][0] == 'ie/neoteric':
+                    stack[-1].append(tos)
+                    tos = stack.pop()
+            except IndexError:
+                pass
             stack[-1].append(tos)
         else:
             stack[-1].append(token)

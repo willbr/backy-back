@@ -91,24 +91,9 @@ def main():
             elif token in '({[':
                 print(token)
                 syntax_stack.append(token)
-            elif token == "ie/neoteric":
-                print('[')
-                syntax_stack.append('[')
-                print(token)
-                token = read_token()
-                print(token)
-                open_char = read_token()
-                print(open_char)
-                assert open_char in '({['
-                syntax_stack.append(open_char)
-                syntax_stack.append("neoteric")
 
             elif token in ')}]':
                 open_char = syntax_stack.pop()
-                is_neoteric = False
-                if open_char == 'neoteric':
-                    is_neoteric = True
-                    open_char = syntax_stack.pop()
 
                 if open_char == '(':
                     assert token == ')'
@@ -122,9 +107,6 @@ def main():
                 else:
                     print(token)
                     assert False
-
-                if is_neoteric:
-                    push_token(']')
             else:
                 print(token)
 
