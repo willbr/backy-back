@@ -6,7 +6,7 @@ i = 0
 line = ""
 len_line = 0
 next_token = None
-breakchars = " \t\n()[]{}"
+breakchars = " \t\n,;()[]{}"
 
 
 def get_line():

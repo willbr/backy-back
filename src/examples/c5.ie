@@ -1,0 +1,42 @@
+include-lib "stdio.h"
+
+define true -1
+define false 0
+
+typedef f32 float
+typedef u32 unsigned int
+
+struct ball
+    x      u32
+    y      u32
+    width  f32
+    height f32
+
+globals
+    step := u32(0)
+    game-is-running := int(true)
+    ball := struct(ball, 0)
+
+fn main
+    params
+        argc int
+        argv **char
+    returns int
+
+    game-is-running = true
+
+    while game-is-running
+        update
+        render
+
+    return 0
+
+fn update
+    if step > 10
+        game-is-running = false
+    ball.x += 2
+    step += 1
+
+fn render
+    printf "%*sX\n" ball.x ""
+

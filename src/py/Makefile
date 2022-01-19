@@ -1,7 +1,7 @@
 wtok:
 	watchexec -cr "make tok"
 
-tok: ..\examples\c4.ie
+tok: ..\examples\c5.ie
 	type $<
 	rem python tokenise.py $<
 	rem python tokenise.py $< | python parse1_indent.py -
