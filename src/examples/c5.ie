@@ -17,12 +17,7 @@ globals
     game-is-running := int(true)
     ball := struct(ball, 0)
 
-fn main
-    params
-        argc int
-        argv **char
-    returns int
-
+fn main(arg int, argv **char) int
     game-is-running = true
 
     while game-is-running

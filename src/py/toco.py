@@ -99,36 +99,63 @@ def compile_lib(lib_name, *body):
 
 
 def compile_fn(fn_name, *spec):
-    assert spec[0] == 'ie/newline'
-    spec = spec[1:]
-    body = []
+    cbody = []
     params = []
-    returns = 'void'
 
-    if spec[0][0] == 'params':
-        params = compile_params(spec[0][1:])
-        spec = spec[1:]
+    if not is_atom(fn_name):
+        if fn_name[0] == 'ie/neoteric':
+            assert len(fn_name) == 3
+            raw_params = fn_name[2]
+            fn_name    = fn_name[1]
+        else:
+            assert False
+
+        if raw_params[0] == 'ie/infix':
+            raw_params = split_on_commas(raw_params[1:])
+            params = compile_params(raw_params)
+        else:
+            assert False
+
+    returns, body = split_newline(spec)
+
+    n = len(returns)
+    if n == 0:
+        returns = 'void'
+        pass
+    elif n == 1:
+        returns = returns[0]
+    else:
+        assert False
+
+    if body[0][0] == 'params':
+        assert params == []
+        params = compile_params(body[0][1:])
+        body = body[1:]
 
     if spec[0][0] == 'returns':
-        returns = compile_returns(spec[0][1:])
-        spec = spec[1:]
+        assert returns == None
+        returns = compile_returns(body[0][1:])
+        body = body[1:]
+    elif returns == None:
+        returns = 'void'
 
-    for x in spec:
+    for x in body:
         # pprint(x)
         s = compile_statement(x)
-        body.append(s)
+        cbody.append(s)
 
-    functions[fn_name] = [params, returns, body]
+    functions[fn_name] = [params, returns, cbody]
 
 
 def compile_params(spec):
-    assert spec[0] == 'ie/newline'
-    spec = spec[1:]
+    if spec[0] == 'ie/newline':
+        spec = spec[1:]
+
     params = []
     for param in spec:
-        assert len(param) == 3
-        var_name, var_type, nl = param
-        assert nl == 'ie/newline'
+        if len(param) == 3:
+            assert param.pop() == 'ie/newline'
+        var_name, var_type = param
         params.append(compile_var_decl(var_name, var_type))
     return params
 
@@ -272,14 +299,19 @@ def compile_expression(x, depth=0):
         return f"{head}({', '.join(cargs)})"
 
 
+def split_on_commas(lst):
+    r = [[]]
+    for e in lst:
+        if e == ',':
+            r.append([])
+        else:
+            r[-1].append(e)
+    return r
+
+
 def transform_infix(x):
     if ',' in x:
-        sections = [[]]
-        for e in x:
-            if e == ',':
-                sections.append([])
-            else:
-                sections[-1].append(e)
+        sections = split_on_commas(x)
     else:
         sections = [x]
 
