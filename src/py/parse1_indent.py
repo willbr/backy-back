@@ -39,9 +39,7 @@ def main():
     file = fileinput.input(arg)
 
     try:
-        token = read_token()
         print('[')
-        print(token)
         cur_indent = 0
         while True:
             token = read_token()

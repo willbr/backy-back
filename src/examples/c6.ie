@@ -1,0 +1,6 @@
+
+include-lib "stdio.h"
+
+fn main(argc int, argv **char) int
+    puts "hi"
+    return 0

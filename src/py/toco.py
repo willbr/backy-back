@@ -16,6 +16,7 @@ and or
 
 
 def compile(x):
+    # pprint(x)
     head, *args = x
     if head == 'fn':
         compile_fn(*args)
@@ -29,6 +30,8 @@ def compile(x):
         compile_typedef(*args)
     elif head == 'define':
         compile_define(*args)
+    elif head == 'ie/newline':
+        assert args == []
     else:
         print(head)
         assert False
