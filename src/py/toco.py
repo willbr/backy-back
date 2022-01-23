@@ -16,7 +16,6 @@ and or
 
 
 def compile(x):
-    # pprint(x)
     head, *args = x
     if head == 'fn':
         compile_fn(*args)
@@ -30,6 +29,8 @@ def compile(x):
         compile_typedef(*args)
     elif head == 'define':
         compile_define(*args)
+    elif head == 'comment':
+        compile_comment(*args)
     elif head == 'ie/newline':
         assert args == []
     else:
@@ -37,11 +38,25 @@ def compile(x):
         assert False
 
 
+def compile_comment(*args):
+    first_line, rest = split_newline(args)
+    assert rest == ()
+    comment = '/* ' + ' '.join(first_line) + ' */'
+    top_level.append(comment)
+
+
 def mangle(name):
     return name.replace('-', '_')
 
-def compile_define(define_name, *body):
-    decl = f"#define {define_name} {body[0]}"
+
+def compile_define(*args):
+    first_line, body = split_newline(args)
+    if body == ():
+        sep   = ""
+        dbody = ""
+    assert len(first_line) == 1
+    define_name = first_line[0]
+    decl = f"#define {define_name}{sep}{dbody}"
     top_level.append(decl)
 
 
