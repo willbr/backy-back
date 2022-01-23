@@ -114,6 +114,10 @@ def compile_globals(body):
 def compile_lib(lib_name, *body):
     assert body == ('ie/newline',)
     libs.add(lib_name)
+    name = lib_name.strip('"')
+    clib = f"#include <{name}>"
+    top_level.append(clib)
+
 
 
 def compile_fn(fn_name, *spec):
@@ -405,13 +409,6 @@ if __name__ == "__main__":
     for x in prog:
         # puts_expr(x)
         compile(x)
-
-    for name in libs:
-        name = name.strip('"')
-        print(f"#include <{name}>")
-
-    if libs:
-        print()
 
     for e in top_level:
         print(e)
