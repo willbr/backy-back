@@ -2,13 +2,16 @@ from parse2_syntax import parse_file, is_atom, remove_newline, puts_expr
 from pprint import pprint
 
 libs = set()
-types = {}
+types = {
+        'int': 'int',
+        'long': 'long',
+        }
 structs = {}
 functions = {}
 global_vars = {}
 top_level = []
 infix_symbols = """
-= == !=
+= := == !=
 + += - -= * *= / /=
 > >= < <=
 and or
@@ -255,6 +258,8 @@ def compile_statement(x):
         return compile_while(args, body)
     elif head == 'var':
         return compile_var(args, body) + ";"
+    elif head == ':=':
+        return compile_let(args, body) + ";"
     elif head == 'if':
         return compile_if(args, body)
 
@@ -272,6 +277,39 @@ def compile_var(args, body):
     elif num_args == 3:
         var_name, var_type, var_val = args
         return f"{var_type} {var_name} = {var_val}"
+    else:
+        assert False
+
+
+def compile_let(args, body):
+    assert body == []
+    num_args = len(args)
+    assert num_args == 2
+    var_name, x = args
+    var_type = infer_type(x)
+    var_val = compile_expression(x)
+    if x[0] == 'ie/neoteric':
+        _, cmd, arg = x
+        if cmd in types.keys():
+            if cmd == var_type:
+                var_val = compile_expression(arg)
+    return f"{var_type} {var_name} = {var_val}"
+
+
+def infer_type(x):
+    if is_atom(x):
+        assert False
+
+    n = len(x)
+    head, *rest = x
+    if head == 'ie/neoteric':
+        cmd = rest[0]
+        if cmd == 'getchar':
+            return 'int'
+        elif cmd in types.keys():
+            return cmd
+        print(cmd)
+        assert False
     else:
         assert False
 
@@ -322,6 +360,8 @@ def compile_expression(x, depth=0):
             return "(" + r + ")"
         else:
             return r
+    elif head in types.keys():
+        return f"({head})({', '.join(cargs)})"
     elif head == "inc":
         assert len(cargs) == 1
         return f"{cargs[0]} += 1"
