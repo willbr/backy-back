@@ -17,8 +17,8 @@ and or
 
 def compile(x):
     head, *args = x
-    if head == 'fn':
-        compile_fn(*args)
+    if head == 'proc':
+        compile_proc(*args)
     elif head == 'include-lib':
         compile_lib(*args)
     elif head == 'struct':
@@ -128,7 +128,7 @@ def compile_lib(lib_name, *body):
 
 
 
-def compile_fn(fn_name, *spec):
+def compile_proc(fn_name, *spec):
     cbody = []
     params = []
 

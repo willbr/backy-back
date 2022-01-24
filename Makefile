@@ -1,4 +1,15 @@
-phony: watch run test1 test2 test3
+PATH := $(PATH);./bin/
+ignore := rem
+
+toco-tests:
+	toco src\examples\c0.ie
+	toco src\examples\c1.ie
+	toco src\examples\c2.ie
+	toco src\examples\c3.ie
+	toco src\examples\c4.ie
+	$(ignore) parse_ie src\examples\c5.ie
+	toco src\examples\c5.ie
+	toco src\examples\c6.ie
 
 test0: .\src\tokens2.ie
 	type $<

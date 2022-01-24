@@ -1,2 +1,2 @@
-fn main
+proc main
     printf "hello, world\n"

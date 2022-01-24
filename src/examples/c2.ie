@@ -1,8 +1,9 @@
 include-lib "stdio.h"
 
-fn main
-    var a int 0
-    var b int 1
-    var c int 2
+proc main
+    a := int(0)
+    b := int(1)
+    c := int(2)
     a = 3 * (b * c)
+    return a
 

@@ -17,7 +17,7 @@ globals
     game-is-running := int(true)
     ball := struct(ball, 0)
 
-fn main(arg int, argv **char) int
+proc main(arg int, argv **char) int
     game-is-running = true
 
     while game-is-running
@@ -26,12 +26,12 @@ fn main(arg int, argv **char) int
 
     return 0
 
-fn update
+proc update
     if step > 10
         game-is-running = false
     ball.x += 2
     step += 1
 
-fn render
+proc render
     printf "%*sX\n" ball.x ""
 
