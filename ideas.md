@@ -168,3 +168,11 @@ object is a union, it can be a list or a void*
     printf("hello %s\n","bob")
                         ^ this isn't, found '"' expected whitespace
 
+# toco
+
+add an escape for c code
+
+    raw-c "#define SDL_MAIN_HANDLED"
+    raw-c "int a = 0;"
+
+
