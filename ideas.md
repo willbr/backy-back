@@ -129,7 +129,7 @@ stack functions
 
 # typed version
 
-object is a union, it can be a list or a void*
+object is a union, it can be a list or a void\*
 
     struct list {
         struct object *elem;
@@ -147,7 +147,17 @@ object is a union, it can be a list or a void*
 
     version 0
 
-#format rules
+# heredocs
+    puts <<end
+    hello,
+    How are you doing today?
+    bye!
+    end
+
+# regex
+create a regex object
+
+    /^haha$/
 
 # toco
 
