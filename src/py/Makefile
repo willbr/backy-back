@@ -2,11 +2,14 @@ wtok:
 	watchexec -cr "make tok"
 
 tok: ../examples/c6.ie
-	# type $<
-	#echo.
-	#rem python tokenise.py $<
-	#rem python tokenise.py $< | python parse1_indent.py -
-	#rem python tokenise.py $< | python parse1_indent.py - | python parse2_syntax.py -
-	#echo.
-	python3 tokenise.py $< | python3 parse1_indent.py - | python3 toco.py -
+## type $<
+##echo.
+##rem python tokenise.py $<
+#python tokenise.py $< | python parse1_indent.py -
+	python tokenise.py $< | python parse1_indent.py - | python parse2_syntax.py -
+##echo.
+	python tokenise.py $< | python parse1_indent.py - | python toco.py -
+
+tok_errors: ../examples/tokenise_errors_01.ie
+	python tokenise.py $< | python parse1_indent.py - | python parse2_syntax.py -
 

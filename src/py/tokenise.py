@@ -1,4 +1,5 @@
 import fileinput
+import textwrap
 import sys
 
 file = None
@@ -48,7 +49,9 @@ def read_token():
     assert len_word
     word = line[start_pos:i]
 
-    if line[i] in '({[':
+    next_char = line[i]
+
+    if next_char in '({[':
         next_token = word
         word = "ie/neoteric"
 
@@ -82,12 +85,34 @@ def next_word():
         word = line[i]
         i += 1
 
+        if word == ',':
+            if line[i] not in ' \n':
+                die("comma must be followed by white space")
+        elif word in ')}]':
+            if line[i] not in ' \n)}]':
+                die("close marker must be followed by another close marker or whitespace")
+
+
     else:
         word = read_token()
 
     chomp(' ')
     return word
 
+
+def die(msg):
+    l = line.strip()
+    red = '\u001b[31m'
+    reset = '\u001b[0m'
+    print(textwrap.dedent(f"""
+
+    {red}ERROR: {msg}{reset}
+
+    {l[:i]}{red}{l[i]}{reset}{l[i+1:]}
+    {" "*i}^
+
+    """), file=sys.stderr)
+    exit(1)
 
 def main():
     global file
