@@ -103,16 +103,19 @@ def next_word():
 def die(msg):
     l = line.strip()
     red = '\u001b[31m'
+    white = '\u001b[37m'
+    bg_red = '\u001b[41m'
     reset = '\u001b[0m'
     print(textwrap.dedent(f"""
 
-    {red}ERROR: {msg}{reset}
+    {bg_red}ERROR: {white}{msg}{reset}
 
     {l[:i]}{red}{l[i]}{reset}{l[i+1:]}
     {" "*i}^
 
     """), file=sys.stderr)
     exit(1)
+
 
 def main():
     global file
