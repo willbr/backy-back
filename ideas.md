@@ -1,10 +1,17 @@
 # reader
     read first char
-    is it a prefix char? "({[*&'
-        " string
+    is it a breakchar char? " \t\n,;()[]{}'
+          space
+       \t tab is an error
+       \n newline
+        , comma
+        ; semicolon
         ( infix
         { rpn
         [ prefix
+
+    is it a prefix char?
+        " string
         * deref
         & address
         ' quote
@@ -12,7 +19,11 @@
         $ hexadecimal
 
     read word
-    try and promote to number
+    try promote functions
+        - promote to number
+        - promote to number from hex
+        - promote to number from binary
+
 
 # assignment syntax
 special case for infix assignment
@@ -54,6 +65,17 @@ pointer methods
     & addr
     ' quote
     ! not
+
+# add promotion stage
+apply a list of transformations to a token
+
+    *something
+
+becomes:
+
+    deref something
+    [deref something]
+    deref(something)
 
 # neoteric function calls
 
@@ -159,11 +181,33 @@ create a regex object
 
     /^haha$/
 
+# add rpn command 
+so I can write reverse polish notation as a statement
+
+    emit 42
+
+    rpn 42 emit
+
 # toco
 
-add an escape for c code
+## add an escape for c code
 
     raw-c "#define SDL_MAIN_HANDLED"
     raw-c "int a = 0;"
+
+
+## add println & fprintln macros
+
+    a := float(3.6)
+
+    println "float: {a:4.2f}"
+    fprintln stderr "{a=}
+
+to
+
+    float a = 3.6;
+
+    printf("float: %3.6f\n")
+    fprintf(stderr, "a=%f", a);
 
 
