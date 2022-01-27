@@ -1,7 +1,7 @@
 wtok:
 	watchexec -cr "make tok"
 
-tok: ../examples/c7.ie
+tok: ../examples/c1.ie
 ## type $<
 ##echo.
 ##rem python tokenise.py $<

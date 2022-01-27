@@ -124,7 +124,11 @@ def compile_globals(body):
 
 
 def compile_lib(lib_name, *body):
-    assert body == ('ie/newline',)
+    assert body[0] == 'ie/newline'
+    body = body[1:]
+    if body:
+        for fn_decl in body:
+            compile_func_decl(*fn_decl)
     libs.add(lib_name)
     name = lib_name.strip('"')
     clib = f"#include <{name}>"
@@ -161,17 +165,18 @@ def compile_func_decl(fn_name, *spec):
     else:
         assert False
 
-    if body[0][0] == 'params':
-        assert params == []
-        params = compile_params(body[0][1:])
-        body = body[1:]
+    if body:
+        if body[0][0] == 'params':
+            assert params == []
+            params = compile_params(body[0][1:])
+            body = body[1:]
 
-    if spec[0][0] == 'returns':
-        assert returns == None
-        returns = compile_returns(body[0][1:])
-        body = body[1:]
-    elif returns == None:
-        returns = 'void'
+        if spec[0][0] == 'returns':
+            assert returns == None
+            returns = compile_returns(body[0][1:])
+            body = body[1:]
+        elif returns == None:
+            returns = 'void'
 
     functions[fn_name] = [params, returns, body]
 
@@ -198,10 +203,19 @@ def compile_params(spec):
 
     params = []
     for param in spec:
+        n = len(param)
         if len(param) == 3:
             assert param.pop() == 'ie/newline'
-        var_name, var_type = param
-        params.append(compile_var_decl(var_name, var_type))
+
+        if n == 1:
+            if param[0] == 'void':
+                params.append('void')
+            else:
+                print(param)
+                assert False
+        else:
+            var_name, var_type = param
+            params.append(compile_var_decl(var_name, var_type))
     return params
 
 
@@ -484,6 +498,8 @@ if __name__ == "__main__":
             continue
         # pprint(spec)
         params, returns, body = spec
+        if body == ():
+            continue
         print_func_decl(name, params, returns, ' ')
         print(';')
     if len(functions) > 1:
@@ -493,6 +509,8 @@ if __name__ == "__main__":
     for name, spec in functions.items():
         # pprint(spec)
         params, returns, body = spec
+        if body == ():
+            continue
         print_func_decl(name, params, returns)
         print(" ", end="")
         print_block(body, 1)
