@@ -1,0 +1,8 @@
+proc main(argc int, argv **char) int
+    a := double(10)
+    return a
+
+
+proc double(n int) int
+    return n * 2
+

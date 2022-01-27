@@ -10,6 +10,7 @@ toco-tests:
 	$(ignore) parse_ie src\examples\c5.ie
 	toco src\examples\c5.ie
 	toco src\examples\c6.ie
+	toco src\examples\c7.ie
 
 test0: .\src\tokens2.ie
 	type $<

@@ -3,6 +3,8 @@ from pprint import pprint
 
 libs = set()
 types = {
+        'char': 'short',
+        'short': 'short',
         'int': 'int',
         'long': 'long',
         }
@@ -101,7 +103,6 @@ def compile_struct(struct_name, *body):
     top_level.append('\n'.join(struct_decl) + '\n')
 
 
-
 def compile_globals(body):
     assert body[0] == 'ie/newline'
     body.pop(0)
@@ -131,7 +132,7 @@ def compile_lib(lib_name, *body):
 
 
 
-def compile_proc(fn_name, *spec):
+def compile_func_decl(fn_name, *spec):
     cbody = []
     params = []
 
@@ -172,10 +173,21 @@ def compile_proc(fn_name, *spec):
     elif returns == None:
         returns = 'void'
 
-    for x in body:
-        # pprint(x)
-        s = compile_statement(x)
-        cbody.append(s)
+    functions[fn_name] = [params, returns, body]
+
+
+def compile_proc(fn_name, *spec):
+    if not is_atom(fn_name):
+        if fn_name[0] == 'ie/neoteric':
+            assert len(fn_name) == 3
+            raw_params = fn_name[2]
+            fn_name    = fn_name[1]
+        else:
+            assert False
+
+    [params, returns, body] = functions[fn_name]
+
+    cbody = [compile_statement(x) for x in body]
 
     functions[fn_name] = [params, returns, cbody]
 
@@ -304,12 +316,10 @@ def infer_type(x):
     head, *rest = x
     if head == 'ie/neoteric':
         cmd = rest[0]
-        if cmd == 'getchar':
-            return 'int'
-        elif cmd in types.keys():
+        if cmd in types.keys():
             return cmd
-        print(cmd)
-        assert False
+        params, returns, body = functions[cmd]
+        return returns
     else:
         assert False
 
@@ -453,6 +463,11 @@ def print_block(body, depth):
 
 if __name__ == "__main__":
     prog = parse_file("-")
+
+    for x in prog:
+        head, *args = x
+        if head == 'proc':
+            compile_func_decl(*args)
 
     for x in prog:
         # puts_expr(x)
