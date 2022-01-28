@@ -3,9 +3,14 @@ import fileinput
 
 
 def parse_file(filename):
+    tokens = fileinput.input(filename)
+    return parse_syntax(tokens)
+
+
+def parse_syntax(tokens):
     stack = [[]]
 
-    for line in fileinput.input(filename):
+    for line in tokens:
         token = line.strip()
 
         if token == '[':
