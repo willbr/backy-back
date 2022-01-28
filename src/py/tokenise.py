@@ -124,6 +124,12 @@ class Tokeniser():
         exit(1)
 
 
+def read_tokens(filename):
+    t = Tokeniser(filename)
+    tokens  = t.read_tokens()
+    return tokens
+
+
 def main():
     filename = sys.argv[1]
     t = Tokeniser(filename)
