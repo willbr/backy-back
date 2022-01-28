@@ -37,7 +37,7 @@ def compile(x):
     elif head == 'define':
         compile_define(*args)
     elif head == 'comment':
-        compile_comment(*args)
+        top_level.append(compile_comment(*args))
     elif head == 'ie/newline':
         assert args == []
     else:
@@ -46,10 +46,14 @@ def compile(x):
 
 
 def compile_comment(*args):
+    print(1, args)
     first_line, rest = split_newline(args)
-    assert rest == ()
-    comment = '/* ' + ' '.join(first_line) + ' */'
-    top_level.append(comment)
+    comment_body = [repr(first_line)]
+    for line in rest:
+        comment_body += repr(line)
+    #todo escape */ in comment body
+    comment = '/* ' + ' '.join(comment_body) + ' */'
+    return comment
 
 
 def mangle(name):
@@ -288,8 +292,11 @@ def compile_statement(x):
         return compile_let(args, body) + ";"
     elif head == 'if':
         return compile_if(args, body)
+    elif head == 'comment':
+        print(head,args,body)
+        return compile_comment(*args, *body)
 
-    assert body == [] or body == None
+    assert body == [] or body == ()
     ce = compile_expression([head, *args])
     return ce + ";"
 
@@ -374,7 +381,7 @@ def compile_expression(x, depth=0):
             head, *rest = rest
 
     args, body = split_newline(rest)
-    assert body == None
+    assert body == ()
     cargs = [compile_expression(a, depth+1) for a in args]
 
     if head in infix_symbols:
@@ -453,7 +460,7 @@ def split_newline(x):
         rhs = x[pos+1:]
     except ValueError:
         lhs = x
-        rhs = None
+        rhs = ()
     finally:
         return lhs, rhs
 

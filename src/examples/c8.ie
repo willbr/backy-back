@@ -1,0 +1,10 @@
+comment import stdio
+
+def main(argc int, argv **char) int
+    comment puts "echo:"
+    comment c := getchar()
+    comment while c != EOF
+        putchar c
+        c = getchar()
+
+    
