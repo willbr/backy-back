@@ -1,5 +1,8 @@
-from parse2_syntax import parse_file, is_atom, remove_newline, puts_expr
+import os
+import sys
+from parse2_syntax import is_atom, puts_expr
 from pprint import pprint
+from ie import parse_ie
 
 
 class CompilationUnit():
@@ -21,13 +24,24 @@ class CompilationUnit():
     and or
     """.split()
     filenames = []
+    lib_directories = []
 
-    def __init__(self, filename):
-        self.read_file(filename)
+
+    def __init__(self, filename=None):
+        here = os.path.abspath(os.path.dirname(__file__))
+        libs_dir = os.path.abspath(os.path.join(here, '../libs'))
+
+        self.lib_directories.append(os.path.abspath(os.path.curdir))
+        self.lib_directories.append(libs_dir)
+
+        if filename:
+            self.read_file(filename)
+
 
     def read_file(self, filename):
         self.filenames.append(filename)
-        prog = parse_file(filename)
+        prog = parse_ie(filename)
+        # pprint(prog)
 
         for x in prog:
             head, *args = x
@@ -121,12 +135,18 @@ class CompilationUnit():
         self.top_level.append(clib)
 
 
-
-
     def compile_import(self, lib_name, *body):
+        filenames = [lib_name, lib_name + '.h.ie', lib_name + '.c.ie']
         assert body == ('ie/newline',)
-        # print(lib_name)
-        pass
+        for lib_dir in self.lib_directories:
+            for name in filenames:
+                path = os.path.join(lib_dir, name)
+                # print(path)
+                if os.path.exists(path):
+                    self.read_file(path)
+                    return
+        assert False
+
 
     def compile_proc(self, fn_name, *spec):
         if not is_atom(fn_name):
@@ -541,7 +561,6 @@ def print_block(body, depth):
 
 
 if __name__ == "__main__":
-    cu = CompilationUnit("-")
-
+    cu = CompilationUnit(sys.argv[1])
     cu.print()
 
