@@ -1,7 +1,8 @@
 include-lib "stdio.h"
-    getchar(void) int
 
-proc main
+func-decl getchar(void) int
+
+def main
     c := getchar()
     while c != EOF
         putchar c

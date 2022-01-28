@@ -1,6 +1,6 @@
 include-lib "stdio.h"
 
-proc main
+def main
     a := int(0)
     b := int(1)
     c := int(2)

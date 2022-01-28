@@ -22,8 +22,10 @@ and or
 
 def compile(x):
     head, *args = x
-    if head == 'proc':
+    if head == 'def':
         compile_proc(*args)
+    elif head == 'func-decl':
+        compile_func_decl(*args)
     elif head == 'include-lib':
         compile_lib(*args)
     elif head == 'struct':
@@ -126,9 +128,7 @@ def compile_globals(body):
 def compile_lib(lib_name, *body):
     assert body[0] == 'ie/newline'
     body = body[1:]
-    if body:
-        for fn_decl in body:
-            compile_func_decl(*fn_decl)
+    assert len(body) == 0
     libs.add(lib_name)
     name = lib_name.strip('"')
     clib = f"#include <{name}>"
@@ -480,7 +480,7 @@ if __name__ == "__main__":
 
     for x in prog:
         head, *args = x
-        if head == 'proc':
+        if head in ['def', 'func-decl']:
             compile_func_decl(*args)
 
     for x in prog:
@@ -493,6 +493,7 @@ if __name__ == "__main__":
         print()
 
 
+    func_decls = 0
     for name, spec in functions.items():
         if name == 'main':
             continue
@@ -502,7 +503,8 @@ if __name__ == "__main__":
             continue
         print_func_decl(name, params, returns, ' ')
         print(';')
-    if len(functions) > 1:
+        func_decls += 1
+    if func_decls:
         print('\n')
 
 
@@ -515,5 +517,4 @@ if __name__ == "__main__":
         print(" ", end="")
         print_block(body, 1)
         print()
-    print()
 

@@ -1,6 +1,6 @@
 include-lib "stdio.h"
 
-proc main
+def main
     puts "hi"
     c := int(0)
     while (c = getchar()) != EOF
