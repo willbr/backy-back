@@ -2,131 +2,133 @@ import fileinput
 import textwrap
 import sys
 
-file = None
-i = 0
-line = ""
-len_line = 0
-next_token = None
-breakchars = " \t\n,;()[]{}"
 
-
-def get_line():
-    global i, line, len_line
-    line = next(file)
-    len_line = len(line)
+class Tokeniser():
+    file = None
     i = 0
+    line = ""
+    len_line = 0
+    next_token = None
+    breakchars = " \t\n,;()[]{}"
+
+    def __init__(self, filename):
+        self.file = fileinput.input(filename)
+
+    def read_tokens(self):
+        try:
+            while True:
+                w = self.next_word()
+                yield w
+        except StopIteration:
+            pass
 
 
-def chomp(chars):
-    global i
-    while i < len_line and line[i] in chars:
-        i += 1
+
+    def get_line(self):
+        self.line = next(self.file)
+        self.len_line = len(self.line)
+        self.i = 0
 
 
-def read_string():
-    global i
-    start_pos = i
-    assert line[i] == '"'
-    i += 1
-
-    while i < len_line and line[i] not in '"':
-        i += 1
-
-    assert line[i] == '"'
-
-    i += 1
-    word = line[start_pos:i]
-    return word
+    def chomp(self, chars):
+        while self.i < self.len_line and self.line[self.i] in chars:
+            self.i += 1
 
 
-def read_token():
-    global i, next_token
-    start_pos = i
-    while i < len_line and line[i] not in breakchars:
-        i += 1
+    def read_string(self):
+        start_pos = self.i
+        assert self.line[self.i] == '"'
+        self.i += 1
 
-    len_word = i - start_pos
-    assert len_word
-    word = line[start_pos:i]
+        while self.i < self.len_line and self.line[self.i] not in '"':
+            self.i += 1
 
-    next_char = line[i]
+        assert self.line[self.i] == '"'
 
-    if next_char in '({[':
-        next_token = word
-        word = "ie/neoteric"
-
-    return word
-
-
-def next_word():
-    global i, next_token
-
-    if next_token:
-        word = next_token
-        next_token = None
+        self.i += 1
+        word = self.line[start_pos:self.i]
         return word
 
-    if i >= len_line:
-        get_line()
 
-    if line[i] == '\n':
-        get_line()
-        chomp(' ')
-        next_token = ' ' * i
-        word = 'ie/newline'
+    def read_token(self):
+        start_pos = self.i
+        while self.i < self.len_line and self.line[self.i] not in self.breakchars:
+            self.i += 1
 
-    elif line[i] == '"':
-        word = read_string()
+        len_word = self.i - start_pos
+        assert len_word
+        word = self.line[start_pos:self.i]
 
-    elif line[i] == '\t':
-        assert False
+        next_char = self.line[self.i]
 
-    elif line[i] in breakchars:
-        word = line[i]
-        i += 1
+        if next_char in '({[':
+            self.next_token = word
+            word = "ie/neoteric"
 
-        if word == ',':
-            if line[i] not in ' \n':
-                die("comma must be followed by white space")
-        elif word in ')}]':
-            if line[i] not in ' \n)}]':
-                die("close marker must be followed by another close marker or whitespace")
+        return word
 
 
-    else:
-        word = read_token()
+    def next_word(self):
+        if self.next_token:
+            word = self.next_token
+            self.next_token = None
+            return word
 
-    chomp(' ')
-    return word
+        if self.i >= self.len_line:
+            self.get_line()
+
+        if self.line[self.i] == '\n':
+            self.get_line()
+            self.chomp(' ')
+            self.next_token = ' ' * self.i
+            word = 'ie/newline'
+
+        elif self.line[self.i] == '"':
+            word = self.read_string()
+
+        elif self.line[self.i] == '\t':
+            assert False
+
+        elif self.line[self.i] in self.breakchars:
+            word = self.line[self.i]
+            self.i += 1
+
+            if word == ',':
+                if self.line[self.i] not in ' \n':
+                    self.die("comma must be followed by white space")
+            elif word in ')}]':
+                if self.line[self.i] not in ' \n)}]':
+                    die("close marker must be followed by another close marker or whitespace")
+
+        else:
+            word = self.read_token()
+
+        self.chomp(' ')
+        return word
 
 
-def die(msg):
-    l = line.strip()
-    red = '\u001b[31m'
-    white = '\u001b[37m'
-    bg_red = '\u001b[41m'
-    reset = '\u001b[0m'
-    print(textwrap.dedent(f"""
+    def die(self, msg):
+        l = line.strip()
+        red = '\u001b[31m'
+        white = '\u001b[37m'
+        bg_red = '\u001b[41m'
+        reset = '\u001b[0m'
+        print(textwrap.dedent(f"""
 
-    {bg_red}ERROR: {white}{msg}{reset}
+        {bg_red}ERROR: {white}{msg}{reset}
 
-    {l[:i]}{red}{l[i]}{reset}{l[i+1:]}
-    {" "*i}^
+        {l[:i]}{red}{l[i]}{reset}{l[i+1:]}
+        {" "*i}^
 
-    """), file=sys.stderr)
-    exit(1)
+        """), file=sys.stderr)
+        exit(1)
 
 
 def main():
-    global file
-    arg = sys.argv[1]
-    file = fileinput.input(arg)
-    try:
-        while True:
-            w = next_word()
-            print(w)
-    except StopIteration:
-        pass
+    filename = sys.argv[1]
+    t = Tokeniser(filename)
+    tokens  = t.read_tokens()
+    print('\n'.join(tokens))
 
 
 if __name__ == "__main__":
