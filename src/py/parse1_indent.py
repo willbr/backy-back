@@ -1,120 +1,126 @@
 import sys
 import fileinput
 
-new_indent = 0
-cur_indent = -1
-indent_width = 4
-next_token = None
-syntax_stack = []
+class IndentParser():
+    input_tokens = None
+    new_indent = 0
+    cur_indent = -1
+    indent_width = 4
+    next_token = None
 
 
-def read_token():
-    global next_token
-    if next_token:
-        token = next_token
-        next_token = None
-        return token
+    def __init__(self, tokens):
+        self.input_tokens = tokens
 
-    return next(file).strip('\n')
+    def read_token(self):
+        if self.next_token:
+            token = self.next_token
+            self.next_token = None
+            return token
 
-
-def peek_token():
-    global next_token
-    if next_token:
-        return next_token
-    next_token = next(file).strip('\n')
-    return next_token
+        return next(self.input_tokens).strip('\n')
 
 
-def push_token(t):
-    global next_token
-    if next_token:
-        assert False
-    next_token = t
+    def peek_token(self):
+        if self.next_token:
+            return self.next_token
+        self.next_token = next(self.input_tokens).strip('\n')
+        return self.next_token
 
 
-def main():
-    global file, new_indent, cur_indent
-    arg = sys.argv[1]
-    file = fileinput.input(arg)
+    def push_token(self, t):
+        if self.next_token:
+            assert False
+        self.next_token = t
 
-    try:
-        print('[')
-        cur_indent = 0
-        while True:
-            token = read_token()
-            if token == 'ie/newline':
-                if syntax_stack:
-                    print(syntax_stack)
-                    assert False # unmatch syntax
-                print(token)
-                token = peek_token()
-                while token == 'ie/newline':
-                    _ = read_token()
-                    token = peek_token()
 
-                if token[0] == ' ':
-                    space_token = read_token()
-                    spaces = len(space_token)
-                    assert not spaces % indent_width
-                    if peek_token() == 'ie/newline':
-                        pass
+    def tokens(self):
+        syntax_stack = []
+
+        try:
+            yield('[')
+            self.cur_indent = 0
+            while True:
+                token = self.read_token()
+                if token == 'ie/newline':
+                    if syntax_stack:
+                        yield(syntax_stack)
+                        assert False # unmatch syntax
+                    yield(token)
+                    token = self.peek_token()
+                    while token == 'ie/newline':
+                        _ = self.read_token()
+                        token = self.peek_token()
+
+                    if token[0] == ' ':
+                        space_token = self.read_token()
+                        spaces = len(space_token)
+                        assert not spaces % self.indent_width
+                        if self.peek_token() == 'ie/newline':
+                            pass
+                        else:
+                            self.new_indent = spaces // self.indent_width
                     else:
-                        new_indent = spaces // indent_width
-                else:
-                    new_indent = 0
+                        self.new_indent = 0
 
-                diff = new_indent - cur_indent
+                    diff = self.new_indent - self.cur_indent
 
-                if peek_token() == '\\':
-                    if new_indent == cur_indent + 1:
-                        _ = read_token()
-                        push_token('ie/backslash')
-                    else:
+                    if self.peek_token() == '\\':
+                        if self.new_indent == self.cur_indent + 1:
+                            _ = read_token()
+                            push_token('ie/backslash')
+                        else:
+                            assert False
+                    elif diff > 1:
                         assert False
-                elif diff > 1:
-                    assert False
-                elif diff == 1:
-                    cur_indent += 1
-                    print('[')
-                elif diff == 0:
-                    print(']')
-                    print('[')
+                    elif diff == 1:
+                        self.cur_indent += 1
+                        yield('[')
+                    elif diff == 0:
+                        yield(']')
+                        yield('[')
+                    else:
+                        for i in range(abs(diff)):
+                            self.cur_indent -= 1
+                            yield(']')
+                        yield(']')
+                        yield('[')
+                elif token in '({[':
+                    yield(token)
+                    syntax_stack.append(token)
+
+                elif token in ')}]':
+                    open_char = syntax_stack.pop()
+
+                    if open_char == '(':
+                        assert token == ')'
+                        yield(token)
+                    elif open_char == '{':
+                        assert token == '}'
+                        yield(token)
+                    elif open_char == '[':
+                        assert token == ']'
+                        yield(token)
+                    else:
+                        yield(token)
+                        assert False
                 else:
-                    for i in range(abs(diff)):
-                        cur_indent -= 1
-                        print(']')
-                    print(']')
-                    print('[')
-            elif token in '({[':
-                print(token)
-                syntax_stack.append(token)
+                    yield(token)
 
-            elif token in ')}]':
-                open_char = syntax_stack.pop()
+        except StopIteration:
+            pass
 
-                if open_char == '(':
-                    assert token == ')'
-                    print(token)
-                elif open_char == '{':
-                    assert token == '}'
-                    print(token)
-                elif open_char == '[':
-                    assert token == ']'
-                    print(token)
-                else:
-                    print(token)
-                    assert False
-            else:
-                print(token)
+        for i in range(self.cur_indent + 1):
+            yield(']')
 
-    except StopIteration:
-        pass
 
-    for i in range(cur_indent + 1):
-        print(']')
+def parse_indent(tokens):
+    ip = IndentParser(tokens)
+    return ip.tokens()
 
 
 if __name__ == '__main__':
-    main()
+    arg = sys.argv[1]
+    tokens = parse_indent(fileinput.input(arg))
+    print('\n'.join(tokens))
 
