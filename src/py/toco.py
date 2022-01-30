@@ -216,7 +216,25 @@ class CompilationUnit():
 
     def infer_type(self, x):
         if is_atom(x):
-            assert False
+            first_char = x[0]
+            if first_char == ':':
+                return 'keyword'
+            elif first_char == '"':
+                return 'string'
+
+            try:
+                n = int(x)
+                return 'integer'
+            except ValueError:
+                pass
+
+            try:
+                n = float(x)
+                return 'float'
+            except ValueError:
+                pass
+
+            return 'symbol'
 
         n = len(x)
         head, *rest = x
@@ -320,6 +338,33 @@ class CompilationUnit():
         return c
 
 
+    def compile_print_macro(self, *args):
+        assert len(args) == 1
+        spec = args[0]
+        assert spec[0] == '"' and spec[-1] == '"'
+        spec = spec[1:-1]
+
+        lhs, rhs = spec.split("{",1)
+        template = [lhs]
+        vargs = []
+        while rhs:
+            try:
+                lhs, rhs = rhs.split("{",1)
+            except ValueError:
+                lhs, rhs = rhs, ''
+            a, text = lhs.split("}")
+            v, fmt = a.rsplit(" ", 1)
+            vargs.append(v)
+            template.append('%' + fmt)
+            template.append(text)
+
+        printf_format = ''.join(template)
+        cvargs = [self.compile_expression(s) for s in vargs]
+        args = [f"\"{printf_format}\"", *cvargs]
+        cargs = ', '.join(args)
+        return f"printf({cargs})"
+
+
     def compile_expression(self, x, depth=0):
         if is_atom(x):
             return mangle(x)
@@ -327,6 +372,8 @@ class CompilationUnit():
         # print(x)
         head, *rest = x
 
+        if head == 'print':
+            return self.compile_print_macro(*rest)
 
         while head in ['ie/infix', 'ie/neoteric']:
             if head == 'ie/infix':
