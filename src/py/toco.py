@@ -54,7 +54,13 @@ class CompilationUnit():
             self.compile(x)
 
         if self.keywords:
-            print(1, self.keywords)
+            self.compile_keywords()
+
+    def compile_keywords(self):
+        escaped_keywords = ('keyword_' + x for x in self.keywords)
+        body = ([kw, 'ie/newline'] for kw in escaped_keywords)
+        x = ('enum', 'toco_keywords', 'ie/newline', *body)
+        self.compile(x)
 
 
     def compile(self, x):
@@ -494,7 +500,6 @@ class CompilationUnit():
 
 
     def print(self):
-        print(1)
         for e in self.top_level:
             print(e)
         if self.top_level:
