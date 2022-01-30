@@ -63,7 +63,7 @@ class CompilationUnit():
         x = ('enum', 'toco_keywords', 'ie/newline', *body)
         self.compile(x)
 
-        x = "typedef enum toco_keywords toco_keywords".split()
+        x = "typedef toco_keywords enum toco_keywords".split()
         self.compile(x)
 
 
@@ -271,13 +271,10 @@ class CompilationUnit():
 
 
     def compile_typedef(self, type_name, *body):
-        # print(type_name)
         type_spec, rest = split_newline(body)
         assert rest == ()
-        # print(type_spec)
+        assert len(type_spec) == 1
         decl = "typedef " + self.compile_var_decl(type_name, type_spec[0]) + ";"
-        # print(decl)
-        # assert False
         self.top_level.append(decl)
 
 
@@ -415,6 +412,11 @@ class CompilationUnit():
             a, text = lhs.split("}")
             v, fmt = a.rsplit(" ", 1)
             vargs.append(v)
+
+            if fmt[0] == '=':
+                template.append(f"{v}=")
+                fmt = fmt[1:]
+
             template.append('%' + fmt)
             template.append(text)
 
