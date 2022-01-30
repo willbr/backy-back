@@ -17,6 +17,7 @@ class CompilationUnit():
     functions = {}
     global_vars = {}
     top_level = []
+    keywords = set()
     infix_symbols = """
     = := == !=
     + += - -= * *= / /=
@@ -52,6 +53,9 @@ class CompilationUnit():
             # puts_expr(x)
             self.compile(x)
 
+        if self.keywords:
+            print(1, self.keywords)
+
 
     def compile(self, x):
         head, *args = x
@@ -73,6 +77,8 @@ class CompilationUnit():
             self.compile_define(*args)
         elif head == 'comment':
             self.top_level.append(compile_comment(*args))
+        elif head == 'enum':
+            self.top_level.append(self.compile_enum(*args))
         elif head == 'ie/newline':
             assert args == []
         else:
@@ -290,7 +296,7 @@ class CompilationUnit():
         for elem in body:
             assert len(elem) == 4
             var_name, let, x, nl = elem
-            var_name = mangle(var_name)
+            var_name = self.mangle(var_name)
             assert let == ':='
             assert nl == 'ie/newline'
             neoteric, var_type, var_initial = x
@@ -323,10 +329,26 @@ class CompilationUnit():
         self.top_level.append(decl)
 
 
-    def compile_if(self,pred, body):
+    def compile_if(self, pred, body):
         cpred = self.compile_expression(transform_infix(pred))
         cbody = [self.compile_statement(s) for s in body]
         return f"if ({cpred})", cbody
+
+
+    def compile_enum(self, *args):
+        first_line, enum_body = split_newline(args)
+        assert len(first_line) == 1
+        name = first_line[0]
+        enum = []
+        for x in enum_body:
+            line, body = split_newline(x)
+            assert len(line) == 1
+            assert body == []
+            enum.append(line[0])
+        s = [f"enum {name} {{"]
+        s.append(',\n'.join(f"    {x}" for x in enum))
+        s.append('};')
+        return '\n'.join(s)
 
 
     def compile_return_statement(self, *args):
@@ -367,7 +389,7 @@ class CompilationUnit():
 
     def compile_expression(self, x, depth=0):
         if is_atom(x):
-            return mangle(x)
+            return self.mangle(x)
 
         # print(x)
         head, *rest = x
@@ -461,9 +483,18 @@ class CompilationUnit():
         return decl
 
 
+    def mangle(self, name):
+        x = name
+        if x[0] == ':':
+            keyword = x[1:]
+            if keyword not in self.keywords:
+                self.keywords.add(keyword)
+            x = 'keyword_' + keyword
+        return x.replace('-', '_')
 
 
     def print(self):
+        print(1)
         for e in self.top_level:
             print(e)
         if self.top_level:
@@ -503,10 +534,6 @@ def compile_comment(*args):
     #todo escape */ in comment body
     comment = '/* ' + ' '.join(comment_body) + ' */'
     return comment
-
-
-def mangle(name):
-    return name.replace('-', '_')
 
 
 def compile_returns(spec):
@@ -555,9 +582,6 @@ def transform_infix(x):
     transformed_sections = []
     for section in sections:
         n = len(section)
-        # print(x)
-        # print(n)
-        # print(n % 2)
 
         if n == 0:
             transformed_sections.append(section)
@@ -586,7 +610,6 @@ def transform_infix(x):
         return transformed_sections[0]
     else:
         return transformed_sections
-
 
 
 def split_newline(x):

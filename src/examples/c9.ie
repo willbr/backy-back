@@ -1,3 +1,7 @@
-def main
+enum toco_keywords
+    hello
+    goodbye
+
+def main(argc int, argv **char) int
     print "hello = {:hello d} num = {10 d} float = {3.6 2f}"
 
