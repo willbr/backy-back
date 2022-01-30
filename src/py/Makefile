@@ -1,8 +1,28 @@
+ifeq ($(OS),Windows_NT)     # is Windows_NT on XP, 2000, 7, Vista, 10...
+    detected_OS := Windows
+	PATH := $(PATH);./bin/
+	mkdir = mkdir
+	make = make
+	rm = del
+	EXE = .exe
+	ignore := rem
+	python := python
+else
+    detected_OS := $(shell uname)  # same as "uname -s"
+	PATH := $(PATH):./bin/
+	mkdir = mkdir
+	make = make
+	rm = rm
+	EXE =
+	ignore := echo ignore
+	python := python3
+endif
+
 wtok:
 	watchexec -cr "make tok"
 
 tok: ../examples/c10-fprint.c.ie
-	python3 toco.py $<
+	$(python) toco.py $<
 ## type $<
 ##echo.
 ##rem python tokenise.py $<

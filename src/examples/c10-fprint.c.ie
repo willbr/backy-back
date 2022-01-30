@@ -1,4 +1,6 @@
-def main(argc int, argv **char)
+include-lib "stdio.h"
+
+def main(argc int, argv **char) int
     poop := :poop
     println "{poop =d}"
 

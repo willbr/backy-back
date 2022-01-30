@@ -60,10 +60,10 @@ class CompilationUnit():
     def compile_keywords(self):
         escaped_keywords = ('keyword_' + x for x in self.keywords)
         body = ([kw, 'ie/newline'] for kw in escaped_keywords)
-        x = ('enum', 'toco_keywords', 'ie/newline', *body)
+        x = ('enum', 'toco_keyword', 'ie/newline', *body)
         self.compile(x)
 
-        x = "typedef toco_keywords enum toco_keywords".split()
+        x = "typedef toco_keyword enum toco_keyword".split()
         self.compile(x)
 
 
@@ -273,8 +273,7 @@ class CompilationUnit():
     def compile_typedef(self, type_name, *body):
         type_spec, rest = split_newline(body)
         assert rest == ()
-        assert len(type_spec) == 1
-        decl = "typedef " + self.compile_var_decl(type_name, type_spec[0]) + ";"
+        decl = "typedef " + self.compile_var_decl(type_name, type_spec) + ";"
         self.top_level.append(decl)
 
 
@@ -378,7 +377,7 @@ class CompilationUnit():
         assert len(args) == 1
         print_args = self.parse_format_string(args[0], True)
         cargs = ', '.join(self.compile_expression(s) for s in print_args)
-        return f"fprintf({cargs})"
+        return f"printf({cargs})"
 
 
     def compile_fprint_macro(self, *args):
@@ -515,9 +514,16 @@ class CompilationUnit():
         lhs = ""
         rhs = ""
 
-        while var_type[0] == '*':
-            lhs = "*" + lhs
-            var_type = var_type[1:]
+        if is_atom(var_type):
+            while var_type[0] == '*':
+                lhs = "*" + lhs
+                var_type = var_type[1:]
+        else:
+            if var_type[0] == 'enum':
+                var_type = ' '.join(var_type)
+            else:
+                print(var_type)
+                assert False
 
         decl = f"{var_type} {lhs}{var_name}{rhs}"
 
