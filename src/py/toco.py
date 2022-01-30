@@ -56,10 +56,14 @@ class CompilationUnit():
         if self.keywords:
             self.compile_keywords()
 
+
     def compile_keywords(self):
         escaped_keywords = ('keyword_' + x for x in self.keywords)
         body = ([kw, 'ie/newline'] for kw in escaped_keywords)
         x = ('enum', 'toco_keywords', 'ie/newline', *body)
+        self.compile(x)
+
+        x = "typedef enum toco_keywords toco_keywords".split()
         self.compile(x)
 
 
@@ -230,7 +234,7 @@ class CompilationUnit():
         if is_atom(x):
             first_char = x[0]
             if first_char == ':':
-                return 'keyword'
+                return 'toco_keyword'
             elif first_char == '"':
                 return 'string'
 
@@ -377,7 +381,23 @@ class CompilationUnit():
         assert len(args) == 1
         print_args = self.parse_format_string(args[0], True)
         cargs = ', '.join(self.compile_expression(s) for s in print_args)
-        return f"printf({cargs})"
+        return f"fprintf({cargs})"
+
+
+    def compile_fprint_macro(self, *args):
+        file, fmt = args
+        print_args = self.parse_format_string(fmt)
+        print_args.insert(0, file)
+        cargs = ', '.join(self.compile_expression(s) for s in print_args)
+        return f"fprintf({cargs})"
+
+
+    def compile_fprintln_macro(self, *args):
+        file, fmt = args
+        print_args = self.parse_format_string(fmt, True)
+        print_args.insert(0, file)
+        cargs = ', '.join(self.compile_expression(s) for s in print_args)
+        return f"fprintf({cargs})"
 
     
     def parse_format_string(self, fmt, append_newline=False):
@@ -417,6 +437,10 @@ class CompilationUnit():
             return self.compile_print_macro(*rest)
         elif head == 'println':
             return self.compile_println_macro(*rest)
+        elif head == 'fprint':
+            return self.compile_fprint_macro(*rest)
+        elif head == 'fprintln':
+            return self.compile_fprintln_macro(*rest)
 
         while head in ['ie/infix', 'ie/neoteric']:
             if head == 'ie/infix':
