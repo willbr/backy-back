@@ -11,6 +11,7 @@ toco-tests:
 	toco src\examples\c5.ie
 	toco src\examples\c6.ie
 	toco src\examples\c7.ie
+	toco src\examples\c8.ie
 
 test0: .\src\tokens2.ie
 	type $<

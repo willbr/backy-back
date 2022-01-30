@@ -38,7 +38,13 @@ def parse_syntax(tokens):
 
 
 def is_atom(x):
-    return not isinstance(x, list)
+    if isinstance(x, list):
+        return False
+
+    if isinstance(x, tuple):
+        return False
+
+    return True
 
 
 def print_expr(x, depth=0, print_brackets=True):

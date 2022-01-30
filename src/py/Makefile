@@ -1,7 +1,7 @@
 wtok:
 	watchexec -cr "make tok"
 
-tok: ../examples/c0.ie
+tok: ../examples/c7.ie
 	python toco.py $<
 ## type $<
 ##echo.

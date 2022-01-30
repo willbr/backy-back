@@ -192,6 +192,8 @@ class CompilationUnit():
             return self.compile_if(args, body)
         elif head == 'comment':
             return self.compile_comment(*args, *body)
+        elif head == 'return':
+            return self.compile_return_statement(*args, *body)
 
         assert body == [] or body == ()
         ce = self.compile_expression([head, *args])
@@ -307,6 +309,15 @@ class CompilationUnit():
         cpred = self.compile_expression(transform_infix(pred))
         cbody = [self.compile_statement(s) for s in body]
         return f"if ({cpred})", cbody
+
+
+    def compile_return_statement(self, *args):
+        x, body = split_newline(args)
+        assert body == ()
+        nx = transform_infix(x)
+        cx = self.compile_expression(nx)
+        c = f"return {cx};"
+        return c
 
 
     def compile_expression(self, x, depth=0):
