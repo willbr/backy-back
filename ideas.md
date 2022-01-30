@@ -196,21 +196,19 @@ so I can write reverse polish notation as a statement
     raw-c "int a = 0;"
 
 
-## add println & fprintln macros
+## add fprintln macros
 
     a := float(3.6)
 
-    println "float: {a:4.2f}"
-    fprintln stderr "{a=}
+    fprintln stderr "{a =f}"
 
 to
 
     float a = 3.6;
 
-    printf("float: %3.6f\n")
     fprintf(stderr, "a=%f", a);
 
-# split ie2 into it's own repo
+# split ie2 into it\'s own repo
 
-# split toco into it's own repo
+# split toco into it\'s own repo
 

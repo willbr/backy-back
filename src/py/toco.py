@@ -368,11 +368,23 @@ class CompilationUnit():
 
     def compile_print_macro(self, *args):
         assert len(args) == 1
-        spec = args[0]
-        assert spec[0] == '"' and spec[-1] == '"'
-        spec = spec[1:-1]
+        print_args = self.parse_format_string(args[0])
+        cargs = ', '.join(self.compile_expression(s) for s in print_args)
+        return f"printf({cargs})"
 
-        lhs, rhs = spec.split("{",1)
+
+    def compile_println_macro(self, *args):
+        assert len(args) == 1
+        print_args = self.parse_format_string(args[0], True)
+        cargs = ', '.join(self.compile_expression(s) for s in print_args)
+        return f"printf({cargs})"
+
+    
+    def parse_format_string(self, fmt, append_newline=False):
+        assert fmt[0] == '"' and fmt[-1] == '"'
+        fmt = fmt[1:-1]
+
+        lhs, rhs = fmt.split("{",1)
         template = [lhs]
         vargs = []
         while rhs:
@@ -386,11 +398,12 @@ class CompilationUnit():
             template.append('%' + fmt)
             template.append(text)
 
-        printf_format = ''.join(template)
-        cvargs = [self.compile_expression(s) for s in vargs]
-        args = [f"\"{printf_format}\"", *cvargs]
-        cargs = ', '.join(args)
-        return f"printf({cargs})"
+        if append_newline:
+            template.append('\\n')
+
+        printf_format = '"' + ''.join(template) + '"'
+
+        return [printf_format, *vargs]
 
 
     def compile_expression(self, x, depth=0):
@@ -402,6 +415,8 @@ class CompilationUnit():
 
         if head == 'print':
             return self.compile_print_macro(*rest)
+        elif head == 'println':
+            return self.compile_println_macro(*rest)
 
         while head in ['ie/infix', 'ie/neoteric']:
             if head == 'ie/infix':

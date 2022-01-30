@@ -29,6 +29,7 @@ toco-tests:
 	toco src/examples/c6.ie
 	toco src/examples/c7.ie
 	toco src/examples/c8.ie
+	toco src/examples/c9.ie
 
 test0: .\src\tokens2.ie
 	type $<
