@@ -211,33 +211,29 @@ to
     fprintf(stderr, "a=%f", a);
 
 
-## import statement
-
-wrap stdlib in their own files
-include details of types and function
-
-    stdio.ie
-
-    include-lib "stdio.h"
-
-    func-decl getchar(void) int
-
 ## add keywords
 
     state = :busy
+    print state
     something()
     state = :done
+    print state
 
 to
 
     enum toco_keywords {
-        busy,
-        state,
+        keyword_busy,
+        keyword_done,
     };
 
     char *(toco_keyword_names[]) = {
         "busy",
-        "state",
+        "done",
     }
 
+    state = keyword_busy;
+    printf("%s\n", state);
+    something();
+    state = keyword_done;
+    printf("%s\n", state);
 
