@@ -210,30 +210,7 @@ to
     printf("float: %3.6f\n")
     fprintf(stderr, "a=%f", a);
 
+# split ie2 into it's own repo
 
-## add keywords
-
-    state = :busy
-    print state
-    something()
-    state = :done
-    print state
-
-to
-
-    enum toco_keywords {
-        keyword_busy,
-        keyword_done,
-    };
-
-    char *(toco_keyword_names[]) = {
-        "busy",
-        "done",
-    }
-
-    state = keyword_busy;
-    printf("%s\n", state);
-    something();
-    state = keyword_done;
-    printf("%s\n", state);
+# split toco into it's own repo
 
