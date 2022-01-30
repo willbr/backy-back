@@ -1,0 +1,6 @@
+def main(argc int, argv **char)
+    poop := :poop
+    fprint stderr "{poop d}\n"
+    fprintln stderr "{poop d}"
+
+
