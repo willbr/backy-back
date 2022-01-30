@@ -1,17 +1,34 @@
-PATH := $(PATH);./bin/
-ignore := rem
+
+ifeq ($(OS),Windows_NT)     # is Windows_NT on XP, 2000, 7, Vista, 10...
+    detected_OS := Windows
+	PATH := $(PATH);./bin/
+	mkdir = mkdir
+	make = make
+	rm = del
+	EXE = .exe
+	ignore := rem
+else
+    detected_OS := $(shell uname)  # same as "uname -s"
+	PATH := $(PATH):./bin/
+	mkdir = mkdir
+	make = make
+	rm = rm
+	EXE =
+	ignore := echo ignore
+endif
+
 
 toco-tests:
-	toco src\examples\c0.ie
-	toco src\examples\c1.ie
-	toco src\examples\c2.ie
-	toco src\examples\c3.ie
-	toco src\examples\c4.ie
+	toco src/examples/c0.ie
+	toco src/examples/c1.ie
+	toco src/examples/c2.ie
+	toco src/examples/c3.ie
+	toco src/examples/c4.ie
 	$(ignore) parse_ie src\examples\c5.ie
-	toco src\examples\c5.ie
-	toco src\examples\c6.ie
-	toco src\examples\c7.ie
-	toco src\examples\c8.ie
+	toco src/examples/c5.ie
+	toco src/examples/c6.ie
+	toco src/examples/c7.ie
+	toco src/examples/c8.ie
 
 test0: .\src\tokens2.ie
 	type $<
