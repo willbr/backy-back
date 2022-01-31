@@ -210,14 +210,14 @@ one token per line
 
 or
 
-    filename,row,col,token
+    row,col,token
 
 example
 
-    test.ie,1,1,def
-    test.ie,1,1,main
-    test.ie,1,1,ie/newline
-    test.ie,2,1,    
-    test.ie,2,5,puts
-    test.ie,2,10,"hello"
+    1,1,def
+    1,1,main
+    1,1,ie/newline
+    2,1,    
+    2,5,puts
+    2,10,"hello"
 
