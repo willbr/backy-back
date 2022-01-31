@@ -1,5 +1,7 @@
 import operator
-from parse import parse_file, is_atom, remove_newline
+import sys
+from parse2_syntax import is_atom, puts_expr, remove_newline
+from ie import parse_ie
 
 env = {}
 
@@ -19,8 +21,10 @@ def eval(env, x):
 
     head, *args = x
 
-    if head == 'infix':
+    if head == 'ie/infix':
         head, *args = transform_infix(args)
+    elif head == 'ie/postfix':
+        head, args = x[-1], x[1:-1]
 
     if head == 'fn':
         fn_name, *fn_body = args
@@ -69,7 +73,9 @@ def transform_infix(x):
 
 
 if __name__ == "__main__":
-    prog = remove_newline(parse_file("-"))
+    filename = sys.argv[1]
+    prog = parse_ie(filename)
+    prog = remove_newline(prog)
 
     for x in prog:
         print('x:', x)
