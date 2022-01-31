@@ -199,3 +199,25 @@ so I can write reverse polish notation as a statement
 
 # split toco into it\'s own repo
 
+
+# ie
+
+## stdout interface
+
+one token per line
+
+    token
+
+or
+
+    filename,row,col,token
+
+example
+
+    test.ie,1,1,def
+    test.ie,1,1,main
+    test.ie,1,1,ie/newline
+    test.ie,2,1,    
+    test.ie,2,5,puts
+    test.ie,2,10,"hello"
+
