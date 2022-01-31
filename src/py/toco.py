@@ -519,11 +519,7 @@ class CompilationUnit():
                 lhs = "*" + lhs
                 var_type = var_type[1:]
         else:
-            if var_type[0] == 'enum':
-                var_type = ' '.join(var_type)
-            else:
-                print(var_type)
-                assert False
+            var_type = ' '.join(var_type)
 
         decl = f"{var_type} {lhs}{var_name}{rhs}"
 

@@ -21,7 +21,7 @@ endif
 wtok:
 	watchexec -cr "make tok"
 
-tok: ../examples/c10-fprint.c.ie
+tok: ../examples/c5.ie
 	$(python) toco.py $<
 ## type $<
 ##echo.
