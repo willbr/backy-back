@@ -130,13 +130,9 @@ def read_tokens(filename):
     return tokens
 
 
-def main():
+if __name__ == "__main__":
     filename = sys.argv[1]
     t = Tokeniser(filename)
     tokens  = t.read_tokens()
     print('\n'.join(tokens))
-
-
-if __name__ == "__main__":
-    main()
 
