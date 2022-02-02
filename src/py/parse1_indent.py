@@ -67,8 +67,8 @@ class IndentParser():
 
                     if self.peek_token() == '\\':
                         if self.new_indent == self.cur_indent + 1:
-                            _ = read_token()
-                            push_token('ie/backslash')
+                            _ = self.read_token()
+                            self.push_token('ie/backslash')
                         else:
                             assert False
                     elif diff > 1:
