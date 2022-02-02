@@ -1,3 +1,10 @@
 #! /usr/bin/env bash
-python3 ./src/py/toco.py $*
+dirname "$(readlink -f "$0")"
+full_path=$(realpath $0)
+#echo $full_path
+
+dir_path=$(dirname $full_path)
+#echo $dir_path
+
+python3 $dir_path/../src/py/toco.py $*
 

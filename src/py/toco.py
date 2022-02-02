@@ -1,5 +1,7 @@
 import os
 import sys
+import argparse
+
 from parse2_syntax import is_atom, puts_expr
 from pprint import pprint
 from ie import parse_ie
@@ -690,6 +692,14 @@ def print_block(body, depth):
 
 
 if __name__ == "__main__":
-    cu = CompilationUnit(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file", nargs='+')
+    args = parser.parse_args()
+
+    cu = CompilationUnit()
+
+    for file in args.file:
+        cu.read_file(file)
+
     cu.print()
 
