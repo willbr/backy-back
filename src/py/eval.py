@@ -1,7 +1,10 @@
 import operator
 import sys
-from parse2_syntax import is_atom, puts_expr, remove_newline
-from ie import parse_ie
+import argparse
+import fileinput
+
+from parse2_syntax import is_atom, puts_expr, remove_markers
+from ie import parse_file, parse_lines
 
 env = {}
 
@@ -73,12 +76,20 @@ def transform_infix(x):
 
 
 if __name__ == "__main__":
-    filename = sys.argv[1]
-    prog = parse_ie(filename)
-    prog = remove_newline(prog)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file", nargs="*", type=str)
+    args = parser.parse_args()
 
-    for x in prog:
-        print('x:', x)
-        eval(env, x)
+    if args.file == []:
+        args.file.append("-")
+
+
+    for file in args.file:
+        prog = parse_file(file)
+        prog = remove_markers(prog)
+
+        for x in prog:
+            #print('x:', x)
+            eval(env, x)
 
 

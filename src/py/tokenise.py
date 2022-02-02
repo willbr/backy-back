@@ -11,9 +11,6 @@ class Tokeniser():
     next_token = None
     breakchars = " \t\n,;()[]{}"
 
-    def __init__(self, filename):
-        self.file = fileinput.input(filename)
-
     def read_tokens(self):
         try:
             while True:
@@ -124,8 +121,16 @@ class Tokeniser():
         exit(1)
 
 
-def read_tokens(filename):
-    t = Tokeniser(filename)
+def tokenise_file(filename):
+    t = Tokeniser()
+    t.file = fileinput.input(filename)
+    tokens  = t.read_tokens()
+    return tokens
+
+
+def tokenise_lines(lines):
+    t = Tokeniser()
+    t.file = (line for line in lines)
     tokens  = t.read_tokens()
     return tokens
 

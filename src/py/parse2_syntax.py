@@ -103,6 +103,14 @@ def remove_newline(prog):
     return [remove_newline(x) for x in prog if x != 'ie/newline']
 
 
+def remove_markers(prog):
+    if is_atom(prog):
+        return prog
+
+    markers = ['ie/newline', 'ie/backslash']
+    return [remove_markers(x) for x in prog if x not in markers]
+
+
 if __name__ == '__main__':
     prog = parse_file('-')
     for s in remove_newline(prog):
