@@ -4,7 +4,7 @@ import argparse
 
 from parse2_syntax import is_atom, puts_expr
 from pprint import pprint
-from ie import parse_ie
+from ie import parse_file
 
 
 class CompilationUnit():
@@ -43,7 +43,7 @@ class CompilationUnit():
 
     def read_file(self, filename):
         self.filenames.append(filename)
-        prog = parse_ie(filename)
+        prog = parse_file(filename)
         # pprint(prog)
 
         for x in prog:
