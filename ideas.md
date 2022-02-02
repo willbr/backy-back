@@ -202,6 +202,12 @@ so I can write reverse polish notation as a statement
 
 # ie
 
+## add ie/prefix
+
+only when you use '['
+
+not for naked lines
+
 ## stdout interface
 
 one token per line
