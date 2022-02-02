@@ -59,7 +59,7 @@ def eval(env, x):
         print(stack)
         return
     elif head == '.':
-        print(stack.pop(0))
+        print(stack.pop())
         return
     else:
         if (fn_spec := env.get(head, None)) is None:
