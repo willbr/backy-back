@@ -10,6 +10,7 @@ env = {}
 
 stack = []
 
+infix_symbols = "+ - * /".split()
 
 def eval(env, x):
     global stack
@@ -33,19 +34,25 @@ def eval(env, x):
         head, *args = transform_infix(args)
     elif head == 'ie/postfix':
         head, args = x[-1], x[1:-1]
+    elif args and args[0] in infix_symbols:
+        head, *args = transform_infix(x)
 
     if head == 'fn':
         fn_name, *fn_body = args
         env[fn_name] = fn_body
         return
-    elif head == '+':
+
+    for y in args:
+        eval(env, y)
+
+    if head == '+':
         fn_spec = ('builtin', operator.add, 2)
     elif head == '-':
         fn_spec = ('builtin', operator.sub, 2)
     elif head == '*':
         fn_spec = ('builtin', operator.mul, 2)
     elif head == '/':
-        fn_spec = ('builtin', operator.div, 2)
+        fn_spec = ('builtin', operator.truediv, 2)
     elif head == 'puts':
         fn_spec = ('builtin', print, 1)
     elif head == '.s':
@@ -58,19 +65,22 @@ def eval(env, x):
         if (fn_spec := env.get(head, None)) is None:
             raise ValueError(f"unknown function: '{head}'")
 
-    for y in args:
-        eval(env, y)
-
-    if fn_spec[0] == 'builtin':
-        _, fn, num_args = fn_spec
-        args  = stack[-num_args:]
-        stack = stack[:-num_args]
-        rval  = fn(*args)
-        if rval:
-            stack.append(rval)
+    if head in infix_symbols:
+        repeat = len(args) - 1
     else:
-        for z in fn_spec:
-            eval(env, z)
+        repeat = 1
+
+    for i in range(repeat):
+        if fn_spec[0] == 'builtin':
+            _, fn, num_args = fn_spec
+            args  = stack[-num_args:]
+            stack = stack[:-num_args]
+            rval  = fn(*args)
+            if rval:
+                stack.append(rval)
+        else:
+            for z in fn_spec:
+                eval(env, z)
 
 
 def transform_infix(x):
@@ -86,20 +96,17 @@ def transform_infix(x):
 
 def repl():
     stdin = fileinput.input()
-    lines = []
-    prompt = "; "
+    prompt = "\n; "
     while True:
         try:
             print(prompt, end="", flush=True)
             line = next(stdin)
-            if line == '\n':
-                eval_lines(env, lines)
-                print('stack', stack)
-                lines = []
-                prompt = "; "
-            else:
-                prompt = "  "
-            lines.append(line)
+
+            try:
+                eval_lines(env, [line])
+                print('stack:', stack)
+            except ValueError as e:
+                print(e)
 
         except StopIteration:
             sys.exit(0)
@@ -124,7 +131,10 @@ if __name__ == "__main__":
 
     if args.file == []:
         if sys.stdin.isatty():
-            repl()
+            try:
+                repl()
+            except KeyboardInterrupt:
+                pass
             sys.exit()
         else:
             args.file.append("-")
