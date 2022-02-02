@@ -75,21 +75,52 @@ def transform_infix(x):
     return xx
 
 
+def repl():
+    stdin = fileinput.input()
+    lines = []
+    prompt = "; "
+    while True:
+        try:
+            print(prompt, end="", flush=True)
+            line = next(stdin)
+            if line == '\n':
+                eval_lines(env, lines)
+                lines = []
+                prompt = "; "
+            else:
+                prompt = "  "
+            lines.append(line)
+
+        except StopIteration:
+            sys.exit(0)
+
+
+def eval_lines(env, lines):
+    prog = parse_lines(lines)
+    eval_prog(prog)
+
+
+def eval_prog(prog):
+    prog = remove_markers(prog)
+    for x in prog:
+        #print('x:', x)
+        eval(env, x)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", nargs="*", type=str)
     args = parser.parse_args()
 
     if args.file == []:
-        args.file.append("-")
+        if sys.stdin.isatty():
+            repl()
+            sys.exit()
+        else:
+            args.file.append("-")
 
 
     for file in args.file:
         prog = parse_file(file)
-        prog = remove_markers(prog)
-
-        for x in prog:
-            #print('x:', x)
-            eval(env, x)
-
+        eval_prog(prog)
 
