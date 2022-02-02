@@ -13,6 +13,8 @@ stack = []
 
 def eval(env, x):
     global stack
+    #print('stack', stack)
+    #print('x', x)
 
     if is_atom(x):
         try:
@@ -20,6 +22,9 @@ def eval(env, x):
         except:
             pass
         stack.append(x)
+        return
+
+    if x == []:
         return
 
     head, *args = x
@@ -43,6 +48,9 @@ def eval(env, x):
         fn_spec = ('builtin', operator.div, 2)
     elif head == 'puts':
         fn_spec = ('builtin', print, 1)
+    elif head == '.s':
+        print(stack)
+        return
     elif head == '.':
         print(stack.pop(0))
         return
@@ -55,10 +63,11 @@ def eval(env, x):
 
     if fn_spec[0] == 'builtin':
         _, fn, num_args = fn_spec
-        args = stack[-num_args:]
+        args  = stack[-num_args:]
         stack = stack[:-num_args]
-        rval = fn(*args)
-        stack.append(rval)
+        rval  = fn(*args)
+        if rval:
+            stack.append(rval)
     else:
         for z in fn_spec:
             eval(env, z)
@@ -85,6 +94,7 @@ def repl():
             line = next(stdin)
             if line == '\n':
                 eval_lines(env, lines)
+                print('stack', stack)
                 lines = []
                 prompt = "; "
             else:
