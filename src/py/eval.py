@@ -59,7 +59,7 @@ def eval(env, x):
         print(stack)
         return
     elif head == '.':
-        print(stack.pop(0))
+        print(stack.pop())
         return
     else:
         if (fn_spec := env.get(head, None)) is None:
@@ -68,19 +68,25 @@ def eval(env, x):
     if head in infix_symbols:
         repeat = len(args) - 1
     else:
-        repeat = 1
-
-    for i in range(repeat):
         if fn_spec[0] == 'builtin':
             _, fn, num_args = fn_spec
+            if num_args != len(args):
+                raise ValueError('wrong number of args', num_args, args)
+        repeat = 1
+
+    if fn_spec[0] == 'builtin':
+        _, fn, num_args = fn_spec
+
+        for i in range(repeat):
             args  = stack[-num_args:]
             stack = stack[:-num_args]
             rval  = fn(*args)
             if rval:
                 stack.append(rval)
-        else:
-            for z in fn_spec:
-                eval(env, z)
+    else:
+        for i in range(repeat):
+                for z in fn_spec:
+                    eval(env, z)
 
 
 def transform_infix(x):
@@ -106,7 +112,7 @@ def repl():
                 eval_lines(env, [line])
                 print('stack:', stack)
             except ValueError as e:
-                print(e)
+                print('error', e)
 
         except StopIteration:
             sys.exit(0)
