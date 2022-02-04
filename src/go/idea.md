@@ -1,30 +1,31 @@
-double
-    \ 1
 
-double newline indent dedent 1 newline
+    double
+        \ 1
 
-
-[double newline 1]
+    double newline indent dedent 1 newline
 
 
-
-puts newline indent dedent ( "hello " vim+ "world" )
+    [double newline 1]
 
 
 
-line-continuation
-backslash
+    puts newline indent dedent ( "hello " vim+ "world" )
 
 
 
-puts ie\newline ie\indent ie\backslash ( "hello " + "word" )
+    line-continuation
+    backslash
 
 
-a ie\newline ie\indent b ie\newline ie\indent c ie\newline
-[a ie\newline [b ie\newline [c ie\newline]]]
-[a [b [c]]]
 
-a ie\newline ie\indent b ie\newline c ie\newline
-[a ie\newline [b ie\newline] [c ie\newline]]
-[a [b] [c]]
+    puts ie\newline ie\indent ie\backslash ( "hello " + "word" )
+
+
+    a ie\newline ie\indent b ie\newline ie\indent c ie\newline
+    [a ie\newline [b ie\newline [c ie\newline]]]
+    [a [b [c]]]
+
+    a ie\newline ie\indent b ie\newline c ie\newline
+    [a ie\newline [b ie\newline] [c ie\newline]]
+    [a [b] [c]]
 
