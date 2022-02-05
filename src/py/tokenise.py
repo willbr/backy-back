@@ -105,8 +105,8 @@ class Tokeniser():
                 if self.line[self.i] not in ' \n':
                     self.die("comma must be followed by white space")
             elif word in ')}]':
-                if self.line[self.i] not in ' \n)}]':
-                    die("close marker must be followed by another close marker or whitespace")
+                if self.line[self.i] not in ' ,\n)}]':
+                    self.die("close marker must be followed by another close marker, comma  or whitespace")
 
         else:
             word = self.read_token()
