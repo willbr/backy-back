@@ -67,8 +67,8 @@ class Tokeniser():
 
     def push_token(self, token):
         if self.next_token != None:
-            print(token)
-            print(next_token)
+            print(repr(token))
+            print(repr(self.next_token))
             assert False
         self.next_token = token
 
@@ -85,7 +85,8 @@ class Tokeniser():
         if self.line[self.i] == '\n':
             self.get_line()
             self.chomp(' ')
-            self.push_token(' ' * self.i)
+            if self.i > 0:
+                self.push_token(' ' * self.i)
             word = 'ie/newline'
 
         elif self.line[self.i] == '"':
