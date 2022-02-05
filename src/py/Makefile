@@ -23,7 +23,7 @@ endif
 wtok:
 	watchexec -cr "make tok"
 
-tok: ../examples/tokens8.ie
+tok: ../examples/tokens13.ie
 	$(cat) $<
 #	$(python) tokenise.py $<
 #	$(python) parse1_indent.py $<

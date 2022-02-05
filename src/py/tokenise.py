@@ -99,13 +99,18 @@ class Tokeniser():
             word = self.line[self.i]
             self.i += 1
 
+            try:
+                next_char = self.line[self.i]
+            except IndexError:
+                next_char = ''
+
             if word == '[':
                 self.push_token("ie/prefix")
             elif word == ',':
-                if self.line[self.i] not in ' \n':
+                if next_char not in ' \n':
                     self.die("comma must be followed by white space")
             elif word in ')}]':
-                if self.line[self.i] not in ' ,\n)}]':
+                if next_char not in ' ,\n)}]':
                     self.die("close marker must be followed by another close marker, comma  or whitespace")
 
         else:
