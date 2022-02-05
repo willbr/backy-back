@@ -1,5 +1,6 @@
 import sys
 import fileinput
+from tokenise import tokenise_file, tokenise_lines
 
 class IndentParser():
     input_tokens = None
@@ -120,7 +121,6 @@ def parse_indent(tokens):
 
 
 if __name__ == '__main__':
-    arg = sys.argv[1]
-    tokens = parse_indent(fileinput.input(arg))
+    tokens = list(tokenise_file(sys.argv[1]))
     print('\n'.join(tokens))
 
