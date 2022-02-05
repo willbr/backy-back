@@ -116,11 +116,12 @@ class Tokeniser():
 
 
     def die(self, msg):
-        l = line.strip()
+        l = self.line.strip()
         red = '\u001b[31m'
         white = '\u001b[37m'
         bg_red = '\u001b[41m'
         reset = '\u001b[0m'
+        i = self.i
         print(textwrap.dedent(f"""
 
         {bg_red}ERROR: {white}{msg}{reset}
