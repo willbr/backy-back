@@ -59,10 +59,18 @@ class Tokeniser():
         next_char = self.line[self.i]
 
         if next_char in '({[':
-            self.next_token = word
+            self.push_token(word)
             word = "ie/neoteric"
 
         return word
+
+
+    def push_token(self, token):
+        if self.next_token != None:
+            print(token)
+            print(next_token)
+            assert False
+        self.next_token = token
 
 
     def next_word(self):
@@ -77,7 +85,7 @@ class Tokeniser():
         if self.line[self.i] == '\n':
             self.get_line()
             self.chomp(' ')
-            self.next_token = ' ' * self.i
+            self.push_token(' ' * self.i)
             word = 'ie/newline'
 
         elif self.line[self.i] == '"':
@@ -90,7 +98,9 @@ class Tokeniser():
             word = self.line[self.i]
             self.i += 1
 
-            if word == ',':
+            if word == '[':
+                self.push_token("ie/prefix")
+            elif word == ',':
                 if self.line[self.i] not in ' \n':
                     self.die("comma must be followed by white space")
             elif word in ')}]':

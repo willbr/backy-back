@@ -1,0 +1,3 @@
+when true
+    puts [+ 1 2]
+
