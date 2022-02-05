@@ -121,6 +121,7 @@ def parse_indent(tokens):
 
 
 if __name__ == '__main__':
-    tokens = list(tokenise_file(sys.argv[1]))
-    print('\n'.join(tokens))
+    tokens = tokenise_file(sys.argv[1])
+    tokens2 = parse_indent(tokens)
+    print('\n'.join(tokens2))
 
