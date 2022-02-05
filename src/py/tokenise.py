@@ -137,7 +137,6 @@ def tokenise_lines(lines):
 
 if __name__ == "__main__":
     filename = sys.argv[1]
-    t = Tokeniser(filename)
-    tokens  = t.read_tokens()
+    tokens  = tokenise_file(filename)
     print('\n'.join(tokens))
 
