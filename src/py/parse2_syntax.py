@@ -1,10 +1,16 @@
 from pprint import pprint
+from tokenise import tokenise_file
+from parse1_indent import parse_indent
+
 import fileinput
+import sys
 
 
 def parse_file(filename):
-    tokens = fileinput.input(filename)
-    return parse_syntax(tokens)
+    tokens  = tokenise_file(filename)
+    tokens2 = parse_indent(tokens)
+    ast = parse_syntax(tokens2)
+    return ast
 
 
 def parse_syntax(tokens):
@@ -112,7 +118,7 @@ def remove_markers(prog):
 
 
 if __name__ == '__main__':
-    prog = parse_file('-')
+    prog = parse_file(sys.argv[1])
     for s in remove_newline(prog):
         puts_expr(s, True)
     print()
