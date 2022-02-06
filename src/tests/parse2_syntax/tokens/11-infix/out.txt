@@ -1,0 +1,13 @@
+[
+    [puts
+        [ie/infix 1]
+        ie/newline]
+    [puts
+        [ie/infix 2 + 3]
+        ie/newline]
+    [puts
+        [ie/infix 4 + 5 + 6]
+        ie/newline]
+    [puts
+        [ie/infix a =
+            [ie/infix 7 + 8]]]]

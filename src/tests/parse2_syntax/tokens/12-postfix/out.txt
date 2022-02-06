@@ -1,0 +1,3 @@
+[
+    [puts
+        [ie/postfix 1 2 +]]]

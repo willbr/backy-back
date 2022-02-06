@@ -23,6 +23,7 @@ ie/newline
 :
 star
 [
+ie/prefix
 emit
 42
 ]

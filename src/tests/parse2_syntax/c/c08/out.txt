@@ -1,0 +1,8 @@
+[
+    [import stdio ie/newline]
+    [def
+        [ie/neoteric main
+            [ie/infix argc int , argv **char]]
+        int ie/newline
+        [puts "press a enter" ie/newline]
+        [getchar ie/newline]]]

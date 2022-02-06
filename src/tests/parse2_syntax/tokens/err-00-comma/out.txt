@@ -1,0 +1,7 @@
+[
+    [a =
+        [ie/neoteric sum
+            [ie/infix 1 , 2 , 3]]
+        ie/newline]
+    [a = sum
+        [ie/infix 1 , 2 , 3]]]

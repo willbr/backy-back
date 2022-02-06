@@ -1,0 +1,15 @@
+[
+*
+3
+ie/newline
+[
++
+5
+6
+ie/newline
+]
+]
+[
+.
+ie/newline
+]

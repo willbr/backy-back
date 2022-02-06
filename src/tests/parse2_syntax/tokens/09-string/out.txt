@@ -1,0 +1,5 @@
+[
+    [: puts . ie/newline]
+    [
+        [ie/prefix puts "hello dad"]
+        ie/newline]]

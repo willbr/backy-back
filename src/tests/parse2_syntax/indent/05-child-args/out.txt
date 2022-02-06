@@ -1,0 +1,6 @@
+[
+    [what's ie/newline
+        [triple
+            [ie/neoteric double
+                [ie/infix 5]]
+            ie/newline]]]

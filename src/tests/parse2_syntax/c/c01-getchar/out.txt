@@ -1,0 +1,17 @@
+[
+    [include-lib "stdio.h" ie/newline]
+    [func-decl
+        [ie/neoteric getchar
+            [ie/infix void]]
+        int ie/newline]
+    [def main ie/newline
+        [c :=
+            [ie/neoteric getchar
+                [ie/infix]]
+            ie/newline]
+        [while c != EOF ie/newline
+            [putchar c ie/newline]
+            [c =
+                [ie/neoteric getchar
+                    [ie/infix]]
+                ie/newline]]]]
