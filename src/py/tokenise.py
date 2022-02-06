@@ -11,6 +11,10 @@ class Tokeniser():
     next_token = None
     breakchars = " \t\n,;()[]{}"
 
+    def __del__(self):
+        self.file.close()
+
+
     def read_tokens(self):
         try:
             while True:
@@ -18,7 +22,6 @@ class Tokeniser():
                 yield w
         except StopIteration:
             pass
-
 
 
     def get_line(self):
@@ -135,7 +138,7 @@ class Tokeniser():
         {" "*i}^
 
         """), file=sys.stderr)
-        exit(1)
+        raise SyntaxError(msg)
 
 
 def tokenise_file(filename):
