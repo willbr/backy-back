@@ -1,6 +1,8 @@
 import fileinput
 import textwrap
 import sys
+from rich import print
+from rich.markup import escape
 
 
 class Tokeniser():
@@ -10,6 +12,12 @@ class Tokeniser():
     len_line = 0
     next_token = None
     breakchars = " \t\n,;()[]{}"
+    prefix = {}
+
+    def __init__(self):
+        self.prefix['"'] = read_string
+        pass
+
 
     def __del__(self):
         self.file.close()
@@ -33,21 +41,6 @@ class Tokeniser():
     def chomp(self, chars):
         while self.i < self.len_line and self.line[self.i] in chars:
             self.i += 1
-
-
-    def read_string(self):
-        start_pos = self.i
-        assert self.line[self.i] == '"'
-        self.i += 1
-
-        while self.i < self.len_line and self.line[self.i] not in '"':
-            self.i += 1
-
-        assert self.line[self.i] == '"'
-
-        self.i += 1
-        word = self.line[start_pos:self.i]
-        return word
 
 
     def read_token(self):
@@ -85,6 +78,8 @@ class Tokeniser():
         if self.i >= self.len_line:
             self.get_line()
 
+        prefix_fn = self.prefix.get(self.line[self.i], None)
+
         if self.line[self.i] == '\n':
             self.get_line()
             self.chomp(' ')
@@ -92,11 +87,11 @@ class Tokeniser():
                 self.push_token(' ' * self.i)
             word = 'ie/newline'
 
-        elif self.line[self.i] == '"':
-            word = self.read_string()
-
         elif self.line[self.i] == '\t':
             assert False
+
+        elif prefix_fn:
+            word = prefix_fn(self)
 
         elif self.line[self.i] in self.breakchars:
             word = self.line[self.i]
@@ -122,23 +117,30 @@ class Tokeniser():
         self.chomp(' ')
         return word
 
-
     def die(self, msg):
         l = self.line.strip()
         i = self.i
-        red = '\u001b[31m'
-        white = '\u001b[37m'
-        bg_red = '\u001b[41m'
-        reset = '\u001b[0m'
-        print(textwrap.dedent(f"""
-
-        {bg_red}ERROR: {white}{msg}{reset}
-
-        {l[:i]}{red}{l[i]}{reset}{l[i+1:]}
+        err_msg =textwrap.dedent(f"""
+        {msg}
+        {l}
         {" "*i}^
+        """).strip()
+        raise SyntaxError(err_msg)
 
-        """), file=sys.stderr)
-        raise SyntaxError(msg)
+
+def read_string(t):
+    start_pos = t.i
+    assert t.line[t.i] == '"'
+    t.i += 1
+
+    while t.i < t.len_line and t.line[t.i] not in '"':
+        t.i += 1
+
+    assert t.line[t.i] == '"'
+
+    t.i += 1
+    word = t.line[start_pos:t.i]
+    return word
 
 
 def tokenise_file(filename):
@@ -157,6 +159,9 @@ def tokenise_lines(lines):
 
 if __name__ == "__main__":
     filename = sys.argv[1]
-    tokens  = tokenise_file(filename)
-    print('\n'.join(tokens))
+    try:
+        tokens  = tokenise_file(filename)
+        print('\n'.join(tokens))
+    except SyntaxError as e:
+        print(f"[r]ERROR:[/] {escape(str(e))}")
 
