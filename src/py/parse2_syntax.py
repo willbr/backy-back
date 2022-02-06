@@ -54,47 +54,53 @@ def is_atom(x):
 
 
 def print_expr(x, depth=0, print_brackets=True):
+    print(expr_to_string(x, depth, print_brackets))
 
+
+def expr_to_string(x, depth=0, print_brackets=True):
     if is_atom(x):
-        print(x, end="")
-        return
+        return str(x)
+
+    buffer = []
 
     if print_brackets:
-        print("[", end="")
+        buffer.append("[")
 
     if x == []:
         if print_brackets:
-            print("]", end="")
-        return
+            buffer.append("]")
+        return ''.join(buffer)
 
     car, *cdr = x
 
     if not is_atom(car):
         if not print_brackets:
-            print("\\\\", end="")
-        print("\n" + (depth+1) * "    ", end="")
+            buffer.append("\\\\")
+        buffer.append("\n" + (depth+1) * "    ")
 
-    print_expr(car, depth+1, print_brackets)
+    buffer.append(expr_to_string(car, depth+1, print_brackets))
 
     prev_it = car
 
     for it in cdr:
         if is_atom(it):
             if is_atom(prev_it):
-                print(" ", end="")
+                buffer.append(" ")
             else:
-                print("\n" + (depth+1) * "    ", end="")
+                buffer.append("\n" + (depth+1) * "    ")
                 if not print_brackets:
-                    print("\\ ", end= "")
+                    buffer.append("\\ ")
         else:
-            print("\n" + (depth+1) * "    ", end="")
+            buffer.append("\n" + (depth+1) * "    ")
 
-        print_expr(it, depth+1, print_brackets)
+        buffer.append(expr_to_string(it, depth+1, print_brackets))
 
         prev_it = it
 
     if print_brackets:
-        print("]", end="")
+        buffer.append("]")
+
+    return ''.join(buffer)
 
 
 def puts_expr(x, print_brackets=True):
