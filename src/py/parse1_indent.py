@@ -1,6 +1,6 @@
 import sys
 import fileinput
-from tokenise import tokenise_file, tokenise_lines
+from .tokenise import tokenise_file, tokenise_lines
 
 class IndentParser():
     input_tokens = None
