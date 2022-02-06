@@ -1,6 +1,6 @@
 from pprint import pprint
-from tokenise import tokenise_file
-from parse1_indent import parse_indent
+from .tokenise import tokenise_file
+from .parse1_indent import parse_indent
 
 import fileinput
 import sys
