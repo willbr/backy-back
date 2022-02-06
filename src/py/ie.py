@@ -1,7 +1,7 @@
 import sys
 from tokenise import tokenise_file, tokenise_lines
 from parse1_indent import parse_indent
-from parse2_syntax import parse_syntax
+from parse2_syntax import parse_syntax, puts_expr
 from pprint import pprint
 
 
@@ -22,5 +22,6 @@ def parse_lines(s):
 if __name__ == "__main__":
     filename = sys.argv[1]
     ast = parse_file(filename)
-    pprint(ast)
+    for x in ast:
+        puts_expr(x)
 

@@ -1,0 +1,2 @@
+def main
+    printf "hello, world\n"

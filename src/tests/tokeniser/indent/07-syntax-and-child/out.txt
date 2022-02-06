@@ -1,0 +1,15 @@
+while
+(
+c
+=
+ie/neoteric
+getchar
+(
+)
+)
+!=
+EOF
+ie/newline
+    
+nop
+ie/newline

@@ -59,10 +59,18 @@ class Tokeniser():
         next_char = self.line[self.i]
 
         if next_char in '({[':
-            self.next_token = word
+            self.push_token(word)
             word = "ie/neoteric"
 
         return word
+
+
+    def push_token(self, token):
+        if self.next_token != None:
+            print(repr(token))
+            print(repr(self.next_token))
+            assert False
+        self.next_token = token
 
 
     def next_word(self):
@@ -77,7 +85,8 @@ class Tokeniser():
         if self.line[self.i] == '\n':
             self.get_line()
             self.chomp(' ')
-            self.next_token = ' ' * self.i
+            if self.i > 0:
+                self.push_token(' ' * self.i)
             word = 'ie/newline'
 
         elif self.line[self.i] == '"':
@@ -90,12 +99,19 @@ class Tokeniser():
             word = self.line[self.i]
             self.i += 1
 
-            if word == ',':
-                if self.line[self.i] not in ' \n':
+            try:
+                next_char = self.line[self.i]
+            except IndexError:
+                next_char = ''
+
+            if word == '[':
+                self.push_token("ie/prefix")
+            elif word == ',':
+                if next_char not in ' \n':
                     self.die("comma must be followed by white space")
             elif word in ')}]':
-                if self.line[self.i] not in ' \n)}]':
-                    self.die("close marker must be followed by another close marker or whitespace")
+                if next_char not in ' ,\n)}]':
+                    self.die("close marker must be followed by another close marker, comma  or whitespace")
 
         else:
             word = self.read_token()
@@ -138,7 +154,6 @@ def tokenise_lines(lines):
 
 if __name__ == "__main__":
     filename = sys.argv[1]
-    t = Tokeniser(filename)
-    tokens  = t.read_tokens()
+    tokens  = tokenise_file(filename)
     print('\n'.join(tokens))
 

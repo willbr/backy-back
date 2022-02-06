@@ -1,0 +1,7 @@
+import stdio
+
+def main(argc int, argv **char) int
+    puts "press a enter"
+    getchar
+
+    

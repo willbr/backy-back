@@ -1,0 +1,14 @@
+:
+double
+ie/newline
+    
+*
+2
+ie/newline
+ie/newline
+double
+ie/newline
+    
+\
+5
+ie/newline

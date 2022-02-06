@@ -1,0 +1,6 @@
+def
+main
+ie/newline
+    
+printf
+"hello, world\n"
