@@ -1,7 +1,0 @@
-include-lib "stdio.h"
-
-def main
-    nc := long(0)
-    while getchar() != EOF
-        inc nc
-    printf "%ld\n" nc

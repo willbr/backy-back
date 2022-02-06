@@ -95,7 +95,7 @@ class Tokeniser():
                     self.die("comma must be followed by white space")
             elif word in ')}]':
                 if self.line[self.i] not in ' \n)}]':
-                    die("close marker must be followed by another close marker or whitespace")
+                    self.die("close marker must be followed by another close marker or whitespace")
 
         else:
             word = self.read_token()
@@ -105,7 +105,8 @@ class Tokeniser():
 
 
     def die(self, msg):
-        l = line.strip()
+        l = self.line.strip()
+        i = self.i
         red = '\u001b[31m'
         white = '\u001b[37m'
         bg_red = '\u001b[41m'
