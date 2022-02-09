@@ -1,2 +1,0 @@
-[
-    [+ ie/newline ie/backslash 1 ie/newline ie/backslash 2]]

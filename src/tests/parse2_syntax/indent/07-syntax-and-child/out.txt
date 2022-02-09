@@ -1,7 +1,0 @@
-[
-    [while
-        [ie/infix c =
-            [ie/neoteric getchar
-                [ie/infix]]]
-        != EOF ie/newline
-        [nop ie/newline]]]

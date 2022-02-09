@@ -1,4 +1,0 @@
-include-lib "stdio.h"
-
-func-decl getchar(void) int
-

@@ -1,9 +1,0 @@
-include-lib "stdio.h"
-
-def main
-    a := int(0)
-    b := int(1)
-    c := int(2)
-    a = 3 * (b * c)
-    return a
-

@@ -1,7 +1,0 @@
-include-lib "stdio.h"
-
-def main
-    puts "hi"
-    c := int(0)
-    while (c = getchar()) != EOF
-        putchar c

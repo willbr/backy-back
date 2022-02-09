@@ -1,6 +1,0 @@
-include-lib "stdio.h"
-
-def main(argc int, argv **char) int
-    print "hello = {:hello d}, num = {10 d}, float = {3.6 2.2f}\n"
-    println "goodbye = {:goodbye d}"
-

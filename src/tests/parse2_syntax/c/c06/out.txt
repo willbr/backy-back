@@ -1,9 +1,0 @@
-[
-    [ie/newline]
-    [include-lib "stdio.h" ie/newline]
-    [def
-        [ie/neoteric main
-            [ie/infix argc int , argv **char]]
-        int ie/newline
-        [puts "hi" ie/newline]
-        [return 0 ie/newline]]]

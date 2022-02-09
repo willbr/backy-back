@@ -1,5 +1,0 @@
-[
-    [+
-        [ie/infix 0 + 1 + 2]
-        [ie/postfix 3 4 +]
-        ie/newline]]

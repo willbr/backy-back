@@ -1,8 +1,0 @@
-[
-    [include-lib "stdio.h" ie/newline]
-    [def
-        [ie/neoteric main
-            [ie/infix argc int , argv **char]]
-        int ie/newline
-        [print "hello = {:hello d}, num = {10 d}, float = {3.6 2.2f}\n" ie/newline]
-        [println "goodbye = {:goodbye d}" ie/newline]]]

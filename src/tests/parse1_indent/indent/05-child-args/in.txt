@@ -1,3 +1,0 @@
-what's
-    triple double(5)
-
