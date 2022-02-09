@@ -3,8 +3,8 @@ import sys
 import argparse
 import fileinput
 
-from parse2_syntax import is_atom, puts_expr, remove_markers
-from ie import parse_file, parse_lines
+from ie.src.py.parse2_syntax import is_atom, puts_expr, remove_markers
+from ie.src.py.ie import parse_file, parse_lines
 
 env = {}
 
