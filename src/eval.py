@@ -31,7 +31,9 @@ def eval(env, x):
 
     head, *args = x
 
-    if head == 'ie/infix':
+    if head == 'ie/prefix':
+        head, *args = args
+    elif head == 'ie/infix':
         head, *args = transform_infix(args)
     elif head == 'ie/postfix':
         head, args = x[-1], x[1:-1]
