@@ -1,45 +1,8 @@
 # backy-back
+
 stack lang
 
-## reader
-    read first char
-    is it a breakchar char? " \t\n,;()[]{}'
-          space
-       \t tab is an error
-       \n newline
-        , comma
-        ; semicolon
-        ( infix
-        { rpn
-        [ prefix
-
-    is it a prefix char?
-        " string
-        * deref
-        & address
-        ' quote
-        % binary
-        $ hexadecimal
-
-    read word
-    try promote functions
-        - promote to number
-        - promote to number from hex
-        - promote to number from binary
-
-
-## assignment syntax
-special case for infix assignment
-
-    a = 5
-
-to
-
-    5 a !
-
-instead of
-
-    a 5 =
+a little bit of forth, python & lisp
 
 ## implied infix
 
@@ -60,62 +23,18 @@ or
 
     10 a !
 
-## prefix chars
+## assignment syntax
+special case for infix assignment
 
-pointer methods
+    a = 5
 
-    * deref
-    & addr
-    ' quote
-    ! not
+to
 
-## add promotion stage
-apply a list of transformations to a token
+    5 a !
 
-    *something
+instead of
 
-becomes:
-
-    deref something
-    [deref something]
-    deref(something)
-
-## neoteric function calls
-
-    printf("hello %s", "Bob")
-
-    to
-
-    [printf ("hello %s", "Bob")]
-
-    tokens:
-    [ printf ( "hello %s" , "Bob" ) ]
-
-do I need to swap the argument orders?
-is this only needed for vaargs?
-
-look into how Forth does printf
-look into how Lisp does printf
-
-    printf("hello %s!\n", name)
-
-    to
-
-    printf "hello %s!\n" name
-
-    to
-
-    name "hello %s!\n" printf
-
-
-or cound the number of arguments?
-
-    printf("hello %s!\n", name)
-
-    to
-
-    printf "hello %s!\n" name 2
-
+    a 5 =
 
 ## struct access
 
@@ -134,7 +53,6 @@ or cound the number of arguments?
     set set
     :=  let
      =  equals or ==
-
 
 ## add forth memory model
 
@@ -173,6 +91,7 @@ object is a union, it can be a list or a void\*
     version 0
 
 ## heredocs
+
     puts <<end
     hello,
     How are you doing today?
@@ -180,53 +99,16 @@ object is a union, it can be a list or a void\*
     end
 
 ## regex
+
 create a regex object
 
     /^haha$/
 
 ## add rpn command 
+
 so I can write reverse polish notation as a statement
 
     emit 42
 
     rpn 42 emit
-
-## toco
-
-## add an escape for c code
-
-    raw-c "#define SDL_MAIN_HANDLED"
-    raw-c "int a = 0;"
-
-## split ie2 into it\'s own repo
-
-## split toco into it\'s own repo
-
-
-## ie
-
-## add ie/prefix
-
-only when you use '['
-
-not for naked lines
-
-## stdout interface
-
-one token per line
-
-    token
-
-or
-
-    row,col,token
-
-example
-
-    1,1,def
-    1,1,main
-    1,1,ie/newline
-    2,1,    
-    2,5,puts
-    2,10,"hello"
 
