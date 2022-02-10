@@ -36,6 +36,12 @@ instead of
 
     a 5 =
 
+## type checking
+
+steal type checking from WASM
+
+https://binji.github.io/posts/webassembly-type-checking/
+
 ## struct access
 
     struct ball
