@@ -44,6 +44,11 @@ def eval(env, x):
         fn_name, *fn_body = args
         env[fn_name] = fn_body
         return
+    elif head == 'quote':
+        if len(args) != 1:
+            raise SyntaxError(f"quote only takes one argument: {repr(x)}")
+        stack.append(args[0])
+        return
 
     for y in args:
         eval(env, y)
@@ -115,7 +120,9 @@ def repl():
                 eval_lines(env, [line])
                 print('stack:', stack)
             except ValueError as e:
-                print('error', e)
+                print('error:', e)
+            except SyntaxError as e:
+                print('error:', e)
 
         except StopIteration:
             sys.exit(0)
