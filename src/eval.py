@@ -10,6 +10,21 @@ from ie.src.py.ie import parse_file, parse_lines
 infix_symbols = "+ - * /".split()
 
 
+def transform_syntax(x):
+    head, *args = x
+
+    if head == 'ie/prefix':
+        return args
+    elif head == 'ie/infix':
+        return transform_infix(args)
+    elif head == 'ie/postfix':
+        return [x[-1]] +  x[1:-1]
+    elif args and args[0] in infix_symbols:
+        return transform_infix(x)
+    else:
+        return x
+
+
 def eval(env, stack, x):
     # print(f'{stack=}')
     # print(f'{x=}')
@@ -26,16 +41,7 @@ def eval(env, stack, x):
     if x == []:
         return
 
-    head, *args = x
-
-    if head == 'ie/prefix':
-        head, *args = args
-    elif head == 'ie/infix':
-        head, *args = transform_infix(args)
-    elif head == 'ie/postfix':
-        head, args = x[-1], x[1:-1]
-    elif args and args[0] in infix_symbols:
-        head, *args = transform_infix(x)
+    head, *args = transform_syntax(x)
 
     # special forms
     if head == 'fn':
@@ -47,6 +53,8 @@ def eval(env, stack, x):
             raise SyntaxError(f"quote only takes one argument: {repr(x)}")
         stack.append(args[0])
         return
+    elif head == 'if':
+        assert False
     else:
         apply(env, stack, head, args)
 
