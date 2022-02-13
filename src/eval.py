@@ -56,14 +56,19 @@ def eval(env, stack, x):
     elif head == 'if':
         assert False
     else:
-        apply(env, stack, head, args)
+        eval_list(env, stack, args)
+        apply(env, stack, head, len(args))
 
 
-def apply(env, stack, fn, args):
+def eval_list(env, stack, args):
+    for x in args:
+        eval(env, stack, x)
+
+
+def apply(env, stack, fn, num_args):
     # print(f"{env=}")
     # print(f"{stack=}")
     # print(f"{fn=}")
-    # print(f"{args=}")
     # print()
 
     if fn == '+':
@@ -77,11 +82,9 @@ def apply(env, stack, fn, args):
     elif fn == 'puts':
         fn_spec = ('builtin', print, 1)
     elif fn == '.s':
-        assert args == []
         print(stack)
         return
     elif fn == '.':
-        assert args == []
         print(stack.pop())
         return
     else:
@@ -89,26 +92,23 @@ def apply(env, stack, fn, args):
             raise ValueError(f"unknown function: '{fn}'")
 
     if fn in infix_symbols:
-        repeat = len(args) - 1
+        repeat = num_args - 1
     else:
         if fn_spec[0] == 'builtin':
-            _, fn, num_args = fn_spec
-            if num_args != len(args):
-                raise ValueError('wrong number of args', num_args, args)
+            _, fn, num_params = fn_spec
+            if num_params != num_args:
+                raise ValueError(f'{num_params=} != {num_args=}')
         repeat = 1
 
-    for x in args:
-        eval(env, stack, x)
-
     if fn_spec[0] == 'builtin':
-        _, fn, num_args = fn_spec
+        _, fn, num_params = fn_spec
 
         for i in range(repeat):
-            if len(stack) < num_args:
+            if len(stack) < num_params:
                 raise ValueError(f"arguments missing form stack")
 
-            args = stack[-num_args:]
-            del stack[-num_args:]
+            args = stack[-num_params:]
+            del stack[-num_params:]
             rval  = fn(*args)
             if rval:
                 stack.append(rval)
@@ -131,7 +131,7 @@ def transform_infix(x):
     return xx
 
 
-def repl():
+def repl(env, stack):
     stdin = fileinput.input()
     prompt = "\n; "
     while True:
@@ -140,7 +140,7 @@ def repl():
             line = next(stdin)
 
             try:
-                eval_lines(env, [line])
+                eval_lines(env, stack, [line])
                 print('stack:', stack)
             except ValueError as e:
                 print('error:', e)
@@ -151,15 +151,12 @@ def repl():
             sys.exit(0)
 
 
-def eval_lines(env, lines):
+def eval_lines(env, stack, lines):
     prog = parse_lines(lines)
-    eval_prog(prog)
+    eval_prog(env, stack, prog)
 
 
-def eval_prog(prog):
-    env = {}
-    stack = []
-
+def eval_prog(env, stack, prog):
     prog = remove_markers(prog)
     for x in prog:
         # print(f'{x=}')
@@ -172,10 +169,13 @@ if __name__ == "__main__":
     parser.add_argument("file", nargs="*", type=str)
     args = parser.parse_args()
 
+    env = {}
+    stack = []
+
     if args.file == []:
         if sys.stdin.isatty():
             try:
-                repl()
+                repl(env, stack)
             except KeyboardInterrupt:
                 pass
             sys.exit()
@@ -185,5 +185,5 @@ if __name__ == "__main__":
 
     for file in args.file:
         prog = parse_file(file)
-        eval_prog(prog)
+        eval_prog(env, stack, prog)
 
