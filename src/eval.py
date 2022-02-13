@@ -31,10 +31,6 @@ def eval(env, stack, x):
     # print()
 
     if is_atom(x):
-        try:
-            x = int(x)
-        except:
-            pass
         stack.append(x)
         return
 
@@ -185,5 +181,6 @@ if __name__ == "__main__":
 
     for file in args.file:
         prog = parse_file(file)
+        print(prog)
         eval_prog(env, stack, prog)
 
