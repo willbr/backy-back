@@ -18,6 +18,12 @@ else
 endif
 
 
+bb-tests:
+	bb src/script.txt
+
+wbbt:
+	watchexec -cr "make bb-tests"
+
 toco-tests:
 	toco src/examples/c0.ie
 	toco src/examples/c1.ie
