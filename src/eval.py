@@ -7,16 +7,13 @@ from rich import print
 from ie.src.py.parse2_syntax import is_atom, puts_expr, remove_markers
 from ie.src.py.ie import parse_file, parse_lines
 
-env = {}
-
-stack = []
-
 infix_symbols = "+ - * /".split()
 
-def eval(env, x):
-    global stack
-    #print('stack', stack)
-    #print('x', x)
+
+def eval(env, stack, x):
+    # print(f'{stack=}')
+    # print(f'{x=}')
+    # print()
 
     if is_atom(x):
         try:
@@ -40,40 +37,50 @@ def eval(env, x):
     elif args and args[0] in infix_symbols:
         head, *args = transform_infix(x)
 
+    # special forms
     if head == 'fn':
         fn_name, *fn_body = args
         env[fn_name] = fn_body
-        return
+
     elif head == 'quote':
         if len(args) != 1:
             raise SyntaxError(f"quote only takes one argument: {repr(x)}")
         stack.append(args[0])
         return
+    else:
+        apply(env, stack, head, args)
 
-    for y in args:
-        eval(env, y)
 
-    if head == '+':
+def apply(env, stack, fn, args):
+    # print(f"{env=}")
+    # print(f"{stack=}")
+    # print(f"{fn=}")
+    # print(f"{args=}")
+    # print()
+
+    if fn == '+':
         fn_spec = ('builtin', operator.add, 2)
-    elif head == '-':
+    elif fn == '-':
         fn_spec = ('builtin', operator.sub, 2)
-    elif head == '*':
+    elif fn == '*':
         fn_spec = ('builtin', operator.mul, 2)
-    elif head == '/':
+    elif fn == '/':
         fn_spec = ('builtin', operator.truediv, 2)
-    elif head == 'puts':
+    elif fn == 'puts':
         fn_spec = ('builtin', print, 1)
-    elif head == '.s':
+    elif fn == '.s':
+        assert args == []
         print(stack)
         return
-    elif head == '.':
+    elif fn == '.':
+        assert args == []
         print(stack.pop())
         return
     else:
-        if (fn_spec := env.get(head, None)) is None:
-            raise ValueError(f"unknown function: '{head}'")
+        if (fn_spec := env.get(fn, None)) is None:
+            raise ValueError(f"unknown function: '{fn}'")
 
-    if head in infix_symbols:
+    if fn in infix_symbols:
         repeat = len(args) - 1
     else:
         if fn_spec[0] == 'builtin':
@@ -82,19 +89,27 @@ def eval(env, x):
                 raise ValueError('wrong number of args', num_args, args)
         repeat = 1
 
+    for x in args:
+        eval(env, stack, x)
+
     if fn_spec[0] == 'builtin':
         _, fn, num_args = fn_spec
 
         for i in range(repeat):
-            args  = stack[-num_args:]
-            stack = stack[:-num_args]
+            if len(stack) < num_args:
+                raise ValueError(f"arguments missing form stack")
+
+            args = stack[-num_args:]
+            del stack[-num_args:]
             rval  = fn(*args)
             if rval:
                 stack.append(rval)
     else:
         for i in range(repeat):
-                for z in fn_spec:
-                    eval(env, z)
+            for z in fn_spec:
+                eval(env, stack, z)
+
+
 
 
 def transform_infix(x):
@@ -134,10 +149,14 @@ def eval_lines(env, lines):
 
 
 def eval_prog(prog):
+    env = {}
+    stack = []
+
     prog = remove_markers(prog)
     for x in prog:
-        #print('x:', x)
-        eval(env, x)
+        # print(f'{x=}')
+        eval(env, stack, x)
+        # print(f'{stack=}')
 
 
 if __name__ == "__main__":
