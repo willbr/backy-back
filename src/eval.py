@@ -7,10 +7,11 @@ from rich import print
 from ie.src.py.parse2_syntax import is_atom, puts_expr, remove_markers
 from ie.src.py.ie import parse_file, parse_lines
 
-infix_symbols = "+ - * /".split()
+infix_symbols = "+ - * / =".split()
 
 
 def transform_syntax(x):
+    # print(x)
     head, *args = x
 
     if head == 'ie/prefix':
@@ -33,7 +34,13 @@ def eval(env, x):
     stack = env['stack']
 
     if is_atom(x):
-        stack.append(x)
+        t = type(x)
+
+        if t is Symbol:
+            stack.append(env[x])
+        else:
+            stack.append(x)
+
         return
 
     if x == []:
@@ -50,9 +57,11 @@ def eval(env, x):
         if len(args) != 1:
             raise SyntaxError(f"quote only takes one argument: {repr(x)}")
         stack.append(args[0])
-        return
     elif head == 'if':
         assert False
+    elif head == '=':
+        lhs, rhs = args
+        env[lhs] = rhs
     else:
         eval_list(env, args)
         apply(env, head, len(args))
