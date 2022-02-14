@@ -25,10 +25,12 @@ def transform_syntax(x):
         return x
 
 
-def eval(env, stack, x):
+def eval(env, x):
     # print(f'{stack=}')
     # print(f'{x=}')
     # print()
+
+    stack = env['stack']
 
     if is_atom(x):
         stack.append(x)
@@ -52,20 +54,22 @@ def eval(env, stack, x):
     elif head == 'if':
         assert False
     else:
-        eval_list(env, stack, args)
-        apply(env, stack, head, len(args))
+        eval_list(env, args)
+        apply(env, head, len(args))
 
 
-def eval_list(env, stack, args):
+def eval_list(env, args):
     for x in args:
-        eval(env, stack, x)
+        eval(env, x)
 
 
-def apply(env, stack, fn, num_args):
+def apply(env, fn, num_args):
     # print(f"{env=}")
     # print(f"{stack=}")
     # print(f"{fn=}")
     # print()
+
+    stack = env['stack']
 
     if fn == '+':
         fn_spec = ('builtin', operator.add, 2)
@@ -114,8 +118,6 @@ def apply(env, stack, fn, num_args):
                 eval(env, stack, z)
 
 
-
-
 def transform_infix(x):
     first_arg, first_op, *rest = x
     xx = [first_op, first_arg]
@@ -147,17 +149,56 @@ def repl(env, stack):
             sys.exit(0)
 
 
-def eval_lines(env, stack, lines):
+def eval_lines(env, lines):
     prog = parse_lines(lines)
-    eval_prog(env, stack, prog)
+    eval_prog(env, prog)
 
 
-def eval_prog(env, stack, prog):
+def eval_prog(env, prog):
     prog = remove_markers(prog)
     for x in prog:
         # print(f'{x=}')
-        eval(env, stack, x)
+        eval(env, x)
         # print(f'{stack=}')
+
+
+class Enviroment(dict):
+    def __init__(self):
+        super().__init__()
+
+    def __getitem__(self, key):
+        return super().__getitem__(key)
+
+
+class Symbol(str):
+    def __repr__(self):
+        return self
+
+
+symbols = {}
+
+
+def symbol(s):
+    if s not in symbols:
+        symbols[s] = Symbol(s)
+    return symbols[s]
+
+
+def promote(t):
+    try:
+        return int(t)
+    except:
+        pass
+
+    try:
+        return float(t)
+    except:
+        pass
+
+    if t[0] == '"':
+        assert False
+
+    return symbol(t)
 
 
 if __name__ == "__main__":
@@ -165,13 +206,13 @@ if __name__ == "__main__":
     parser.add_argument("file", nargs="*", type=str)
     args = parser.parse_args()
 
-    env = {}
-    stack = []
+    env = Enviroment()
+    env['stack'] = []
 
     if args.file == []:
         if sys.stdin.isatty():
             try:
-                repl(env, stack)
+                repl(env)
             except KeyboardInterrupt:
                 pass
             sys.exit()
@@ -180,7 +221,7 @@ if __name__ == "__main__":
 
 
     for file in args.file:
-        prog = parse_file(file)
+        prog = parse_file(file, promote)
         print(prog)
-        eval_prog(env, stack, prog)
+        eval_prog(env, prog)
 
