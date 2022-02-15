@@ -3,16 +3,25 @@ import sys
 import argparse
 import fileinput
 
-from rich import print
+from functools import reduce
+
+# from rich import print
+from rich.console import Console
 from ie.src.py.parse2_syntax import is_atom, puts_expr, remove_markers
 from ie.src.py.ie import parse_file, parse_lines
+
+console = Console(markup=False)
+python_print = print
+print = console.print
 
 infix_symbols = "+ - * / =".split()
 
 
 def transform_syntax(x):
-    # print(x)
+    # print(f"transform_syntax: {x=}")
     head, *args = x
+    # print(f"{args=}")
+    # print(f"{args[0]=}")
 
     if head == 'ie/prefix':
         return args
@@ -20,51 +29,72 @@ def transform_syntax(x):
         return transform_infix(args)
     elif head == 'ie/postfix':
         return [x[-1]] +  x[1:-1]
-    elif args and args[0] in infix_symbols:
+    elif head == 'ie/neoteric':
+        return x[1:]
+    elif args and str(args[0]) in infix_symbols:
         return transform_infix(x)
     else:
         return x
 
 
 def eval(env, x):
-    # print(f'{stack=}')
+    stack = env['stack']
+    # print(f'eval start: {stack=}')
     # print(f'{x=}')
     # print()
 
-    stack = env['stack']
-
     if is_atom(x):
-        t = type(x)
+        xx = x
+    else:
+        xx = transform_syntax(x)
+    # print(f'{xx=}')
+
+    if is_atom(xx):
+        t = type(xx)
 
         if t is Symbol:
-            stack.append(env[x])
+            if xx != symbol('$'):
+                stack.append(env[str(xx)])
         else:
-            stack.append(x)
+            stack.append(xx)
 
         return
 
     if x == []:
         return
 
-    head, *args = transform_syntax(x)
+    head, *args = xx
+    s = str(head)
 
     # special forms
-    if head == 'fn':
+    if s == 'fn':
         fn_name, *fn_body = args
-        env[fn_name] = fn_body
+        env[str(fn_name)] = fn_body
 
-    elif head == 'quote':
+    elif s == 'quote':
         if len(args) != 1:
             raise SyntaxError(f"quote only takes one argument: {repr(x)}")
         stack.append(args[0])
-    elif head == 'if':
+    elif s == 'if':
         assert False
-    elif head == '=':
+    elif s == '=':
         lhs, rhs = args
-        env[lhs] = rhs
+        assert type(lhs) == Symbol
+        env[str(lhs)] = rhs
+    elif s == 'dup':
+        stack.append(stack[-1])
+    elif s == '.s':
+        print(env['stack'])
+    elif s == 'comment':
+        pass
+    elif s == '$':
+        pass
     else:
         eval_list(env, args)
         apply(env, head, len(args))
+
+    # print(f'eval end: {stack=}')
+    # print()
 
 
 def eval_list(env, args):
@@ -72,62 +102,52 @@ def eval_list(env, args):
         eval(env, x)
 
 
-def apply(env, fn, num_args):
+def apply(env, fn_name, num_args):
     # print(f"{env=}")
     # print(f"{stack=}")
-    # print(f"{fn=}")
+    # print(f"{fn_name=}")
     # print()
 
     stack = env['stack']
 
-    if fn == '+':
-        fn_spec = ('builtin', operator.add, 2)
-    elif fn == '-':
-        fn_spec = ('builtin', operator.sub, 2)
-    elif fn == '*':
-        fn_spec = ('builtin', operator.mul, 2)
-    elif fn == '/':
-        fn_spec = ('builtin', operator.truediv, 2)
-    elif fn == 'puts':
-        fn_spec = ('builtin', print, 1)
-    elif fn == '.s':
-        print(stack)
-        return
-    elif fn == '.':
-        print(stack.pop())
-        return
+    assert type(fn_name) == Symbol
+    if (fn := env.get(str(fn_name), None)) is None:
+        print(env)
+        raise ValueError(f"unknown function: '{fn_name}'")
+    # print(fn_spec)
+
+    # print(callable(fn))
+    # print(fn)
+    # print(fn(1,2))
+
+    if callable(fn):
+        if num_args > 0:
+            args = stack[-num_args:]
+            del stack[-num_args:]
+        else:
+            args = []
+
+        # print(f"{num_args=}")
+        # print(f"{args=}")
+
+        if str(fn_name) in infix_symbols:
+            rval = reduce(fn, args)
+        else:
+            rval = fn(*args)
+
+        # print(rval)
+        # print(repeat)
+        if rval:
+            # print(f"{rval=}")
+            stack.append(rval)
     else:
-        if (fn_spec := env.get(fn, None)) is None:
-            raise ValueError(f"unknown function: '{fn}'")
-
-    if fn in infix_symbols:
-        repeat = num_args - 1
-    else:
-        if fn_spec[0] == 'builtin':
-            _, fn, num_params = fn_spec
-            if num_params != num_args:
-                raise ValueError(f'{num_params=} != {num_args=}')
-        repeat = 1
-
-    if fn_spec[0] == 'builtin':
-        _, fn, num_params = fn_spec
-
-        for i in range(repeat):
-            if len(stack) < num_params:
-                raise ValueError(f"arguments missing form stack")
-
-            args = stack[-num_params:]
-            del stack[-num_params:]
-            rval  = fn(*args)
-            if rval:
-                stack.append(rval)
-    else:
-        for i in range(repeat):
-            for z in fn_spec:
-                eval(env, stack, z)
+        for x in fn:
+            eval(env, x)
 
 
 def transform_infix(x):
+    if len(x) == 1:
+        return x[0]
     first_arg, first_op, *rest = x
     xx = [first_op, first_arg]
     for i in range(2, len(x)):
@@ -164,11 +184,9 @@ def eval_lines(env, lines):
 
 
 def eval_prog(env, prog):
-    prog = remove_markers(prog)
+    prog = remove_markers2(prog, [symbol('ie/newline')])
     for x in prog:
-        # print(f'{x=}')
         eval(env, x)
-        # print(f'{stack=}')
 
 
 class Enviroment(dict):
@@ -183,11 +201,20 @@ class Symbol(str):
     def __repr__(self):
         return self
 
+    def __eq__(self, other):
+        return self is other
+
+    def __hash__(self):
+        h = str(id(self)) + "_" + self
+        return hash(h)
+
 
 symbols = {}
 
 
 def symbol(s):
+    # print(f"{s=}")
+    # print(f"{symbols=}")
     if s not in symbols:
         symbols[s] = Symbol(s)
     return symbols[s]
@@ -205,10 +232,17 @@ def promote(t):
         pass
 
     if t[0] == '"':
-        assert False
+        assert t[-1] == '"'
+        return t[1:-1]
 
     return symbol(t)
 
+
+def remove_markers2(prog, markers=['ie/newline', 'ie/backslash']):
+    if is_atom(prog):
+        return prog
+
+    return [remove_markers2(x, markers) for x in prog if x not in markers]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -217,6 +251,21 @@ if __name__ == "__main__":
 
     env = Enviroment()
     env['stack'] = []
+
+    env['+'] = operator.add
+    env['-'] = operator.sub
+    env['*'] = operator.mul
+    env['/'] = operator.truediv
+    env['puts'] = print
+
+    env['$'] = symbol('$')
+
+    # elif fn == '.s':
+        # print(stack)
+        # return
+    # elif fn == '.':
+        # print(stack.pop())
+        # return
 
     if args.file == []:
         if sys.stdin.isatty():
@@ -231,6 +280,6 @@ if __name__ == "__main__":
 
     for file in args.file:
         prog = parse_file(file, promote)
-        print(prog)
+        # print(remove_markers2(prog))
         eval_prog(env, prog)
 

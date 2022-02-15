@@ -2,3 +2,12 @@
 .s
 a = 5
 puts a
+
+fn double
+    dup
+    $ + $
+
+puts "before"
+puts double(10)
+puts "after"
+
