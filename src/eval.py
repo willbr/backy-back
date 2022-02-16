@@ -184,7 +184,7 @@ def eval_lines(env, lines):
 
 
 def eval_prog(env, prog):
-    prog = remove_markers2(prog, [symbol('ie/newline')])
+    prog = remove_markers(prog, [symbol('ie/newline')])
     for x in prog:
         eval(env, x)
 
@@ -238,12 +238,6 @@ def promote(t):
     return symbol(t)
 
 
-def remove_markers2(prog, markers=['ie/newline', 'ie/backslash']):
-    if is_atom(prog):
-        return prog
-
-    return [remove_markers2(x, markers) for x in prog if x not in markers]
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", nargs="*", type=str)
@@ -280,6 +274,6 @@ if __name__ == "__main__":
 
     for file in args.file:
         prog = parse_file(file, promote)
-        # print(remove_markers2(prog))
+        # print(remove_markers(prog))
         eval_prog(env, prog)
 
