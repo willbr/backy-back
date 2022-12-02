@@ -72,10 +72,6 @@ test5: .\src\tokens5.ie
 	tcc -run src/main.c < $< | python src/transform.py
 	tcc -run src/main.c < $< | python src/transform.py | python src/eval.py
 
-alt:
-	python src/alt.py --echo-code
-	python src/alt.py | python src/eval.py --trace
-
 alt2: .\src\tokens0.ie src/*.py
 	type $<
 	python src/alt2.py --echo-code < $<
@@ -163,4 +159,10 @@ pytok: src\examples\c4.ie
 
 wpytok:
 	watchexec -cr "make pytok"
+
+alt:
+	python src\alt.py src\script.txt
+
+walt:
+	watchexec -cr "make alt"
 

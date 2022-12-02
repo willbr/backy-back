@@ -118,3 +118,11 @@ so I can write reverse polish notation as a statement
 
     rpn 42 emit
 
+# alt token parser
+
+    head, *tail = "one two three"
+
+    into
+
+    ['one', ['two', 'three']]
+
