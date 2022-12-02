@@ -8,6 +8,5 @@ fn double
     $ + $
 
 puts "before"
-puts double(10)
 puts "after"
 

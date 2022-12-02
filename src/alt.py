@@ -8,7 +8,9 @@ print = console.print
 install(show_locals=True)
 
 ####################################
+from functools import reduce
 
+import operator as op
 import sys
 import re
 #print('hi')
@@ -21,6 +23,7 @@ with open(filename) as f:
 data_tail = data
 pending_token = None
 pending_line = None
+global_stack = []
 
 def read_string(s):
     m = re.search('"', s[1:])
@@ -210,19 +213,47 @@ def pretty(tree, depth = 0):
             pretty(tail, depth + 1)
 
 def fn_add(x):
-    assert False
+    cmd, args, *children = x
+    assert children == []
+    xargs = list(map(eval, args))
+    r = reduce(op.add, xargs)
+    return r
 
 def fn_assign(x):
-    assert False
+    cmd, args, *children = x
+    assert children == []
+    dst, val = args
+    xval = eval(val)
+    env[dst] = xval
 
 def fn_print_stack(x):
-    assert False
+    cmd, args, *children = x
+    assert args == []
+    assert children == []
+    print(f'stack: {global_stack}')
 
 def fn_puts(x):
-    assert False
+    cmd, args, *children = x
+    assert children == []
+    assert len(args) == 1
+    xarg = eval(args[0])
+    print(xarg)
 
 def fn_define(x):
-    assert False
+    cmd, args, *children = x
+    assert children != []
+    name, *tail = args
+    assert tail == []
+    fn = ['lambda', [], children]
+    nx = ['=', [name, fn]]
+    fn_assign(nx)
+    return fn
+
+def fn_lambda(x):
+    cmd, args, *children = x
+    assert args == []
+    assert children != []
+    return x
 
 env = {
         '+': fn_add,
@@ -230,13 +261,23 @@ env = {
         '.s': fn_print_stack,
         'puts': fn_puts,
         'fn': fn_define,
+        'lambda': fn_lambda,
         }
 
 def eval(x):
-    if type(x) is list:
-        pass
-    else:
-        assert False
+    if not isinstance(x, list):
+        try:
+            n = float(x)
+            return n
+        except ValueError:
+            pass
+        c = x[0]
+        if c == '"':
+            s = x[1:-1]
+            return s
+        else:
+            r = env[x]
+            return r
 
     cmd, args, *children = x
     if type(cmd) is list:
@@ -249,8 +290,10 @@ def eval(x):
     if fn == None:
         r = eval_infix(x)
     else:
-        print(x)
-        print()
+        #print(x)
+        r = fn(x)
+        #print()
+    return r
 
 def eval_infix(line):
     line_cmd, line_args, *children = line
@@ -291,10 +334,9 @@ def main():
         if x == None:
             assert pending_line == None
             break
-        eval(x)
+        r = eval(x)
+        global_stack.append(r)
 
 if __name__ == '__main__':
-    print("hi")
     main()
-    print("bye")
 
