@@ -146,15 +146,27 @@ def apply(env, fn_name, num_args):
 
 
 def transform_infix(x):
+    """
+    transform infix to prefix
+
+    (1 + 2 + 3)
+    [+ [+ 1 2] 3]
+    {1 2 + 3 +}
+
+    (1 + 2 + 3 + 4)
+    [+ [+ [+ 1 2] 3] 4]
+    {1 2 + 3 + 4 +}
+    """
     if len(x) == 1:
         return x[0]
-    first_arg, first_op, *rest = x
-    xx = [first_op, first_arg]
-    for i in range(2, len(x)):
+    assert len(x) > 2
+    first_arg, first_op, second_arg, *rest = x
+    xx = [first_op, first_arg, second_arg]
+    for i in range(3, len(x)):
         if i % 2:
             assert first_op == x[i]
         else:
-            xx.append(x[i])
+            xx = [first_op, xx, x[i]]
     return xx
 
 
