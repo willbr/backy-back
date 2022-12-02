@@ -209,14 +209,89 @@ def pretty(tree, depth = 0):
         if tail:
             pretty(tail, depth + 1)
 
+def fn_add(x):
+    assert False
+
+def fn_assign(x):
+    assert False
+
+def fn_print_stack(x):
+    assert False
+
+def fn_puts(x):
+    assert False
+
+def fn_define(x):
+    assert False
+
+env = {
+        '+': fn_add,
+        '=': fn_assign,
+        '.s': fn_print_stack,
+        'puts': fn_puts,
+        'fn': fn_define,
+        }
+
+def eval(x):
+    if type(x) is list:
+        pass
+    else:
+        assert False
+
+    cmd, args, *children = x
+    if type(cmd) is list:
+        old_cmd = cmd
+        cmd = eval(old_cmd)
+        assert False
+    else:
+        fn = env.get(cmd, None)
+
+    if fn == None:
+        r = eval_infix(x)
+    else:
+        print(x)
+        print()
+
+def eval_infix(line):
+    line_cmd, line_args, *children = line
+    assert children == []
+    x = [line_cmd]
+    x.extend(line_args)
+    nx = transform_infix(x)
+    r = eval(nx)
+    return r
+
+def transform_infix(x):
+    """
+    transform infix to prefix
+
+    (1 + 2 + 3)
+    [+ [+ 1 2] 3]
+    {1 2 + 3 +}
+
+    (1 + 2 + 3 + 4)
+    [+ [+ [+ 1 2] 3] 4]
+    {1 2 + 3 + 4 +}
+    """
+    if len(x) == 1:
+        return x[0]
+    assert len(x) > 2
+    first_arg, first_op, second_arg, *rest = x
+    xx = [first_op, [first_arg, second_arg]]
+    for i in range(3, len(x)):
+        if i % 2:
+            assert first_op == x[i]
+        else:
+            xx = [first_op, [xx, x[i]]]
+    return xx
+
 def main():
     while True:
         x = read_expr()
         if x == None:
             assert pending_line == None
             break
-        print(x)
-        print()
+        eval(x)
 
 if __name__ == '__main__':
     print("hi")
