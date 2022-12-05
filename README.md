@@ -126,3 +126,18 @@ so I can write reverse polish notation as a statement
 
     ['one', ['two', 'three']]
 
+## infix
+
+    (1 + 2 + 3)
+
+    into
+
+    ['+', ['1', '2', '3']]
+
+## neoteric
+    puts double(10)
+
+    into
+
+    ['puts', [['double', [['infix', ['10']]]]]]
+

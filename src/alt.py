@@ -54,39 +54,30 @@ def next_token():
 
     if data_tail == '':
         return None
-    m = re.search('\n|\s+|[(),"]', data_tail)
-    if m == None:
+
+    token_regex = '[^\s()]+[(\[]?'
+
+    m = re.search(f'^(\n|\s+|[()[\],"]|{token_regex})', data_tail)
+    if m is None:
         t = data_tail
         data_tail = ''
+        assert False
         return t
 
     start = m.start()
     end = m.end()
     c = data_tail[start]
 
-    if start == 0:
-        if c == '"':
-            t, data_tail = read_string(data_tail)
-        else:
-            t = data_tail[:end]
-            data_tail = data_tail[end:]
+    if c == '"':
+        t, data_tail = read_string(data_tail)
         return t
 
-    t = data_tail[:start]
-    data_tail = data_tail[start:]
+    d=data_tail
+    t = data_tail[:end]
+    assert t != '"'
+    data_tail = data_tail[end:]
     return t
-
-def read_tokens():
-    global data_tail
-    tokens = []
-    while True:
-        t = next_token()
-
-        if t == None:
-            break
-
-        tokens.append(t)
-    return tokens
+    assert False
 
 def calc_depth(s):
     #print(repr(s))
@@ -106,6 +97,33 @@ def push_line(depth, tokens):
     assert pending_line == None
     pending_line = (depth, tokens)
 
+def read_infix():
+    infix_depth = 1
+    tokens = []
+    while True:
+        t = next_token()
+        assert t != None
+
+        if t[0] == ' ':
+            continue
+
+        tokens.append(t)
+
+        if t == '(':
+            infix_depth += 1
+        elif t == ')':
+            infix_depth -= 1
+            if infix_depth == 0:
+                break
+        elif t == ',':
+            assert False
+
+    return tokens
+
+def parse_line(tokens):
+    raise ValueError("What is an expr [cmd [args] [children]]???")
+    assert False
+
 def read_line():
     global pending_line
     if pending_line != None:
@@ -123,6 +141,12 @@ def read_line():
         return depth, None
     elif t[0] == ' ':
         depth = calc_depth(t)
+    elif t[0] == '(':
+        nfx = read_infix()
+        assert False
+    elif t[-1] == '(':
+        nfx = read_infix()
+        assert False
     else:
         tokens.append(t)
 
@@ -130,15 +154,24 @@ def read_line():
         t = next_token()
         if t == None:
             break
-        elif t[0] == (' '):
+        elif t[0] == ' ':
             continue
         elif t == '\n':
             break
+        elif t[0] == '(':
+            nfx = read_infix()
+            assert False
+        elif t[-1] == '(':
+            cmd = t[:-1]
+            nfx = read_infix()
+            spec = ['neoteric', cmd, '(', *nfx]
+            tokens.extend(spec)
+        else:
+            tokens.append(t)
 
-        tokens.append(t)
-
-    head, *tail = tokens
-    return depth, [head, tail]
+    head, *tail = parse_line(tokens)
+    line_spec = depth, [head, tail]
+    return line_spec
 
 def unwind(stack):
     children = stack.pop()
@@ -212,48 +245,72 @@ def pretty(tree, depth = 0):
         if tail:
             pretty(tail, depth + 1)
 
-def fn_add(x):
+def fn_add(wst, x):
     cmd, args, *children = x
     assert children == []
-    xargs = list(map(eval, args))
-    r = reduce(op.add, xargs)
-    return r
+    for arg in args:
+        eval(wst, arg)
+    b = wst.pop()
+    a = wst.pop()
+    r = a + b
+    wst.append(r)
+    print(wst)
 
-def fn_assign(x):
+def fn_assign(wst, x):
     cmd, args, *children = x
     assert children == []
     dst, val = args
-    xval = eval(val)
+    eval(wst, val)
+    xval = wst.pop()
     env[dst] = xval
 
-def fn_print_stack(x):
+def fn_print_stack(wst, x):
     cmd, args, *children = x
     assert args == []
     assert children == []
-    print(f'stack: {global_stack}')
+    print(f'stack: {wst}')
 
-def fn_puts(x):
+def fn_puts(wst, x):
     cmd, args, *children = x
     assert children == []
     assert len(args) == 1
-    xarg = eval(args[0])
-    print(xarg)
+    eval(wst, args[0])
+    s = wst.pop()
+    print(s)
 
-def fn_define(x):
+def fn_define(wst, x):
     cmd, args, *children = x
     assert children != []
     name, *tail = args
     assert tail == []
     fn = ['lambda', [], children]
     nx = ['=', [name, fn]]
-    fn_assign(nx)
-    return fn
+    fn_assign(wst, nx)
 
-def fn_lambda(x):
-    cmd, args, *children = x
+def fn_lambda(wst, x):
+    cmd, args, children = x
     assert args == []
     assert children != []
-    return x
+    wst.append(x)
+
+def fn_infix(wst, x):
+    cmd, args, *children = x
+    assert children == []
+    if len(args) == 1:
+        eval(args[0])
+        return
+    assert len(args) % 3 == 0
+    assert False
+
+def fn_dup(wst, x):
+    cmd, args, *children = x
+    assert args == []
+    assert children == []
+    tos = wst[-1]
+    wst.append(tos)
+
+def fn_neoteric(wst, x):
+    assert False
 
 env = {
         '+': fn_add,
@@ -261,23 +318,35 @@ env = {
         '.s': fn_print_stack,
         'puts': fn_puts,
         'fn': fn_define,
+        'neoteric': fn_neoteric,
         'lambda': fn_lambda,
+        'infix': fn_infix,
+        'dup': fn_dup,
         }
 
-def eval(x):
+def eval(wst, x):
     if not isinstance(x, list):
         try:
             n = float(x)
-            return n
+            wst.append(n)
+            return
         except ValueError:
             pass
         c = x[0]
         if c == '"':
             s = x[1:-1]
-            return s
+            wst.append(s)
+            return
+        elif x == '$':
+            # do nothing
+            return
         else:
-            r = env[x]
-            return r
+            try:
+                r = env[x]
+                wst.append(r)
+                return
+            except KeyError as e:
+                raise ValueError(f'unknown command: {repr(x)}')
 
     cmd, args, *children = x
     if type(cmd) is list:
@@ -288,21 +357,22 @@ def eval(x):
         fn = env.get(cmd, None)
 
     if fn == None:
-        r = eval_infix(x)
+        eval_infix(wst, *x)
+    elif isinstance(fn, list):
+        fn_cmd, fn_params, fn_children = fn
+        assert fn_cmd == 'lambda'
+        assert fn_params == []
+        for child in fn_children:
+            eval(wst, child)
     else:
-        #print(x)
-        r = fn(x)
-        #print()
-    return r
+        fn(wst, x)
 
-def eval_infix(line):
-    line_cmd, line_args, *children = line
-    assert children == []
+def eval_infix(wst, line_cmd, line_args, children=None):
+    assert children == [] or children == None
     x = [line_cmd]
     x.extend(line_args)
     nx = transform_infix(x)
-    r = eval(nx)
-    return r
+    eval(wst, nx)
 
 def transform_infix(x):
     """
@@ -334,8 +404,11 @@ def main():
         if x == None:
             assert pending_line == None
             break
-        r = eval(x)
-        global_stack.append(r)
+        print(x)
+        print(global_stack)
+        eval(global_stack, x)
+        print(global_stack)
+        print()
 
 if __name__ == '__main__':
     main()
