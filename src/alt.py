@@ -55,7 +55,7 @@ def next_token():
     if data_tail == '':
         return None
 
-    token_regex = '[^\s()]+[(\[]?'
+    token_regex = '[^\s(),]+[(\[]?'
 
     m = re.search(f'^(\n|\s+|[()[\],"]|{token_regex})', data_tail)
     if m is None:
@@ -99,7 +99,8 @@ def push_line(depth, tokens):
 
 def read_infix():
     infix_depth = 1
-    tokens = []
+    x = []
+    top = [x]
     while True:
         t = next_token()
         assert t != None
@@ -107,22 +108,22 @@ def read_infix():
         if t[0] == ' ':
             continue
 
-        tokens.append(t)
-
         if t == '(':
-            infix_depth += 1
-        elif t == ')':
-            infix_depth -= 1
-            if infix_depth == 0:
-                break
-        elif t == ',':
+            child = read_infix()
             assert False
+        elif t == ')':
+            break
+        elif t == ',':
+            x = []
+            top.append(x)
+        else:
+            x.append(t)
 
-    return tokens
-
-def parse_line(tokens):
-    raise ValueError("What is an expr [cmd [args] [children]]???")
-    assert False
+    px = list(map(transform_infix, top))
+    if len(px) == 1:
+        return px[0]
+    else:
+        assert False
 
 def read_line():
     global pending_line
@@ -160,16 +161,16 @@ def read_line():
             break
         elif t[0] == '(':
             nfx = read_infix()
-            assert False
+            tokens.append(nfx)
         elif t[-1] == '(':
             cmd = t[:-1]
             nfx = read_infix()
-            spec = ['neoteric', cmd, '(', *nfx]
-            tokens.extend(spec)
+            spec = [cmd, nfx]
+            tokens.append(spec)
         else:
             tokens.append(t)
 
-    head, *tail = parse_line(tokens)
+    head, *tail = tokens
     line_spec = depth, [head, tail]
     return line_spec
 
@@ -258,8 +259,15 @@ def fn_add(wst, x):
 
 def fn_assign(wst, x):
     cmd, args, *children = x
-    assert children == []
-    dst, val = args
+    if len(args) == 2:
+        assert children == []
+        dst, val = args
+    if len(args) == 1:
+        dst = args[0]
+        val = children
+        assert False
+    else:
+        assert False
     eval(wst, val)
     xval = wst.pop()
     env[dst] = xval
@@ -273,34 +281,17 @@ def fn_print_stack(wst, x):
 def fn_puts(wst, x):
     cmd, args, *children = x
     assert children == []
-    assert len(args) == 1
-    eval(wst, args[0])
+    assert len(args) <= 1
+    if args:
+        eval(wst, args[0])
     s = wst.pop()
     print(s)
-
-def fn_define(wst, x):
-    cmd, args, *children = x
-    assert children != []
-    name, *tail = args
-    assert tail == []
-    fn = ['lambda', [], children]
-    nx = ['=', [name, fn]]
-    fn_assign(wst, nx)
 
 def fn_lambda(wst, x):
     cmd, args, children = x
     assert args == []
     assert children != []
     wst.append(x)
-
-def fn_infix(wst, x):
-    cmd, args, *children = x
-    assert children == []
-    if len(args) == 1:
-        eval(args[0])
-        return
-    assert len(args) % 3 == 0
-    assert False
 
 def fn_dup(wst, x):
     cmd, args, *children = x
@@ -309,18 +300,12 @@ def fn_dup(wst, x):
     tos = wst[-1]
     wst.append(tos)
 
-def fn_neoteric(wst, x):
-    assert False
-
 env = {
         '+': fn_add,
         '=': fn_assign,
         '.s': fn_print_stack,
         'puts': fn_puts,
-        'fn': fn_define,
-        'neoteric': fn_neoteric,
         'lambda': fn_lambda,
-        'infix': fn_infix,
         'dup': fn_dup,
         }
 
@@ -404,10 +389,10 @@ def main():
         if x == None:
             assert pending_line == None
             break
-        print(x)
-        print(global_stack)
+        print('bs', str(global_stack))
+        print('x', str(x))
         eval(global_stack, x)
-        print(global_stack)
+        print('af', str(global_stack))
         print()
 
 if __name__ == '__main__':

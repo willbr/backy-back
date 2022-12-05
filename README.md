@@ -135,9 +135,19 @@ so I can write reverse polish notation as a statement
     ['+', ['1', '2', '3']]
 
 ## neoteric
+    double(10)
+
+    into
+
+    [double [infix [10]]]
+
+
     puts double(10)
 
     into
 
-    ['puts', [['double', [['infix', ['10']]]]]]
+    [puts [[double [infix [10]]]]]
+
+
+## comma must be followed bya whitespace?
 
