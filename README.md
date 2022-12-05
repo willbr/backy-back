@@ -134,6 +134,12 @@ so I can write reverse polish notation as a statement
 
     ['+', ['1', '2', '3']]
 
+    puts (9 + 11)
+
+    into
+
+    ['puts', [['+', ['9', '11']]]]
+
 ## neoteric
     double(10)
 
