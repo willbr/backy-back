@@ -16,13 +16,200 @@ import re
 #print('hi')
 filename = sys.argv[1]
 
-i = 0
-with open(filename) as f:
-    data = f.read()
+class Reader():
+    def __init__(self, filename=None):
+        self.i = 0
+        self.data = None
+        self.data_tail = None
+        self.pending_token = None
+        self.pending_line = None
 
-data_tail = data
-pending_token = None
-pending_line = None
+        if filename != None:
+            self.read_from_file(filename)
+
+    def read_from_file(self, filename):
+        with open(filename) as f:
+            data = f.read()
+        self.read_from_string(data)
+
+    def read_from_string(self, s):
+        self.i = 0
+        self.data = s
+        self.data_tail = s
+
+    def read_expr(self):
+        cur_indent = 0
+
+        this_indent, body = self.read_line()
+        assert this_indent == 0
+
+        if body == None:
+            return None
+
+        stack = [[body]]
+        #print('stack', str(stack))
+
+        while True:
+            #print('stack', str(stack))
+            this_indent, body = self.read_line()
+            #print(this_indent, str(body))
+
+            if body == None:
+                break
+            elif this_indent == 0:
+                self.push_line(this_indent, body)
+                break
+
+            if this_indent > cur_indent + 1:
+                assert False
+            elif this_indent == cur_indent + 1:
+                stack.append([body])
+            elif this_indent == cur_indent:
+                tos = stack[-1]
+                tos.append(body)
+            else:
+                i = this_indent
+                while i < cur_indent:
+                    unwind(stack)
+                    i += 1
+                tos = stack[-1]
+                tos.append(body)
+
+            cur_indent = this_indent
+
+        #print(f'{this_indent=} {cur_indent=}')
+
+        while cur_indent > 0:
+            unwind(stack)
+            cur_indent -= 1
+
+        #print(stack)
+        assert len(stack) == 1
+        assert len(stack[0]) == 1
+        return stack[0][0]
+
+    def read_line(self):
+        if self.pending_line != None:
+            depth, tokens = self.pending_line
+            self.pending_line = None
+            return depth, tokens
+
+        self.chomp_empty_lines()
+
+        t = self.next_token()
+        tokens = []
+        depth = 0
+
+        if t == None:
+            return depth, None
+        elif t[0] == ' ':
+            depth = calc_depth(t)
+        elif t[0] == '(':
+            nfx = self.read_infix()
+            assert False
+        elif t[-1] == '(':
+            nfx = self.read_infix()
+            assert False
+        else:
+            tokens.append(t)
+
+        while True:
+            t = self.next_token()
+            if t == None:
+                break
+            elif t[0] == ' ':
+                continue
+            elif t == '\n':
+                break
+            elif t[0] == '(':
+                nfx = self.read_infix()
+                tokens.append(nfx)
+            elif t[-1] == '(':
+                cmd = t[:-1]
+                nfx = self.read_infix()
+                spec = [cmd, nfx]
+                tokens.append(spec)
+            else:
+                tokens.append(t)
+
+        head, *tail = tokens
+        line_spec = depth, [head, tail]
+        return line_spec
+
+    def chomp_empty_lines(self):
+        nt = self.peek_token()
+        while nt == '\n':
+            _ = self.next_token()
+            nt = self.peek_token()
+
+    def peek_token(self):
+        if self.pending_token == None:
+            self.pending_token = self.next_token()
+        return self.pending_token
+
+    def next_token(self):
+        if self.pending_token:
+            t = self.pending_token
+            self.pending_token = None
+            return t
+
+        if self.data_tail == '':
+            return None
+
+        token_regex = '[^\s(),]+[(\[]?'
+
+        m = re.search(f'^(\n|\s+|[()[\],"]|{token_regex})', self.data_tail)
+        if m is None:
+            t = self.data_tail
+            self.data_tail = ''
+            assert False
+            return t
+
+        start = m.start()
+        end = m.end()
+        c = self.data_tail[start]
+
+        if c == '"':
+            t, self.data_tail = read_string(data_tail)
+            return t
+
+        t = self.data_tail[:end]
+        assert t != '"'
+        self.data_tail = self.data_tail[end:]
+        return t
+
+    def push_line(self, depth, tokens):
+        assert self.pending_line == None
+        self.pending_line = (depth, tokens)
+
+    def read_infix(self):
+        infix_depth = 1
+        x = []
+        top = [x]
+        while True:
+            t = self.next_token()
+            assert t != None
+
+            if t[0] == ' ':
+                continue
+
+            if t == '(':
+                child = self.read_infix()
+                assert False
+            elif t == ')':
+                break
+            elif t == ',':
+                x = []
+                top.append(x)
+            else:
+                x.append(t)
+
+        px = list(map(transform_infix, top))
+        if len(px) == 1:
+            return px[0]
+        else:
+            assert False
+
 global_stack = []
 
 def read_string(s):
@@ -32,53 +219,6 @@ def read_string(s):
     tail = s[end:]
     return string, tail
 
-def push_token(t):
-    global pending_token
-    assert pending_token == None
-    pending_token = t
-
-def peek_token():
-    global pending_token
-    if pending_token == None:
-        pending_token = next_token()
-    return pending_token
-
-def next_token():
-    global data_tail
-    global pending_token
-
-    if pending_token:
-        t = pending_token
-        pending_token = None
-        return t
-
-    if data_tail == '':
-        return None
-
-    token_regex = '[^\s(),]+[(\[]?'
-
-    m = re.search(f'^(\n|\s+|[()[\],"]|{token_regex})', data_tail)
-    if m is None:
-        t = data_tail
-        data_tail = ''
-        assert False
-        return t
-
-    start = m.start()
-    end = m.end()
-    c = data_tail[start]
-
-    if c == '"':
-        t, data_tail = read_string(data_tail)
-        return t
-
-    d=data_tail
-    t = data_tail[:end]
-    assert t != '"'
-    data_tail = data_tail[end:]
-    return t
-    assert False
-
 def calc_depth(s):
     #print(repr(s))
     l = len(s)
@@ -86,165 +226,11 @@ def calc_depth(s):
     depth = l // 4
     return depth
 
-def chomp_empty_lines():
-    nt = peek_token()
-    while nt == '\n':
-        _ = next_token()
-        nt = peek_token()
-
-def push_line(depth, tokens):
-    global pending_line
-    assert pending_line == None
-    pending_line = (depth, tokens)
-
-def read_infix():
-    infix_depth = 1
-    x = []
-    top = [x]
-    while True:
-        t = next_token()
-        assert t != None
-
-        if t[0] == ' ':
-            continue
-
-        if t == '(':
-            child = read_infix()
-            assert False
-        elif t == ')':
-            break
-        elif t == ',':
-            x = []
-            top.append(x)
-        else:
-            x.append(t)
-
-    px = list(map(transform_infix, top))
-    if len(px) == 1:
-        return px[0]
-    else:
-        assert False
-
-def read_line():
-    global pending_line
-    if pending_line != None:
-        depth, tokens = pending_line
-        pending_line = None
-        return depth, tokens
-
-    chomp_empty_lines()
-
-    t = next_token()
-    tokens = []
-    depth = 0
-
-    if t == None:
-        return depth, None
-    elif t[0] == ' ':
-        depth = calc_depth(t)
-    elif t[0] == '(':
-        nfx = read_infix()
-        assert False
-    elif t[-1] == '(':
-        nfx = read_infix()
-        assert False
-    else:
-        tokens.append(t)
-
-    while True:
-        t = next_token()
-        if t == None:
-            break
-        elif t[0] == ' ':
-            continue
-        elif t == '\n':
-            break
-        elif t[0] == '(':
-            nfx = read_infix()
-            tokens.append(nfx)
-        elif t[-1] == '(':
-            cmd = t[:-1]
-            nfx = read_infix()
-            spec = [cmd, nfx]
-            tokens.append(spec)
-        else:
-            tokens.append(t)
-
-    head, *tail = tokens
-    line_spec = depth, [head, tail]
-    return line_spec
-
 def unwind(stack):
     children = stack.pop()
     tos = stack[-1]
     parent = tos[-1]
     parent.extend(children)
-
-def read_expr():
-    cur_indent = 0
-
-    this_indent, body = read_line()
-    assert this_indent == 0
-
-    if body == None:
-        return None
-
-    stack = [[body]]
-    #print('stack', str(stack))
-
-    while True:
-        #print('stack', str(stack))
-        this_indent, body = read_line()
-        #print(this_indent, str(body))
-
-        if body == None:
-            break
-        elif this_indent == 0:
-            push_line(this_indent, body)
-            break
-
-        if this_indent > cur_indent + 1:
-            assert False
-        elif this_indent == cur_indent + 1:
-            stack.append([body])
-        elif this_indent == cur_indent:
-            tos = stack[-1]
-            tos.append(body)
-        else:
-            i = this_indent
-            while i < cur_indent:
-                unwind(stack)
-                i += 1
-            tos = stack[-1]
-            tos.append(body)
-
-        cur_indent = this_indent
-
-    #print(f'{this_indent=} {cur_indent=}')
-
-    while cur_indent > 0:
-        unwind(stack)
-        cur_indent -= 1
-
-    #print(stack)
-    assert len(stack) == 1
-    assert len(stack[0]) == 1
-    return stack[0][0]
-
-def pretty(tree, depth = 0):
-    #print(f'{tree=}')
-    indent = '    ' * depth
-    for expr in tree:
-        #print(f'{expr=}')
-        if len(expr) == 1:
-            head = expr[0]
-            tail = None
-        else:
-            head, tail = expr
-        s = ' '.join(head)
-        print(f'{indent}{s}')
-        if tail:
-            pretty(tail, depth + 1)
 
 def fn_add(wst, x):
     cmd, args, *children = x
@@ -281,8 +267,8 @@ def fn_print_stack(wst, x):
 def fn_puts(wst, x):
     cmd, args, *children = x
     assert children == []
-    assert len(args) <= 1
     if args:
+        assert len(args) == 1
         eval(wst, args[0])
     s = wst.pop()
     print(s)
@@ -384,10 +370,11 @@ def transform_infix(x):
     return xx
 
 def main():
+    r = Reader(filename = sys.argv[1])
     while True:
-        x = read_expr()
+        x = r.read_expr()
         if x == None:
-            assert pending_line == None
+            assert r.pending_line == None
             break
         print('bs', str(global_stack))
         print('x', str(x))
