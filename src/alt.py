@@ -37,6 +37,13 @@ class Reader():
         self.data = s
         self.data_tail = s
 
+    def read_tokens(self):
+        while True:
+            t = self.next_token()
+            if t is None:
+                break
+            yield t
+
     def read_expr(self):
         cur_indent = 0
 
@@ -170,7 +177,7 @@ class Reader():
         c = self.data_tail[start]
 
         if c == '"':
-            t, self.data_tail = read_string(data_tail)
+            t, self.data_tail = read_string(self.data_tail)
             return t
 
         t = self.data_tail[:end]
@@ -369,18 +376,84 @@ def transform_infix(x):
             xx = [first_op, [xx, x[i]]]
     return xx
 
-def main():
+def read_indent():
     r = Reader(filename = sys.argv[1])
-    while True:
-        x = r.read_expr()
-        if x == None:
-            assert r.pending_line == None
+    #print(list(r.read_tokens()))
+
+    t = r.next_token()
+    if t == None:
+        return
+
+    assert t != '\n'
+    assert t[0] != ' '
+
+    yield '('
+    yield t
+    depth = 0
+    while t := r.next_token():
+        if t[0] == ' ':
+            continue
+
+        if t != '\n':
+            yield t
+            continue
+
+        yield t
+
+        nt = r.peek_token()
+        if nt == None:
             break
-        print('bs', str(global_stack))
-        print('x', str(x))
-        eval(global_stack, x)
-        print('af', str(global_stack))
-        print()
+
+        if nt[0] == ' ':
+            t = r.next_token()
+            new_depth = calc_depth(t)
+        else:
+            new_depth = 0
+
+        delta = new_depth - depth
+
+        if delta > 1:
+            assert False
+        if delta == 1:
+            yield '('
+        elif delta  == 0:
+            yield ')'
+            yield '('
+        elif delta < 0:
+            for i in range(0, delta, -1):
+                yield ')'
+        depth = new_depth
+
+    for i in range(depth+1):
+        yield ')'
+
+
+
+def main():
+    tokens = list(read_indent())
+    #print(tokens)
+    x = []
+    stack = [x]
+    for t in tokens:
+        if t == '(':
+            x = []
+            stack.append(x)
+        elif t == ')':
+            stack.pop()
+            tos = stack[-1]
+            tos.append(x)
+            x = tos
+        elif t[-1] == '(':
+            cmd = t[:-1]
+            x = [cmd]
+            stack.append(x)
+        else:
+            x.append(t)
+
+    assert len(stack) == 1
+    tos = stack[-1]
+    print(tos)
+
 
 if __name__ == '__main__':
     main()
