@@ -157,3 +157,15 @@ so I can write reverse polish notation as a statement
 
 ## comma must be followed bya whitespace?
 
+## into expresion
+
+    def double
+        dup
+        $ + $
+
+    into
+
+    ( def double \n
+        ( dup \n )
+        ( $ + $ \n ) )
+
