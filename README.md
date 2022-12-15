@@ -169,3 +169,16 @@ so I can write reverse polish notation as a statement
         ( dup \n )
         ( $ + $ \n ) )
 
+
+## c ish syntax?
+
+    fn main {
+        puts "hello"
+    }
+
+    into
+
+    ( fn main { \n
+        ( puts "hello" \n )
+        } \n )
+
