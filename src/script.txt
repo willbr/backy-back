@@ -11,3 +11,5 @@ puts "before"
 puts double(10)
 puts "after"
 
+when a > 1
+    puts "big"

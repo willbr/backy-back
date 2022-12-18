@@ -306,8 +306,30 @@ def fn_define_function(wst, x):
     assert children != []
     env[fn_name] = ['lambda', *children]
 
+def fn_greater_than(wst, x):
+    cmd, args, children = split_expr(x)
+    assert children == []
+    for arg in args:
+        eval(wst, arg)
+    b = wst.pop()
+    a = wst.pop()
+    r = a > b
+    wst.append(r)
+
+def fn_when(wst, x):
+    cmd, args, children = split_expr(x)
+    assert len(args) > 0
+    eval_infix(wst, args)
+    fn_name = args[0]
+    assert children != []
+    pred = wst.pop()
+    if pred:
+        for child in children:
+            eval(wst, child)
+
 env = {
         '+': fn_add,
+        '>': fn_greater_than,
         '=': fn_assign,
         '.s': fn_print_stack,
         'puts': fn_puts,
@@ -315,6 +337,7 @@ env = {
         'dup': fn_dup,
         '\n': fn_newline,
         'fn': fn_define_function,
+        'when': fn_when,
         }
 
 def split_expr(x):
@@ -490,6 +513,9 @@ def main():
     for x in parse_tree(tokens):
         eval(wst, x)
     #print(tokens)
+    print("\n\nend")
+    print('wst:', repr(wst))
+    print()
 
 
 if __name__ == '__main__':
