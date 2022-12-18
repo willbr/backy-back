@@ -304,7 +304,10 @@ def fn_define_function(wst, x):
     assert len(args) == 1
     fn_name = args[0]
     assert children != []
-    env[fn_name] = ['lambda', *children]
+    children.remove('\n')
+    body = ['lambda', *children]
+    #print(body)
+    env[fn_name] = body
 
 def fn_greater_than(wst, x):
     cmd, args, children = split_expr(x)
@@ -351,9 +354,9 @@ def split_expr(x):
     return cmd, args, children
 
 def eval(wst, x):
-    print()
-    print('eval', repr(x))
-    print('wst', repr(wst))
+    #print()
+    #print('eval', repr(x))
+    #print('wst', repr(wst))
 
     if not isinstance(x, list):
         try:
