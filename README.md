@@ -182,3 +182,21 @@ so I can write reverse polish notation as a statement
         ( puts "hello" \n )
         } \n )
 
+## runtime
+
+server exe
+listen on tcp
+linked list of functions
+linked list of variables
+define new functions
+call function
+list functions
+
+### function details
+functions include both source code
+and
+compiled versions
+
+
+
+
