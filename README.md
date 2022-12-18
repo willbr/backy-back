@@ -189,8 +189,10 @@ listen on tcp
 linked list of functions
 linked list of variables
 define new functions
+redefine functions
 call function
 list functions
+inspect global state
 
 ### function details
 functions include both source code
