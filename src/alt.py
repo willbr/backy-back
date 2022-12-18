@@ -240,7 +240,7 @@ def unwind(stack):
     parent.extend(children)
 
 def fn_add(wst, x):
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     assert children == []
     for arg in args:
         eval(wst, arg)
@@ -248,14 +248,14 @@ def fn_add(wst, x):
     a = wst.pop()
     r = a + b
     wst.append(r)
-    print(wst)
+    #print(wst)
 
 def fn_assign(wst, x):
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     if len(args) == 2:
         assert children == []
         dst, val = args
-    if len(args) == 1:
+    elif len(args) == 1:
         dst = args[0]
         val = children
         assert False
@@ -266,13 +266,13 @@ def fn_assign(wst, x):
     env[dst] = xval
 
 def fn_print_stack(wst, x):
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     assert args == []
     assert children == []
     print(f'stack: {wst}')
 
 def fn_puts(wst, x):
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     assert children == []
     if args:
         assert len(args) == 1
@@ -281,17 +281,30 @@ def fn_puts(wst, x):
     print(s)
 
 def fn_lambda(wst, x):
-    cmd, args, children = x
+    cmd, args, children = split_expr(x)
     assert args == []
     assert children != []
     wst.append(x)
 
 def fn_dup(wst, x):
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     assert args == []
     assert children == []
     tos = wst[-1]
     wst.append(tos)
+
+def fn_newline(wst, x):
+    cmd, args, children = split_expr(x)
+    assert args == []
+    assert children == []
+
+def fn_define_function(wst, x):
+    cmd, args, children = split_expr(x)
+    assert cmd == 'fn'
+    assert len(args) == 1
+    fn_name = args[0]
+    assert children != []
+    env[fn_name] = ['lambda', *children]
 
 env = {
         '+': fn_add,
@@ -300,9 +313,25 @@ env = {
         'puts': fn_puts,
         'lambda': fn_lambda,
         'dup': fn_dup,
+        '\n': fn_newline,
+        'fn': fn_define_function,
         }
 
+def split_expr(x):
+    try:
+        i = x.index('\n')
+        cmd, *args = x[:i]
+        children = x[i+1:]
+    except ValueError:
+        cmd, *args = x
+        children = []
+    return cmd, args, children
+
 def eval(wst, x):
+    print()
+    print('eval', repr(x))
+    print('wst', repr(wst))
+
     if not isinstance(x, list):
         try:
             n = float(x)
@@ -326,7 +355,7 @@ def eval(wst, x):
             except KeyError as e:
                 raise ValueError(f'unknown command: {repr(x)}')
 
-    cmd, args, *children = x
+    cmd, args, children = split_expr(x)
     if type(cmd) is list:
         old_cmd = cmd
         cmd = eval(old_cmd)
@@ -335,20 +364,18 @@ def eval(wst, x):
         fn = env.get(cmd, None)
 
     if fn == None:
-        eval_infix(wst, *x)
+        eval_infix(wst, x)
     elif isinstance(fn, list):
-        fn_cmd, fn_params, fn_children = fn
+        fn_cmd, *fn_children = fn
+        for arg in args:
+            eval(wst, arg)
         assert fn_cmd == 'lambda'
-        assert fn_params == []
         for child in fn_children:
             eval(wst, child)
     else:
         fn(wst, x)
 
-def eval_infix(wst, line_cmd, line_args, children=None):
-    assert children == [] or children == None
-    x = [line_cmd]
-    x.extend(line_args)
+def eval_infix(wst, x):
     nx = transform_infix(x)
     eval(wst, nx)
 
@@ -364,16 +391,23 @@ def transform_infix(x):
     [+ [+ [+ 1 2] 3] 4]
     {1 2 + 3 + 4 +}
     """
-    if len(x) == 1:
-        return x[0]
-    assert len(x) > 2
+    cmd, args, children = split_expr(x)
+    assert children == []
+    ix = [cmd, *args]
+
+    if len(ix) == 1:
+        return ix[0]
+    assert len(ix) > 2
+
     first_arg, first_op, second_arg, *rest = x
-    xx = [first_op, [first_arg, second_arg]]
-    for i in range(3, len(x)):
+    xx = [first_op, first_arg, second_arg]
+
+    for i in range(3, len(ix)):
+        t = ix[i]
         if i % 2:
-            assert first_op == x[i]
+            assert first_op == t
         else:
-            xx = [first_op, [xx, x[i]]]
+            xx = [first_op, xx, t]
     return xx
 
 def read_indent():
@@ -427,11 +461,7 @@ def read_indent():
     for i in range(depth+1):
         yield ')'
 
-
-
-def main():
-    tokens = list(read_indent())
-    #print(tokens)
+def parse_tree(tokens):
     x = []
     stack = [x]
     for t in tokens:
@@ -451,8 +481,15 @@ def main():
             x.append(t)
 
     assert len(stack) == 1
-    tos = stack[-1]
-    print(tos)
+    ast = stack[-1]
+    return ast
+
+def main():
+    wst = []
+    tokens = list(read_indent())
+    for x in parse_tree(tokens):
+        eval(wst, x)
+    #print(tokens)
 
 
 if __name__ == '__main__':
