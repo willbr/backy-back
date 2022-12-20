@@ -104,12 +104,6 @@ object is a union, it can be a list or a void\*
     bye!
     end
 
-## regex
-
-create a regex object
-
-    /^haha$/
-
 ## add rpn command 
 
 so I can write reverse polish notation as a statement
@@ -184,20 +178,18 @@ so I can write reverse polish notation as a statement
 
 ## runtime
 
-server exe
-listen on tcp
-linked list of functions
-linked list of variables
-define new functions
-redefine functions
-call function
-list functions
-inspect global state
+* server exe
+* listen on tcp
+* linked list of functions
+* linked list of variables
+* define new functions
+* redefine functions
+* call function
+* list functions
+* inspect global state
 
 ### function details
-functions include both source code
-and
-compiled versions
+functions include both source code and compiled versions
 
 
 
