@@ -101,13 +101,13 @@ def convert_indent_to_sexp(tokens):
             depth += 1
             continue
         elif token.type == 'NOINDENT':
-            yield Token('LPAREN', ')', token.line, token.column)
+            yield Token('RPAREN', ')', token.line, token.column)
             yield Token('LPAREN', '(', token.line, token.column)
             continue
         elif token.type == 'DEDENT':
-            yield Token('LPAREN', ')', token.line, token.column)
+            yield Token('RPAREN', ')', token.line, token.column)
             if next_token.type != 'DEDENT':
-                yield Token('LPAREN', ')', token.line, token.column)
+                yield Token('RPAREN', ')', token.line, token.column)
                 yield Token('LPAREN', '(', token.line, token.column)
             depth -= 1
             continue
@@ -125,16 +125,22 @@ def parse_tree(tokens):
     x = []
     stack = [x]
     for t in tokens:
+        #print(repr(t.value))
+        #print(stack)
+        #print(stack, x)
         if t.type == 'LPAREN':
             x = []
             stack.append(x)
         elif t.type == 'RPAREN':
+            #breakpoint()
             stack.pop()
             tos = stack[-1]
             tos.append(x)
             x = tos
         else:
-            x.append(t)
+            x.append(t.value)
+        #print(stack)
+        #print()
 
     assert len(stack) == 1
     ast = stack[0]
@@ -162,18 +168,20 @@ if __name__ == '__main__':
     if True:
         hline(title='# tokens')
         for token in tokens:
-            print(token)
+            #print(token)
+            print(token.type, repr(token.value))
 
     tokens2 = list(convert_indent_to_sexp(tokens))
     if True:
         hline(title='# sexp')
-        for token in tokens2:
-            print(token)
+        if False:
+            for token in tokens2:
+                print(token)
 
         print(' '.join(t.value for t in tokens2 if t.type != 'NEWLINE'))
         print('( a b ( c ( d e ) ) ) ( f )')
 
-    if False:
+    if True:
         hline(title='# tree')
         ast = parse_tree(tokens2)
         print(ast)
