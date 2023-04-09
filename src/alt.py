@@ -373,6 +373,8 @@ def eval(wst, x):
         elif x == '$':
             # do nothing
             return
+        elif x == '\n':
+            return
         else:
             try:
                 r = env[x]
@@ -382,6 +384,11 @@ def eval(wst, x):
                 raise ValueError(f'unknown command: {repr(x)}')
 
     cmd, args, children = split_expr(x)
+    if cmd == '\n':
+        assert args == []
+        assert children == []
+        return
+
     if type(cmd) is list:
         old_cmd = cmd
         cmd = eval(old_cmd)
