@@ -4,18 +4,26 @@ from typing import NamedTuple
 import itertools
 import re
 
+from itertools import tee, islice, chain
+
+
 install(show_locals=True)
 
 console = Console(markup=False)
 python_print = print
 print = console.print
 
-def hline(n=1, c='#', width=80, title=None):
+def hline(n=1, c='#', width=60, title=None):
     print('\n'*n)
     if title:
         print(f' {title}')
     print(c*width)
     print('\n'*n)
+
+def peek(iterable):
+    a, b = tee(iterable)
+    c = chain(islice(b, 1, None), [None])
+    return zip(a, c)
 
 class Token(NamedTuple):
     type: str
@@ -84,9 +92,10 @@ def tokenize(code):
 
 
 def convert_indent_to_sexp(tokens):
-    depth = 0
+    #breakpoint()
+    depth = -1
 
-    for token in tokens:
+    for token, next_token in peek(tokens):
         if token.type == 'INDENT':
             yield Token('LPAREN', '(', token.line, token.column)
             depth += 1
@@ -97,34 +106,33 @@ def convert_indent_to_sexp(tokens):
             continue
         elif token.type == 'DEDENT':
             yield Token('LPAREN', ')', token.line, token.column)
-            yield Token('LPAREN', ')', token.line, token.column)
-            yield Token('LPAREN', '(', token.line, token.column)
+            if next_token.type != 'DEDENT':
+                yield Token('LPAREN', ')', token.line, token.column)
+                yield Token('LPAREN', '(', token.line, token.column)
             depth -= 1
             continue
+        elif depth == -1:
+            yield Token('LPAREN', '(', token.line, token.column)
+            depth = 1
 
         yield token
 
     for i in range(depth):
         yield Token('RPAREN', ')', token.line, token.column)
 
-    pass
 
 def parse_tree(tokens):
     x = []
     stack = [x]
     for t in tokens:
-        if t == '(':
+        if t.type == 'LPAREN':
             x = []
             stack.append(x)
-        elif t == ')':
+        elif t.type == 'RPAREN':
             stack.pop()
             tos = stack[-1]
             tos.append(x)
             x = tos
-        elif t[-1] == '(':
-            cmd = t[:-1]
-            x = [cmd]
-            stack.append(x)
         else:
             x.append(t)
 
@@ -133,36 +141,40 @@ def parse_tree(tokens):
     return ast
 
 
+
 code = """
-a
-    b
-        c
-d
+a b
+    c
+        d e
+f
 """
 
-hline(5)
 
-if True:
-    hline(title='# code')
-    print(code)
 
-tokens = list(tokenize(code))
-if True:
-    hline(title='# tokens')
-    for token in tokens:
-        print(token)
+if __name__ == '__main__':
+    hline(5)
 
-tokens2 = list(convert_indent_to_sexp(tokens))
-if True:
-    hline(title='# sexp')
-    for token in tokens2:
-        print(token)
+    if True:
+        hline(title='# code')
+        print(code)
 
-    print(' '.join(t.value for t in tokens2 if t.type != 'NEWLINE'))
-    print('( a b ( c ( d e ) ) ) ( f )')
+    tokens = list(tokenize(code))
+    if True:
+        hline(title='# tokens')
+        for token in tokens:
+            print(token)
 
-if False:
-    hline(title='# tree')
-    ast = parse_sexp(tokens2)
-    print(ast)
+    tokens2 = list(convert_indent_to_sexp(tokens))
+    if True:
+        hline(title='# sexp')
+        for token in tokens2:
+            print(token)
+
+        print(' '.join(t.value for t in tokens2 if t.type != 'NEWLINE'))
+        print('( a b ( c ( d e ) ) ) ( f )')
+
+    if False:
+        hline(title='# tree')
+        ast = parse_tree(tokens2)
+        print(ast)
 
