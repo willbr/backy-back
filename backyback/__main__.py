@@ -1,6 +1,7 @@
 from rich.console import Console
 from rich.traceback import install
 from typing import NamedTuple
+from collections.abc import Iterable
 import re
 
 from itertools import tee, islice, chain
@@ -29,8 +30,9 @@ class Token(NamedTuple):
     value: str
     line: int
     column: int
+    filename: str
 
-def tokenize(code):
+def tokenize(code, filename):
     code = code.strip()
 
     word_regex = r'[^ \t\n\"(){}[\],]+'
@@ -67,7 +69,7 @@ def tokenize(code):
         if kind == 'NUMBER':
             value = float(value) if '.' in value else int(value)
         elif kind == 'NEWLINE':
-            yield Token(kind, value[0], line_num, column)
+            yield Token(kind, value[0], line_num, column, filename)
             line_start = mo.end()
             line_num += 1
 
@@ -78,12 +80,12 @@ def tokenize(code):
             if delta > 1:
                 assert False
             elif delta == 1:
-                yield Token('INDENT', '', line_num, column)
+                yield Token('INDENT', '', line_num, column, filename)
             elif delta == 0:
-                yield Token('NOINDENT', '', line_num, column)
+                yield Token('NOINDENT', '', line_num, column, filename)
             else:
                 for i in range(0, delta, -1):
-                    yield Token('DEDENT', '', line_num, column)
+                    yield Token('DEDENT', '', line_num, column, filename)
 
             cur_indent = indent
 
@@ -98,7 +100,7 @@ def tokenize(code):
             name = value[:-1]
             char = value[-1]
             offset = line_num + len(value) - 1
-            yield Token('LBRACKET', char, offset, column)
+            yield Token('LBRACKET', char, offset, column, filename)
             stack.append(char)
 
             prefix_table = {
@@ -107,13 +109,13 @@ def tokenize(code):
                     '[' : 'subscript',
                     }
             neo_prefix = prefix_table[char]
-            yield Token('WORD', neo_prefix, offset, column)
+            yield Token('WORD', neo_prefix, offset, column, filename)
 
-            yield Token('WORD', name, line_num, column)
+            yield Token('WORD', name, line_num, column, filename)
             continue
         elif kind in ['LPAREN', 'LBRACE','LBRACKET']:
             stack.append(value)
-            yield Token('LBRACKET', value, line_num, column)
+            yield Token('LBRACKET', value, line_num, column, filename)
             continue
         elif kind in ['RPAREN', 'RBRACE','RBRACKET']:
             pair_table = {
@@ -125,11 +127,11 @@ def tokenize(code):
             tos = stack[-1]
             assert tos == expected
             stack.pop()
-            yield Token('RBRACKET', value, line_num, column)
+            yield Token('RBRACKET', value, line_num, column, filename)
             continue
             #assert False
 
-        yield Token(kind, value, line_num, column)
+        yield Token(kind, value, line_num, column, filename)
 
 
 def convert_indent_to_sexp(tokens):
@@ -138,29 +140,29 @@ def convert_indent_to_sexp(tokens):
 
     for token, next_token in peek(tokens):
         if token.type == 'INDENT':
-            yield Token('LBRACKET', '[', token.line, token.column)
+            yield Token('LBRACKET', '[', token.line, token.column, token.filename)
             depth += 1
             continue
         elif token.type == 'NOINDENT':
-            yield Token('RBRACKET', ']', token.line, token.column)
-            yield Token('LBRACKET', '[', token.line, token.column)
+            yield Token('RBRACKET', ']', token.line, token.column, token.filename)
+            yield Token('LBRACKET', '[', token.line, token.column, token.filename)
             continue
         elif token.type == 'DEDENT':
-            yield Token('RBRACKET', ']', token.line, token.column)
+            yield Token('RBRACKET', ']', token.line, token.column, token.filename)
             if next_token.type != 'DEDENT':
-                yield Token('RBRACKET', ']', token.line, token.column)
-                yield Token('LBRACKET', '[', token.line, token.column)
+                yield Token('RBRACKET', ']', token.line, token.column, token.filename)
+                yield Token('LBRACKET', '[', token.line, token.column, token.filename)
             depth -= 1
             continue
 
         if depth == -1:
-            yield Token('LBRACKET', '[', token.line, token.column)
+            yield Token('LBRACKET', '[', token.line, token.column, token.filename)
             depth = 1
 
         yield token
 
     for i in range(depth):
-        yield Token('RBRACKET', ']', token.line, token.column)
+        yield Token('RBRACKET', ']', token.line, token.column, token.filename)
 
 
 def parse_tree(tokens):
@@ -179,35 +181,39 @@ def parse_tree(tokens):
                 tos.append(x)
                 x = tos
         else:
-            x.append(t.value)
+            x.append(t)
 
     assert len(stack) == 1
     tos = stack[0]
     assert len(tos) == 0
 
 
+def maptree(fn, tree):
+    if isinstance(tree, Iterable) and not isinstance(tree, str) and not isinstance(tree, Token):
+        return [maptree(fn, leaf) for leaf in tree]
+    else:
+        return fn(tree)
+
 code = """
 sum 1 2 3
 """
 
 
-def parse_string(s):
-    tokens = tokenize(s)
+def parse_string(s, filename):
+    tokens = tokenize(s, filename)
     tokens2 = convert_indent_to_sexp(tokens)
     ast = parse_tree(tokens2)
     return ast
 
+
 if __name__ == '__main__':
-    ast = parse_string(code)
-    print(list(ast))
-    exit()
     hline(5)
 
     if True:
         hline(title='# code')
         print(code)
 
-    tokens = list(tokenize(code))
+    tokens = list(tokenize(code, 'code'))
     if True:
         hline(title='# tokens')
         for token in tokens:
@@ -227,5 +233,6 @@ if __name__ == '__main__':
         hline(title='# tree')
         ast = parse_tree(tokens2)
         for expr in ast:
-            print(expr)
+            r = maptree(lambda x: x.value, expr)
+            print(r)
 
