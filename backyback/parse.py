@@ -4,6 +4,8 @@ import re
 
 from itertools import tee, islice, chain
 
+infix = "+ - * / =".split()
+
 
 if __name__ == '__main__':
     from rich.console import Console
@@ -194,18 +196,20 @@ def parse_tree(tokens):
     assert len(tos) == 0
 
 
-def maptree(fn, tree):
-    if isinstance(tree, Iterable) and not isinstance(tree, str) and not isinstance(tree, Token):
-        return [maptree(fn, leaf) for leaf in tree]
-    else:
+def mapleaf(fn, tree):
+    if is_atom(tree):
         return fn(tree)
+    return [mapleaf(fn, leaf) for leaf in tree]
+
+
+def mapbranch(fn, x):
+    if is_atom(x):
+        return x
+    return fn([mapbranch(fn, leaf) for leaf in x])
+
 
 def tree_values(tree):
-    return maptree(lambda x: x.value, tree)
-
-code = """
-sum 1 2 3
-"""
+    return mapleaf(lambda x: x.value, tree)
 
 
 def parse_file(filename):
@@ -219,7 +223,13 @@ def parse_string(s, filename):
     tokens = tokenize(s, filename)
     tokens2 = convert_indent_to_sexp(tokens)
     ast = parse_tree(tokens2)
-    return ast
+    for x in ast:
+        if len(x) == 1 and is_atom(x[0]):
+            if x[0].type == 'NEWLINE':
+                continue
+
+        x2 = mapbranch(convert_implied_infix, x)
+        yield x2
 
 
 def strip_newlines(tree):
@@ -236,7 +246,48 @@ def split_on_newline(tree: list):
             return lhs, rhs
     return tree.copy(), []
 
-if __name__ == '__main__':
+
+def is_atom(x):
+    if isinstance(x, str) or isinstance(x, Token):
+        return True
+    return not isinstance(x, Iterable)
+
+
+def is_implied_infix(x, infix_words):
+    if is_atom(x):
+        return False
+    elif len(x) < 3:
+        return False
+
+    operand, op, *tail = x
+    if not isinstance(op, Token):
+        return False
+
+    if op.type != 'WORD':
+        return False
+
+    if not op.value in infix_words:
+        return False
+
+    return True
+
+
+def convert_implied_infix(x):
+    if is_implied_infix(x, infix):
+        op = x[1]
+        prefix = Token('WORD', 'infix', op.line, op.column, op.filename)
+        x2 = [prefix, *x]
+    else:
+        x2 = x
+    return x2
+
+
+def main():
+    code = """
+sum 1 2 3
+"""
+
+
     hline(5)
 
     if True:
@@ -264,6 +315,9 @@ if __name__ == '__main__':
         ast = parse_tree(tokens2)
         for expr in ast:
             print(expr)
-            r = maptree(lambda x: x.value, expr)
+            r = mapleaf(lambda x: x.value, expr)
             print(r)
+
+if __name__ == '__main__':
+    main()
 
