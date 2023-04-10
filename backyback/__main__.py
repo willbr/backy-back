@@ -1,7 +1,6 @@
 from rich.console import Console
 from rich.traceback import install
 from typing import NamedTuple
-import itertools
 import re
 
 from itertools import tee, islice, chain
@@ -34,7 +33,7 @@ class Token(NamedTuple):
 def tokenize(code):
     code = code.strip()
 
-    word_regex = r'[^ \t\n\"(){}[\]]+'
+    word_regex = r'[^ \t\n\"(){}[\],]+'
     token_specification = [
         ('NUMBER',   r'\d+(\.\d*)?'),
         ('NEOTERIC', word_regex + r'[({[]'),
@@ -187,17 +186,21 @@ def parse_tree(tokens):
     assert len(tos) == 0
 
 
-
 code = """
-def main() -> int
-    puts "hello world"
-    set a = 10
-    for i in range(10)
-        print i
+sum 1 2 3
 """
 
 
+def parse_string(s):
+    tokens = tokenize(s)
+    tokens2 = convert_indent_to_sexp(tokens)
+    ast = parse_tree(tokens2)
+    return ast
+
 if __name__ == '__main__':
+    ast = parse_string(code)
+    print(list(ast))
+    exit()
     hline(5)
 
     if True:
