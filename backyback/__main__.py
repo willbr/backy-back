@@ -125,39 +125,39 @@ def convert_indent_to_sexp(tokens):
 
     for token, next_token in peek(tokens):
         if token.type == 'INDENT':
-            yield Token('LPAREN', '(', token.line, token.column)
+            yield Token('LBRACKET', '[', token.line, token.column)
             depth += 1
             continue
         elif token.type == 'NOINDENT':
-            yield Token('RPAREN', ')', token.line, token.column)
-            yield Token('LPAREN', '(', token.line, token.column)
+            yield Token('RBRACKET', ']', token.line, token.column)
+            yield Token('LBRACKET', '[', token.line, token.column)
             continue
         elif token.type == 'DEDENT':
-            yield Token('RPAREN', ')', token.line, token.column)
+            yield Token('RBRACKET', ']', token.line, token.column)
             if next_token.type != 'DEDENT':
-                yield Token('RPAREN', ')', token.line, token.column)
-                yield Token('LPAREN', '(', token.line, token.column)
+                yield Token('RBRACKET', ']', token.line, token.column)
+                yield Token('LBRACKET', '[', token.line, token.column)
             depth -= 1
             continue
 
         if depth == -1:
-            yield Token('LPAREN', '(', token.line, token.column)
+            yield Token('LBRACKET', '[', token.line, token.column)
             depth = 1
 
         yield token
 
     for i in range(depth):
-        yield Token('RPAREN', ')', token.line, token.column)
+        yield Token('RBRACKET', ']', token.line, token.column)
 
 
 def parse_tree(tokens):
     x = []
     stack = [x]
     for t in tokens:
-        if t.type == 'LPAREN':
+        if t.type == 'LBRACKET':
             x = []
             stack.append(x)
-        elif t.type == 'RPAREN':
+        elif t.type == 'RBRACKET':
             stack.pop()
             tos = stack[-1]
             if len(stack) == 1:
@@ -175,7 +175,8 @@ def parse_tree(tokens):
 
 
 code = """
-double sum(1 2 3)
+infix 1 = a[10]
+infix 1 = [subscript a 10]
 """
 
 
@@ -201,7 +202,6 @@ if __name__ == '__main__':
                 print(token)
 
         print(' '.join(str(t.value) for t in tokens2 if t.type != 'NEWLINE'))
-        print('( a b ( c ( d e ) ) ) ( f )')
 
     if True:
         hline(title='# tree')
