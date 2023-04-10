@@ -59,6 +59,8 @@ def tokenize(code):
     cur_indent = 0
     indent_width = 4
 
+    stack = []
+
     for mo in re.finditer(tok_regex, code):
         kind = mo.lastgroup
         value = mo.group()
@@ -97,13 +99,8 @@ def tokenize(code):
             name = value[:-1]
             char = value[-1]
             offset = line_num + len(value) - 1
-            table = {
-                    '(' : 'LPAREN',
-                    '{' : 'LBRACE',
-                    '[' : 'LBRACKET',
-                    }
-            neo_name = table[char]
-            yield Token(neo_name, char, offset, column)
+            yield Token('LBRACKET', char, offset, column)
+            stack.append(char)
 
             prefix_table = {
                     '(' : 'neo-infix',
@@ -115,6 +112,23 @@ def tokenize(code):
 
             yield Token('WORD', name, line_num, column)
             continue
+        elif kind in ['LPAREN', 'LBRACE','LBRACKET']:
+            stack.append(value)
+            yield Token('LBRACKET', value, line_num, column)
+            continue
+        elif kind in ['RPAREN', 'RBRACE','RBRACKET']:
+            pair_table = {
+                    ')':'(',
+                    '}':'{',
+                    ']':'[',
+                    }
+            expected = pair_table[value]
+            tos = stack[-1]
+            assert tos == expected
+            stack.pop()
+            yield Token('RBRACKET', value, line_num, column)
+            continue
+            #assert False
 
         yield Token(kind, value, line_num, column)
 
@@ -175,8 +189,11 @@ def parse_tree(tokens):
 
 
 code = """
-infix 1 = a[10]
-infix 1 = [subscript a 10]
+def main() -> int
+    puts "hello world"
+    set a = 10
+    for i in range(10)
+        print i
 """
 
 
