@@ -207,7 +207,6 @@ sum 1 2 3
 def parse_file(filename):
     with open(filename) as f:
         s = f.read()
-        print(s)
         ast = parse_string(s, filename)
         return ast
 
