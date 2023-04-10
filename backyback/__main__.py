@@ -3,6 +3,9 @@ from .parse import (
         parse_file,
         parse_string,
         tree_values,
+        Token,
+        strip_newlines,
+        split_on_newline
         )
 
 from rich.console import Console
@@ -16,7 +19,14 @@ print = console.print
 
 args = sys.argv[1:]
 
+
 for filename in args:
     ast = parse_file(filename)
     for x in ast:
-        print(tree_values(x))
+        xx = strip_newlines(x)
+        if xx:
+            print(tree_values(x))
+            lhs, rhs = split_on_newline(x)
+            print((tree_values(lhs), tree_values(rhs)))
+
+

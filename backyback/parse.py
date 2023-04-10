@@ -222,6 +222,20 @@ def parse_string(s, filename):
     return ast
 
 
+def strip_newlines(tree):
+    return [leaf for leaf in tree if getattr(leaf, 'type', None) != 'NEWLINE']
+
+
+def split_on_newline(tree: list):
+    for i, x in enumerate(tree):
+        if not isinstance(x, Token):
+            continue
+        elif x.type == 'NEWLINE':
+            lhs = tree[:i]
+            rhs = tree[i+1:]
+            return lhs, rhs
+    return tree.copy(), []
+
 if __name__ == '__main__':
     hline(5)
 
