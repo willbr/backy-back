@@ -92,6 +92,21 @@ def tokenize(code):
             pass
         elif kind == 'MISMATCH':
             raise RuntimeError(f'{value!r} unexpected on line {line_num}')
+
+        elif kind == 'NEOTERIC':
+            name = value[:-1]
+            char = value[-1]
+            offset = line_num + len(value) - 1
+            table = {
+                    '(' : 'LPAREN',
+                    '{' : 'LBRACE',
+                    '[' : 'LBRACKET',
+                    }
+            neo_name = table[char]
+            yield Token(neo_name, char, offset, column)
+            yield Token('WORD', name, line_num, column)
+            continue
+
         yield Token(kind, value, line_num, column)
 
 
@@ -124,24 +139,6 @@ def convert_indent_to_sexp(tokens):
 
     for i in range(depth):
         yield Token('RPAREN', ')', token.line, token.column)
-
-def convert_syntax(tokens):
-    for token, next_token in peek(tokens):
-        if token.type == 'NEOTERIC':
-            offset = token.line + len(token.value) - 1
-            name = token.value[:-1]
-            char = token.value[-1]
-            table = {
-                    '(' : 'LPAREN',
-                    '{' : 'LBRACE',
-                    '[' : 'LBRACKET',
-                    }
-            neo_name = table[char]
-            yield Token(neo_name, char, offset, token.column)
-            yield Token('WORD', name, token.line, token.column)
-            continue
-
-        yield token
 
 
 def parse_tree(tokens):
@@ -197,10 +194,9 @@ if __name__ == '__main__':
         print(' '.join(str(t.value) for t in tokens2 if t.type != 'NEWLINE'))
         print('( a b ( c ( d e ) ) ) ( f )')
 
-    tokens3 = list(convert_syntax(tokens2))
     if True:
         hline(title='# tree')
-        ast = parse_tree(tokens3)
+        ast = parse_tree(tokens2)
         for expr in ast:
             print(expr)
 
