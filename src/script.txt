@@ -14,3 +14,5 @@ puts "after"
 
 when a > 1
     puts "big"
+
+puts "\"end\""

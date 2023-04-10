@@ -15,6 +15,7 @@ if __name__ == '__main__':
     python_print = print
     print = console.print
 
+
 def hline(n=1, c='#', width=60, title=None):
     print('\n'*n)
     if title:
@@ -22,10 +23,12 @@ def hline(n=1, c='#', width=60, title=None):
     print(c*width)
     print('\n'*n)
 
+
 def peek(iterable):
     a, b = tee(iterable)
     c = chain(islice(b, 1, None), [None])
     return zip(a, c)
+
 
 class Token(NamedTuple):
     type: str
@@ -33,6 +36,7 @@ class Token(NamedTuple):
     line: int
     column: int
     filename: str
+
 
 def tokenize(code, filename):
     code = code.strip()
@@ -48,7 +52,7 @@ def tokenize(code, filename):
         ('RBRACKET', r'\]'),
         ('LBRACE',   r'\{'),
         ('RBRACE',   r'\}'),
-        ('STRING',   r'"[^!]*"'),
+        ('STRING',   r'"(\\"|[^"])*"'),
         ('NEWLINE',  r'\n[ ]*'),
         ('SKIP',     r'[ ]+'),
         ('MISMATCH', r'.'),
