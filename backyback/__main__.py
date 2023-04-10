@@ -1,5 +1,3 @@
-from rich.console import Console
-from rich.traceback import install
 from typing import NamedTuple
 from collections.abc import Iterable
 import re
@@ -7,11 +5,15 @@ import re
 from itertools import tee, islice, chain
 
 
-install(show_locals=True)
+if __name__ == '__main__':
+    from rich.console import Console
+    from rich.traceback import install
 
-console = Console(markup=False)
-python_print = print
-print = console.print
+    install(show_locals=True)
+
+    console = Console(markup=False)
+    python_print = print
+    print = console.print
 
 def hline(n=1, c='#', width=60, title=None):
     print('\n'*n)
@@ -233,6 +235,7 @@ if __name__ == '__main__':
         hline(title='# tree')
         ast = parse_tree(tokens2)
         for expr in ast:
+            print(expr)
             r = maptree(lambda x: x.value, expr)
             print(r)
 
