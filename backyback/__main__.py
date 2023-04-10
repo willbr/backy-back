@@ -34,13 +34,17 @@ class Token(NamedTuple):
 def tokenize(code):
     code = code.strip()
 
-    word_regex = r'[^ \t\n\"()]+'
+    word_regex = r'[^ \t\n\"(){}[\]]+'
     token_specification = [
         ('NUMBER',   r'\d+(\.\d*)?'),
-        ('NEOTERIC',   word_regex + r'\('),
-        ('WORD',   word_regex),
+        ('NEOTERIC', word_regex + r'[({[]'),
+        ('WORD',     word_regex),
         ('LPAREN',   r'\('),
         ('RPAREN',   r'\)'),
+        ('LBRACKET', r'\['),
+        ('RBRACKET', r'\]'),
+        ('LBRACE',   r'\{'),
+        ('RBRACE',   r'\}'),
         ('STRING',   r'"[^!]*"'),
         ('NEWLINE',  r'\n[ ]*'),
         ('SKIP',     r'[ ]+'),
@@ -111,7 +115,8 @@ def convert_indent_to_sexp(tokens):
                 yield Token('LPAREN', '(', token.line, token.column)
             depth -= 1
             continue
-        elif depth == -1:
+
+        if depth == -1:
             yield Token('LPAREN', '(', token.line, token.column)
             depth = 1
 
@@ -119,6 +124,24 @@ def convert_indent_to_sexp(tokens):
 
     for i in range(depth):
         yield Token('RPAREN', ')', token.line, token.column)
+
+def convert_syntax(tokens):
+    for token, next_token in peek(tokens):
+        if token.type == 'NEOTERIC':
+            offset = token.line + len(token.value) - 1
+            name = token.value[:-1]
+            char = token.value[-1]
+            table = {
+                    '(' : 'LPAREN',
+                    '{' : 'LBRACE',
+                    '[' : 'LBRACKET',
+                    }
+            neo_name = table[char]
+            yield Token(neo_name, char, offset, token.column)
+            yield Token('WORD', name, token.line, token.column)
+            continue
+
+        yield token
 
 
 def parse_tree(tokens):
@@ -146,10 +169,7 @@ def parse_tree(tokens):
 
 
 code = """
-a b
-    c
-        d e
-f
+double sum(1 2 3)
 """
 
 
@@ -177,9 +197,10 @@ if __name__ == '__main__':
         print(' '.join(str(t.value) for t in tokens2 if t.type != 'NEWLINE'))
         print('( a b ( c ( d e ) ) ) ( f )')
 
+    tokens3 = list(convert_syntax(tokens2))
     if True:
         hline(title='# tree')
-        ast = parse_tree(tokens2)
+        ast = parse_tree(tokens3)
         for expr in ast:
             print(expr)
 
