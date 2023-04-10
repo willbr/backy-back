@@ -104,6 +104,15 @@ def tokenize(code):
                     }
             neo_name = table[char]
             yield Token(neo_name, char, offset, column)
+
+            prefix_table = {
+                    '(' : 'neo-infix',
+                    '{' : 'neo-brace',
+                    '[' : 'subscript',
+                    }
+            neo_prefix = prefix_table[char]
+            yield Token('WORD', neo_prefix, offset, column)
+
             yield Token('WORD', name, line_num, column)
             continue
 
