@@ -192,5 +192,3 @@ so I can write reverse polish notation as a statement
 functions include both source code and compiled versions
 
 
-
-
