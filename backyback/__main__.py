@@ -125,26 +125,23 @@ def parse_tree(tokens):
     x = []
     stack = [x]
     for t in tokens:
-        #print(repr(t.value))
-        #print(stack)
-        #print(stack, x)
         if t.type == 'LPAREN':
             x = []
             stack.append(x)
         elif t.type == 'RPAREN':
-            #breakpoint()
             stack.pop()
             tos = stack[-1]
-            tos.append(x)
-            x = tos
+            if len(stack) == 1:
+                yield x
+            else:
+                tos.append(x)
+                x = tos
         else:
             x.append(t.value)
-        #print(stack)
-        #print()
 
     assert len(stack) == 1
-    ast = stack[0]
-    return ast
+    tos = stack[0]
+    assert len(tos) == 0
 
 
 
@@ -154,7 +151,6 @@ a b
         d e
 f
 """
-
 
 
 if __name__ == '__main__':
@@ -178,11 +174,12 @@ if __name__ == '__main__':
             for token in tokens2:
                 print(token)
 
-        print(' '.join(t.value for t in tokens2 if t.type != 'NEWLINE'))
+        print(' '.join(str(t.value) for t in tokens2 if t.type != 'NEWLINE'))
         print('( a b ( c ( d e ) ) ) ( f )')
 
     if True:
         hline(title='# tree')
         ast = parse_tree(tokens2)
-        print(ast)
+        for expr in ast:
+            print(expr)
 
