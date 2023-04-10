@@ -166,3 +166,9 @@ alt:
 walt:
 	watchexec -cr "make alt"
 
+mod:
+	python -m backyback src\script.txt
+
+wmod:
+	watchexec -e py -cr "make mod"
+
