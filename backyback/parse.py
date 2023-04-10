@@ -196,9 +196,20 @@ def maptree(fn, tree):
     else:
         return fn(tree)
 
+def tree_values(tree):
+    return maptree(lambda x: x.value, tree)
+
 code = """
 sum 1 2 3
 """
+
+
+def parse_file(filename):
+    with open(filename) as f:
+        s = f.read()
+        print(s)
+        ast = parse_string(s, filename)
+        return ast
 
 
 def parse_string(s, filename):
