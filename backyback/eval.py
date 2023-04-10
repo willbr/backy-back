@@ -34,6 +34,7 @@ def evalbb(env, x):
 
     # special forms
     if s == 'fn':
+        assert False
         fn_name, *fn_body = args
         env[fn_name.value] = fn_body
 
@@ -58,6 +59,12 @@ def evalbb(env, x):
         ix = transform_infix(args)
         evalbb(env, ix)
         return 
+    elif s == 'neo-infix':
+        name, *iargs = args
+        ix = transform_infix(iargs)
+        new_x = [name, ix]
+        evalbb(env, new_x)
+        assert False
 
     else:
         evalbb_list(env, args)
