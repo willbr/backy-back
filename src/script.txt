@@ -1,3 +1,5 @@
+puts "hello world"
+
 1 + 2 + 3.1
 .s
 puts
@@ -16,3 +18,18 @@ when a > 1
     puts "big"
 
 puts "\"end\""
+
+
+puts <<MSG
+
+----------------
+
+the last goodbye
+
+----------------
+
+MSG
+
+
+if a > 2
+    puts big # this is a comment
