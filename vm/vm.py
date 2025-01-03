@@ -1,16 +1,16 @@
 import math
 
-print('hello')
-
-msg = 'hello world'
-
 type_number  = 0x1111_0000_0000_0001
 type_string  = 0x1111_0000_0000_0002
 type_command = 0xcccc_0000_0000_0001
 
-id_return = 0
-id_puts = 1
+id_return = 1
+id_puts = 2
 id_open_window = 12
+
+command_ids = {k: v for k,v in locals().items() if k.startswith('id_')}
+ids_to_command_name = {v:k for k,v in command_ids.items()}
+
 
 def packed_string(s):
     data = s.encode('utf8')
@@ -90,6 +90,87 @@ def call_command(stack, cmd_id):
     else:
         assert False, f'invalid cmd {cmd_id}'
 
+
+def disasemble(byte_code):
+    i = 0
+    while i < len(byte_code):
+        #print()
+        op = byte_code[i]
+        i += 1
+        #print_stack(stack)
+        #hex_dump(stack)
+
+        if op == type_number:
+            n = byte_code[i]
+            i += 1
+            print(f'number {n=}')
+
+        elif op == type_string:
+            packed_len = byte_code[i]
+            i += 1
+            string_ints = byte_code[i:i + packed_len]
+            string_value = b''.join(int.to_bytes(j, 8, byteorder='big', signed=False) for j in string_ints).rstrip(b'\0').decode('utf8')
+            i += packed_len
+            print(f'string {packed_len=} {string_value=}')
+
+        elif op == type_command:
+            cmd_id = byte_code[i]
+            assert cmd_id >= 0
+            i += 1
+
+            cmd_name = ids_to_command_name.get(cmd_id, 'Unknown Command').lstrip('id_')
+            print(f'call {cmd_name=} {cmd_id=}')
+
+        else:
+            assert False, f'unknown op: {op}'
+
+
+def execute(byte_code, stack=None):
+    if stack is None:
+        stack = []
+
+    i = 0 # instruction pointer
+
+    while i < len(byte_code):
+        #print()
+        op = byte_code[i]
+        i += 1
+        #print_stack(stack)
+        #hex_dump(stack)
+
+        if op == type_number:
+            n = byte_code[i]
+            i += 1
+            push_number(stack, n)
+
+        elif op == type_string:
+            packed_len = byte_code[i]
+            i += 1
+            string_ints = byte_code[i:i + packed_len]
+            string_value = b''.join(int.to_bytes(j, 8, byteorder='big', signed=False) for j in string_ints).rstrip(b'\0').decode('utf8')
+            i += packed_len
+            push_string(stack, string_value)
+
+        elif op == type_command:
+            cmd_id = byte_code[i]
+            assert cmd_id >= 0
+            i += 1
+
+            if cmd_id == id_return:
+                print('return')
+                break
+
+            call_command(stack, cmd_id)
+
+        else:
+            assert False, f'unknown op: {op}'
+
+    if stack != []:
+        print_stack(stack)
+        hex_dump(ints_to_bytes(stack))
+
+
+msg = 'hello world'
 packed_msg = packed_string(msg)
 #print(f'{packed_msg=}')
 
@@ -102,50 +183,12 @@ byte_code = [
     type_command, id_return,
 ]
 
-print('byte_code=')
-hex_dump(ints_to_bytes(byte_code))
-stack = []  # Use a list as our stack
+#print('byte_code=')
+#hex_dump(ints_to_bytes(byte_code))
 
-#print_stack(stack)
+#print('# disasemble')
+#disasemble(byte_code)
 
-# instruction pointer
-i = 0
-
-while i < len(byte_code):
-    #print()
-    op = byte_code[i]
-    i += 1
-    #print_stack(stack)
-    #hex_dump(stack)
-
-    if op == type_number:
-        n = byte_code[i]
-        i += 1
-        push_number(stack, n)
-
-    elif op == type_string:
-        packed_len = byte_code[i]
-        i += 1
-        string_ints = byte_code[i:i + packed_len]
-        string_value = b''.join(int.to_bytes(j, 8, byteorder='big', signed=False) for j in string_ints).rstrip(b'\0').decode('utf8')
-        i += packed_len
-        push_string(stack, string_value)
-
-    elif op == type_command:
-        cmd_id = byte_code[i]
-        assert cmd_id >= 0
-        i += 1
-
-        if cmd_id == id_return:
-            print('return')
-            break
-
-        call_command(stack, cmd_id)
-
-    else:
-        assert False, f'unknown op: {op}'
-
-if stack != []:
-    print_stack(stack)
-    hex_dump(ints_to_bytes(stack))
+print('# execute')
+execute(byte_code, stack=[])
 
