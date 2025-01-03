@@ -12,10 +12,9 @@ The bytecode is a structured sequence of integers representing operations and da
      - `packed_data` contains the UTF-8 encoded string, padded to 64-bit alignment.
 
 2. **Commands**:
-   - `[type_command, command_id, argument_count]`
+   - `[type_command, command_id]`
      - `type_command` marks a command.
      - `command_id` specifies the operation (e.g., `id_puts`, `id_open_window`).
-     - `argument_count` indicates the number of stack arguments the command requires.
 
 ### Example Encoding
 - Push `"hello world"`:  

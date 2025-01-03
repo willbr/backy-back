@@ -28,11 +28,11 @@ packed_msg = packed_string(msg)
 
 byte_code = [
     type_string, len(packed_msg), *packed_msg,
-    type_command, id_puts, 1,
+    type_command, id_puts,
     type_number, 640,
     type_number, 480,
-    type_command, id_open_window, 2,
-    type_command, id_return, 0,
+    type_command, id_open_window,
+    type_command, id_return,
 ]
 
 #print(f'{byte_code=}')
@@ -218,8 +218,8 @@ def pop_string(stack):
     return string_data
 
 
-def call_command(stack, cmd_id, num_args):
-    print(f'call command {cmd_id=} {num_args=}')
+def call_command(stack, cmd_id):
+    print(f'call command {cmd_id=}')
     if cmd_id == id_open_window:
         h = pop_number(stack)
         w = pop_number(stack)
@@ -271,15 +271,11 @@ while i < len(byte_code):
         assert cmd_id >= 0
         i += 1
 
-        number_args = byte_code[i]
-        assert number_args >= 0
-        i += 1
-
         if cmd_id == id_return:
             print('return')
             break
 
-        call_command(stack, cmd_id, number_args)
+        call_command(stack, cmd_id)
 
     else:
         assert False, f'unknown op: {op}'
